@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Company>MPP</Company>
+    <Product>MPP Watcher</Product>
+    <Version>0.1.0</Version>
+    <!-- Lets the Windows-only projects compile on Linux/macOS build machines (they still only run on Windows). -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- Lower memory footprint for a long-running background app. -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+</Project>
