@@ -183,6 +183,11 @@ public sealed class AppEndToEndTests : IDisposable
     {
         using var w = new TestWindow("MPP Inspector Target", f =>
         {
+            // Keep clear of the inspector, which stays on top at the right of the screen.
+            f.StartPosition = FormStartPosition.Manual;
+            f.Left = 0;
+            f.Top = 60;
+            f.Width = 300;
             f.Controls.Add(new TextBox { Name = "skuBox", AccessibleName = "SKU", Text = "MA023", Left = 20, Top = 20, Width = 200 });
             f.Controls.Add(new TextBox { Name = "pwBox", AccessibleName = "Password", Text = "hunter2", UseSystemPasswordChar = true, Left = 20, Top = 70, Width = 200 });
         });

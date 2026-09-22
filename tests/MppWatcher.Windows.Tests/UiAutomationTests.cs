@@ -24,7 +24,7 @@ public sealed class UiAutomationTests : IDisposable
         var cfg = new WatcherConfig();
         cfg.Collectors.UiAutomation.ValueSettleSeconds = 3;
         cfg.Collectors.UiAutomation.FocusedFieldPollMs = 250;
-        _collector = new UiAutomationCollector();
+        _collector = new UiAutomationCollector(ignoreOwnProcess: false); // sample windows live in this test process
         _collector.Start(new CollectorContext(_sink, new ConfigProvider(cfg), _log, SystemClock.Instance));
         Thread.Sleep(500);
     }

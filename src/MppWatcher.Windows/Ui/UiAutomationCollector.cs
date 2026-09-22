@@ -21,7 +21,7 @@ namespace MppWatcher.Windows.Ui;
 public sealed class UiAutomationCollector : ICollector
 {
     private readonly BlockingCollection<Action> _work = new(new ConcurrentQueue<Action>(), 1000);
-    private readonly int _ownPid = Environment.ProcessId;
+    private readonly int _ownPid;
     private CollectorContext? _ctx;
     private UiCapturePolicy? _policy;
     private FocusedFieldTracker? _tracker;
@@ -33,6 +33,11 @@ public sealed class UiAutomationCollector : ICollector
     private IUIAutomationElement? _trackedElement;
     private (string? RuntimeId, DateTimeOffset At) _lastAction;
     private long _focusEvents, _clicksSeen, _fieldsLogged, _actionsLogged, _refusedSensitive, _errors, _dropped;
+
+    public UiAutomationCollector() : this(ignoreOwnProcess: true) { }
+
+    /// <summary>Tests host their sample windows in the test process, so they turn the self-filter off.</summary>
+    internal UiAutomationCollector(bool ignoreOwnProcess) => _ownPid = ignoreOwnProcess ? Environment.ProcessId : -1;
 
     public string Name => UiEventFactory.CollectorName;
     public string Version => UiEventFactory.CollectorVersion;
