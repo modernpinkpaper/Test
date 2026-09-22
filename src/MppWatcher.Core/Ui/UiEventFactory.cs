@@ -24,6 +24,7 @@ public static class UiEventFactory
         m["value_length"] = d.ValueLength;
         m["trigger"] = trigger;         // focus_left | value_settled
         m["edited"] = edited;
+        if (!edited) m["focus_detected_late"] = true; // Windows did not announce the focus; value may have been there before
         ev.DedupFingerprint = $"{e.ProcessName}|{e.AutomationId}|{e.Name}|{d.Value}";
         return ev;
     }

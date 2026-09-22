@@ -172,6 +172,17 @@ public class FocusedFieldTrackerTests
     }
 
     [Fact]
+    public void Late_detected_focus_still_reports_a_value_typed_before_it_was_noticed()
+    {
+        // The person typed "notebooks" before the watcher noticed the field had focus.
+        _t.OnFocus(F("search", "notebooks"), T.Start, initialValueKnown: false);
+        var c = _t.OnTick(T.Start.AddSeconds(5))!;
+        Assert.Equal("notebooks", c.Element.Value);
+        Assert.False(c.Edited);
+        Assert.Null(_t.OnTick(T.Start.AddSeconds(10))); // reported once
+    }
+
+    [Fact]
     public void Refocusing_the_same_element_is_ignored()
     {
         _t.OnFocus(F("search"), T.Start);

@@ -134,7 +134,9 @@ public sealed class UiAutomationCollector : ICollector
         while (_work.TryTake(out var rest)) { try { rest(); } catch { } }
     }
 
-    private void OnFocus(IUIAutomationElement element)
+    private void OnFocus(IUIAutomationElement element) => OnFocus(element, announced: true);
+
+    private void OnFocus(IUIAutomationElement element, bool announced)
     {
         _focusEvents++;
         var uia = _uia!;
@@ -152,26 +154,26 @@ public sealed class UiAutomationCollector : ICollector
             if (pre.Log) trackable = info with { Value = uia.ReadValue(element, out _) };
             else if (pre.IsSensitive) _refusedSensitive++;
         }
-        Commit(_tracker!.OnFocus(trackable, now));
+        Commit(_tracker!.OnFocus(trackable, now, initialValueKnown: announced));
         _trackedElement = trackable is null ? null : element;
     }
 
     /// <summary>
     /// Windows does not always announce focus (e.g. a window opens with the cursor already in
-    /// its first field). Once a second, ask which element has focus and treat a change as a
+    /// its first field). Twice a second, ask which element has focus and treat a change as a
     /// focus event. Two cheap calls.
     /// </summary>
     private void CheckFocusDirectly()
     {
         var now = _ctx!.Clock.Now;
-        if (now - _lastFocusCheck < TimeSpan.FromSeconds(1)) return;
+        if (now - _lastFocusCheck < TimeSpan.FromMilliseconds(500)) return;
         _lastFocusCheck = now;
         var focused = _uia!.FocusedElement();
         if (focused is null) return;
         var id = _uia.RuntimeIdOf(focused);
         if (id is null || id == _lastFocusRuntimeId) return;
         _lastFocusRuntimeId = id; // remember even if OnFocus decides to skip it (e.g. our own window)
-        OnFocus(focused);
+        OnFocus(focused, announced: false);
     }
 
     private void PollTrackedField()
