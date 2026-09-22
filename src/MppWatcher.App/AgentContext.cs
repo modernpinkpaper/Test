@@ -17,6 +17,9 @@ internal sealed class AgentContext : ApplicationContext
     private readonly IDiagnosticLog _log;
     private readonly WatcherRuntime _runtime;
     private readonly NotifyIcon? _tray;
+    private readonly EventWaitHandle _stopSignal;
+    private readonly RegisteredWaitHandle _stopWait;
+    private readonly SynchronizationContext _ui;
     private int _stopping;
 
     public AgentContext(string configPath, string? dataFolderOverride, IDiagnosticLog log)
@@ -31,6 +34,12 @@ internal sealed class AgentContext : ApplicationContext
         SystemEvents.SessionEnded += OnSessionEnded;
 
         if (_config.Current.ShowTrayIcon) _tray = CreateTray();
+
+        // "MPPWatcher.exe --stop" signals this event; stop cleanly on the UI thread.
+        _ui = SynchronizationContext.Current ?? new WindowsFormsSynchronizationContext();
+        _stopSignal = new EventWaitHandle(false, EventResetMode.AutoReset, Program.StopEventName);
+        _stopWait = ThreadPool.RegisterWaitForSingleObject(_stopSignal,
+            (_, _) => _ui.Post(_ => Shutdown("stop_requested"), null), null, Timeout.Infinite, executeOnlyOnce: true);
     }
 
     private NotifyIcon CreateTray()
@@ -141,6 +150,8 @@ internal sealed class AgentContext : ApplicationContext
         if (disposing)
         {
             SystemEvents.SessionEnded -= OnSessionEnded;
+            _stopWait.Unregister(null);
+            _stopSignal.Dispose();
             StopRuntime("watcher_stopped");
             if (_tray is not null)
             {

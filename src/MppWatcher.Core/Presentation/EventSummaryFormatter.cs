@@ -29,7 +29,9 @@ public static class EventSummaryFormatter
                 $"{app} ended after {Dur(m, "duration_seconds")} (active {Dur(m, "active_seconds")}, idle {Dur(m, "idle_seconds")}) — {Reason(m)}{excluded}",
             EventTypes.WindowTitleChanged => $"{where} title → \"{e.WindowTitle}\"",
             EventTypes.IdleStart => $"Idle — no keyboard/mouse since {ShortTime(Str(m, "idle_start"))}",
-            EventTypes.IdleEnd => $"Active again after {Dur(m, "idle_seconds")} idle",
+            EventTypes.IdleEnd => Str(m, "end_reason") is null or "input_resumed"
+                ? $"Active again after {Dur(m, "idle_seconds")} idle"
+                : $"Idle period of {Dur(m, "idle_seconds")} closed — {Str(m, "end_reason")!.Replace('_', ' ')}",
             EventTypes.WorkstationLocked => "Workstation locked",
             EventTypes.WorkstationUnlocked => $"Workstation unlocked (locked {Dur(m, "locked_seconds")})",
             EventTypes.SystemSuspend => "PC going to sleep",

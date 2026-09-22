@@ -31,6 +31,13 @@ public class FormatterTests
     }
 
     [Fact]
+    public void Idle_closed_by_lock_or_stop_is_not_called_activity()
+    {
+        var e = new WatchEvent { EventType = EventTypes.IdleEnd }.Set("idle_seconds", 300.0).Set("end_reason", "watcher_stopped");
+        Assert.Equal("Idle period of 5m 0s closed — watcher stopped", EventSummaryFormatter.Summarize(e));
+    }
+
+    [Fact]
     public void Utc_timestamp_has_fixed_format_and_round_trips()
     {
         var e = new WatchEvent { TimestampUtc = new DateTimeOffset(2026, 9, 22, 9, 31, 20, 500, TimeSpan.FromHours(-4)) };

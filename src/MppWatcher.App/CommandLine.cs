@@ -1,6 +1,6 @@
 namespace MppWatcher.App;
 
-internal enum RunMode { Agent, Viewer, SmokeTest, WriteDefaultConfig, Version, Help }
+internal enum RunMode { Agent, Viewer, SmokeTest, Stop, WriteDefaultConfig, Version, Help }
 
 /// <summary>
 /// MPPWatcher.exe                       run the background watcher (normal mode, started at logon)
@@ -29,6 +29,7 @@ internal sealed record CommandLine(RunMode Mode, string? ConfigPath, string? Dat
                     if (i + 1 < args.Length && int.TryParse(args[i + 1], out var s)) { seconds = Math.Clamp(s, 3, 3600); i++; }
                     break;
                 case "--write-default-config": mode = RunMode.WriteDefaultConfig; output = Next(); break;
+                case "--stop": mode = RunMode.Stop; break;
                 case "--version": mode = RunMode.Version; break;
                 case "--help": case "-h": case "/?": mode = RunMode.Help; break;
                 case "--config": config = Next(); break;
@@ -45,6 +46,7 @@ internal sealed record CommandLine(RunMode Mode, string? ConfigPath, string? Dat
           MPPWatcher.exe                          Run the background watcher (normal mode).
           MPPWatcher.exe --viewer                 Open the live test viewer.
           MPPWatcher.exe --smoke-test [seconds]   Run briefly, write a report, exit 0 if OK.
+          MPPWatcher.exe --stop                   Ask the watcher in this Windows session to stop cleanly.
           MPPWatcher.exe --write-default-config <path>
           MPPWatcher.exe --version
 

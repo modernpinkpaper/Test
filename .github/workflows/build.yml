@@ -30,6 +30,15 @@ jobs:
         run: dotnet test tests/MppWatcher.Core.Tests -c Release --no-build
       - name: Publish MPPWatcher.exe
         run: dotnet publish src/MppWatcher.App -c Release -o publish
+      - name: Windows tests (real windows, idle, processes, the published exe)
+        shell: pwsh
+        env:
+          MPPWATCHER_EXE: ${{ github.workspace }}\publish\MPPWatcher.exe
+          MPPWATCHER_SCREENSHOTS: ${{ github.workspace }}\test-output\screenshots
+        run: >
+          dotnet test tests/MppWatcher.Windows.Tests -c Release --no-build
+          --logger "console;verbosity=detailed" --logger "trx;LogFileName=windows-tests.trx"
+          --results-directory test-output
       - name: Smoke test (real Windows collectors for 15 seconds)
         shell: pwsh
         run: |
@@ -39,6 +48,46 @@ jobs:
           $p = Start-Process -FilePath 'publish\MPPWatcher.exe' -ArgumentList $smokeArgs -Wait -PassThru
           Get-Content $result
           exit $p.ExitCode
+      - name: Installer test (install, upgrade keeps config, uninstall)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Check($ok, $what) { if ($ok) { Write-Host "[PASS] $what" } else { Write-Host "[FAIL] $what"; exit 1 } }
+          $dir = "$env:ProgramFiles\MPP Watcher"
+          $cfg = "$env:ProgramData\MPP Watcher\config.json"
+
+          powershell -ExecutionPolicy Bypass -File installer\Install-MppWatcher.ps1 -SourceFolder publish -EmployeeId EMP-CI
+          Check ($LASTEXITCODE -eq 0) 'install script succeeded'
+          Check (Test-Path "$dir\MPPWatcher.exe") 'exe installed'
+          Check ((Get-Content $cfg -Raw) -match 'EMP-CI') 'config created with employee id'
+          $task = Get-ScheduledTask -TaskName 'MPP Watcher'
+          Check ($null -ne $task) 'logon task registered'
+          Check ($task.Triggers[0].Repetition.Interval -eq 'PT5M') 'task re-checks every 5 minutes'
+          Check ($task.Principal.GroupId -ne $null) 'task runs for every user (group principal)'
+          $running = $false
+          for ($i = 0; $i -lt 40 -and -not $running; $i++) { Start-Sleep -Milliseconds 500; $running = [bool](Get-Process MPPWatcher -ErrorAction SilentlyContinue) }
+          Write-Host "[INFO] watcher started by the scheduled task: $running"
+          Check (Test-Path "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\MPP Watcher\MPP Watcher Live Viewer.lnk") 'viewer shortcut created'
+
+          (Get-Content $cfg -Raw) -replace '"idle_timeout_seconds":\s*300', '"idle_timeout_seconds": 240' | Set-Content $cfg
+          powershell -ExecutionPolicy Bypass -File installer\Install-MppWatcher.ps1 -SourceFolder publish -NoStart
+          Check ($LASTEXITCODE -eq 0) 'upgrade install succeeded'
+          Check ((Get-Content $cfg -Raw) -match '"idle_timeout_seconds":\s*240') 'upgrade kept the existing config'
+          Check (-not (Get-Process MPPWatcher -ErrorAction SilentlyContinue)) 'running watcher was stopped for the upgrade'
+
+          powershell -ExecutionPolicy Bypass -File installer\Uninstall-MppWatcher.ps1
+          Check ($LASTEXITCODE -eq 0) 'uninstall succeeded'
+          Check (-not (Test-Path "$dir\MPPWatcher.exe")) 'program removed'
+          Check ($null -eq (Get-ScheduledTask -TaskName 'MPP Watcher' -ErrorAction SilentlyContinue)) 'task removed'
+          Check (Test-Path $cfg) 'config kept by default'
+          powershell -ExecutionPolicy Bypass -File installer\Uninstall-MppWatcher.ps1 -RemoveConfig
+          Check (-not (Test-Path $cfg)) 'config removed with -RemoveConfig'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-test-output
+          path: test-output/
+          if-no-files-found: ignore
       - name: Assemble package
         shell: pwsh
         run: |

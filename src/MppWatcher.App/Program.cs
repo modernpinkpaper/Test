@@ -9,6 +9,9 @@ internal static class Program
     /// <summary>One watcher per Windows user session.</summary>
     public const string AgentMutexName = @"Local\MPPWatcher.Agent";
 
+    /// <summary>Signalled by "MPPWatcher.exe --stop" (installer, tests) to stop the agent cleanly.</summary>
+    public const string StopEventName = @"Local\MPPWatcher.Stop";
+
     [STAThread]
     private static int Main(string[] args)
     {
@@ -23,6 +26,8 @@ internal static class Program
                 return 0;
             case RunMode.WriteDefaultConfig:
                 return WriteDefaultConfig(cmd.OutputPath);
+            case RunMode.Stop:
+                return RequestStop();
         }
 
         ApplicationConfiguration.Initialize();
@@ -61,6 +66,30 @@ internal static class Program
             log.Error("app", "Watcher crashed during start", e);
             return 1; // non-zero so Task Scheduler's "restart on failure" kicks in
         }
+    }
+
+    /// <summary>Exit codes: 0 = stopped (or was not running), 2 = still running after 20 s.</summary>
+    private static int RequestStop()
+    {
+        if (!Mutex.TryOpenExisting(AgentMutexName, out var running))
+        {
+            WriteConsole("MPP Watcher is not running in this session.");
+            return 0;
+        }
+        running.Dispose();
+        if (EventWaitHandle.TryOpenExisting(StopEventName, out var stop))
+        {
+            using (stop) stop.Set();
+        }
+        var deadline = DateTime.UtcNow.AddSeconds(20);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (!Mutex.TryOpenExisting(AgentMutexName, out var m)) { WriteConsole("MPP Watcher stopped."); return 0; }
+            m.Dispose();
+            Thread.Sleep(250);
+        }
+        WriteConsole("MPP Watcher did not stop within 20 seconds.");
+        return 2;
     }
 
     private static void InstallCrashHandlers(IDiagnosticLog log)

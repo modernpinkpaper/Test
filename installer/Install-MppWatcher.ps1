@@ -45,9 +45,14 @@ Write-Host '1/6 Stopping any running MPP Watcher...'
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 }
+$installedExe = Join-Path $InstallDir 'MPPWatcher.exe'
+if (Test-Path $installedExe) {
+    # Clean stop for the admin's own session (writes watcher_stopped and closes the open session).
+    Start-Process -FilePath $installedExe -ArgumentList '--stop' -Wait -WindowStyle Hidden -ErrorAction SilentlyContinue
+}
+# Other users' sessions: a forced stop is still safe, the open session is recovered from its checkpoint.
 Get-Process -Name 'MPPWatcher' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
-# A forced stop is safe: the open session is recovered from its checkpoint on next start.
 
 Write-Host "2/6 Copying program files to $InstallDir ..."
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
