@@ -1,0 +1,137 @@
+{
+  "company_name": "MPP",
+  "employee_id": "",
+  "employee_id_by_windows_user": {},
+  "computer_id": "",
+  "idle_timeout_seconds": 300,
+  "debug_mode": false,
+  "show_tray_icon": true,
+  "allow_user_exit": false,
+  "data_folder": "",
+  "log_folder": "",
+  "collectors": {
+    "activity": {
+      "enabled": true,
+      "foreground_stable_ms": 1000,
+      "title_stable_ms": 2000,
+      "split_sessions_on_title_change": true,
+      "poll_interval_ms": 500,
+      "gap_threshold_seconds": 60,
+      "return_window_minutes": 240,
+      "heartbeat_minutes": 15,
+      "checkpoint_seconds": 30
+    },
+    "process": {
+      "enabled": true,
+      "scan_interval_seconds": 15,
+      "ignore_processes": [
+        "svchost",
+        "RuntimeBroker",
+        "conhost",
+        "dllhost",
+        "backgroundTaskHost",
+        "taskhostw",
+        "sihost",
+        "SearchProtocolHost",
+        "SearchFilterHost",
+        "SearchIndexer",
+        "SearchHost",
+        "SearchApp",
+        "StartMenuExperienceHost",
+        "ShellExperienceHost",
+        "TextInputHost",
+        "ctfmon",
+        "smartscreen",
+        "WmiPrvSE",
+        "audiodg",
+        "fontdrvhost",
+        "dwm",
+        "csrss",
+        "winlogon",
+        "wininit",
+        "lsass",
+        "services",
+        "smss",
+        "System",
+        "Idle",
+        "Registry",
+        "MoUsoCoreWorker",
+        "TiWorker",
+        "TrustedInstaller",
+        "CompPkgSrv",
+        "WidgetService",
+        "Widgets",
+        "LockApp",
+        "UserOOBEBroker",
+        "SecurityHealthSystray",
+        "SecurityHealthService",
+        "MsMpEng",
+        "NisSrv",
+        "crashpad_handler",
+        "msedgewebview2",
+        "identity_helper",
+        "GoogleCrashHandler*",
+        "MicrosoftEdgeUpdate",
+        "OneDrive.Sync.Service",
+        "FileCoAuth",
+        "CrossDeviceResume",
+        "PhoneExperienceHost",
+        "AggregatorHost",
+        "MPPWatcher"
+      ],
+      "collapse_multi_instance": true
+    }
+  },
+  "privacy": {
+    "blocked_mode": "redact",
+    "blocked_applications": [
+      "KeePass*",
+      "1Password*",
+      "Bitwarden*",
+      "LastPass*",
+      "Dashlane*",
+      "NordPass*",
+      "RoboForm*",
+      "CredentialUIBroker",
+      "LogonUI",
+      "consent"
+    ],
+    "blocked_window_titles": [
+      "*Windows Security*",
+      "*Credential Manager*"
+    ],
+    "allowed_domains": [],
+    "blocked_domains": [
+      "*bank*",
+      "accounts.google.com",
+      "login.microsoftonline.com",
+      "login.live.com"
+    ],
+    "blocked_urls": [
+      "*/checkout*",
+      "*/payment*",
+      "*/signin*",
+      "*/login*",
+      "*/ap/signin*",
+      "*/password*"
+    ],
+    "blocked_folders": [],
+    "blocked_controls": [],
+    "sensitive_field_terms": [],
+    "sensitive_url_parameters": []
+  },
+  "export": {
+    "enabled": true,
+    "uploader": "local_folder",
+    "destination_folder": "",
+    "interval_minutes": 15,
+    "batch_size": 2000
+  },
+  "retention": {
+    "keep_uploaded_events_days": 30,
+    "keep_diagnostic_logs_days": 14
+  },
+  "deduplication": {
+    "window_seconds": 10
+  }
+}

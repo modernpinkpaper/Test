@@ -15,7 +15,7 @@ public sealed class WatchEvent
 
     [JsonPropertyName("schema_version")] public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     [JsonPropertyName("event_id")] public string EventId { get; set; } = "";
-    [JsonPropertyName("timestamp_utc")] public DateTimeOffset TimestampUtc { get; set; }
+    [JsonPropertyName("timestamp_utc"), JsonConverter(typeof(UtcTimestampConverter))] public DateTimeOffset TimestampUtc { get; set; }
     [JsonPropertyName("timestamp_local")] public string TimestampLocal { get; set; } = "";
     [JsonPropertyName("computer_id")] public string ComputerId { get; set; } = "";
     [JsonPropertyName("employee_id")] public string EmployeeId { get; set; } = "";
@@ -51,4 +51,14 @@ public sealed class WatchEvent
         Metadata[key] = value;
         return this;
     }
+}
+
+/// <summary>Always writes UTC as "2026-09-22T13:31:20.500Z" (fixed width, sortable as text).</summary>
+public sealed class UtcTimestampConverter : JsonConverter<DateTimeOffset>
+{
+    public override DateTimeOffset Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options) =>
+        DateTimeOffset.Parse(reader.GetString()!, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime();
+
+    public override void Write(System.Text.Json.Utf8JsonWriter writer, DateTimeOffset value, System.Text.Json.JsonSerializerOptions options) =>
+        writer.WriteStringValue(TimeFormat.IsoUtc(value));
 }

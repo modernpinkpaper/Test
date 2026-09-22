@@ -1,0 +1,15 @@
+09:00:00  app_session_start    Google Chrome — "Keepa - Amazon Price Tracker - Google Chrome"
+09:04:00  app_session_end      Google Chrome ended after 4m 0s (active 4m 0s, idle 0s) — moved to "Amazon.com: Personalized Stationery Set for Women - Google Chrome"
+09:04:00  app_session_start    Google Chrome — "Amazon.com: Personalized Stationery Set for Women - Google Chrome"
+09:07:00  app_session_end      Google Chrome ended after 3m 0s (active 3m 0s, idle 0s) — switched to Adobe Photoshop 2025
+09:07:00  app_session_start    Adobe Photoshop 2025 — "MA023-main.psd @ 66.7% (Layer 1, RGB/8) *"
+09:19:00  app_session_end      Adobe Photoshop 2025 ended after 12m 0s (active 12m 0s, idle 0s) — switched to [excluded]
+09:19:00  app_session_start    [excluded] — "[excluded]" (excluded: blocked_application)
+09:19:20  app_session_end      [excluded] ended after 20s (active 20s, idle 0s) — switched to another app (excluded: blocked_application)
+09:19:20  app_session_start    Adobe Photoshop 2025 — "MA024-main.psd @ 66.7% (RGB/8)"
+09:21:20  idle_start           Idle — no keyboard/mouse since 09:21:20
+09:30:20  idle_end             Active again after 9m 0s idle
+09:31:20  app_session_end      Adobe Photoshop 2025 ended after 12m 0s (active 2m 59s, idle 9m 0s) — switched to Google Chrome
+09:31:20  app_session_start    Google Chrome — "Keepa - Amazon Price Tracker - Google Chrome" (returned after 27m 20s)
+09:33:20  app_session_end      Google Chrome ended after 1m 59s (active 1m 59s, idle 0s) — workstation locked
+09:33:20  workstation_locked   Workstation locked

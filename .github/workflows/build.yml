@@ -1,0 +1,54 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  core-tests:
+    name: Core tests (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet test tests/MppWatcher.Core.Tests -c Release
+
+  windows:
+    name: Windows build, tests, smoke test, package
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build
+        run: dotnet build -c Release
+      - name: Unit tests
+        run: dotnet test tests/MppWatcher.Core.Tests -c Release --no-build
+      - name: Publish MPPWatcher.exe
+        run: dotnet publish src/MppWatcher.App -c Release -o publish
+      - name: Smoke test (real Windows collectors for 15 seconds)
+        shell: pwsh
+        run: |
+          $result = Join-Path $env:RUNNER_TEMP 'smoke.txt'
+          $smokeArgs = @('--smoke-test', '15', '--config', (Join-Path $env:RUNNER_TEMP 'no-config.json'),
+                    '--data', (Join-Path $env:RUNNER_TEMP 'smoke-data'), '--result', $result)
+          $p = Start-Process -FilePath 'publish\MPPWatcher.exe' -ArgumentList $smokeArgs -Wait -PassThru
+          Get-Content $result
+          exit $p.ExitCode
+      - name: Assemble package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force package | Out-Null
+          Copy-Item publish\MPPWatcher.exe package\
+          Copy-Item installer\*.ps1 package\
+          Copy-Item README.md package\
+          Copy-Item docs\PRIVACY.md package\
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MPPWatcher-win-x64
+          path: package/
+          if-no-files-found: error

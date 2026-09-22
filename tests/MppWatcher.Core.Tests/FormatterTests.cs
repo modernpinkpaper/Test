@@ -29,4 +29,13 @@ public class FormatterTests
         Assert.Equal("Active again after 12m 3s idle", EventSummaryFormatter.Summarize(back));
         Assert.Equal("10:04:17", EventSummaryFormatter.LocalTimeText(back));
     }
+
+    [Fact]
+    public void Utc_timestamp_has_fixed_format_and_round_trips()
+    {
+        var e = new WatchEvent { TimestampUtc = new DateTimeOffset(2026, 9, 22, 9, 31, 20, 500, TimeSpan.FromHours(-4)) };
+        var json = EventJson.Serialize(e);
+        Assert.Contains("\"timestamp_utc\":\"2026-09-22T13:31:20.500Z\"", json);
+        Assert.Equal(e.TimestampUtc, EventJson.Deserialize(json).TimestampUtc);
+    }
 }
