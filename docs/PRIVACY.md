@@ -15,20 +15,34 @@ record *what kind of work* happened, not private content.
 - Program command lines (they can contain secrets)
 - File contents (no reading or hashing of files)
 
-## What is collected in Phase 1
+## What is collected (Phases 1–2)
 
 - Which app/window is in front, its **window title**, and for how long
 - Active vs idle time (no keyboard/mouse for 5 minutes by default)
 - Lock/unlock, sleep/wake, sign-out
 - Which programs start and stop (name, exe path, run time)
 - Watcher health information
+- Finished values of changed, non-sensitive form fields (e.g. Search, SKU) and the names of
+  buttons/links/tabs clicked (e.g. Save, Publish)
 
 Window titles can contain document names, web page titles and email subjects. If a
 title must not be logged, block it (below).
 
-## Sensitive fields (Phase 2 onward, filter already built)
+## Field values and clicks (Phase 2)
 
-When UI field values are read (Phase 2), a field is **always** skipped if:
+- Only the **finished** value of a field is read from Windows, when the person leaves the
+  field or stops typing for a few seconds. Keystrokes are never seen or stored.
+- Only fields that were **changed** are recorded.
+- Values longer than 200 characters or with line breaks (e.g. an email body or a message
+  to a customer) are **not stored**; only their length is.
+- For a click, Windows is asked which control is under the mouse. The **click position is
+  used once and discarded**, never stored. Only clicks on *named* buttons, links, tabs,
+  menu items and check boxes are recorded.
+- The watcher never records anything about its own windows (viewer, inspector).
+
+## Sensitive fields
+
+A field is **always** skipped if:
 
 - Windows marks it as a password/protected field, or
 - its name, automation id, label, help text or class contains a sensitive term:
@@ -37,7 +51,8 @@ When UI field values are read (Phase 2), a field is **always** skipped if:
   token, API key, private key, credential, date of birth…, or
 - its value *looks like* a card number (passes the Luhn check), an SSN, or a long token/JWT.
 
-This built-in list **cannot be turned off**. Admins can only add terms
+For password fields the value is **not even read** from Windows. For the other cases the
+decision is made before anything is written. This built-in list **cannot be turned off**. Admins can only add terms
 (`privacy.sensitive_field_terms`). The matching is word-based, so "Shipping address"
 is not confused with "PIN".
 
@@ -79,7 +94,7 @@ and checkout/payment/login URLs.
   (normal Windows file permissions).
 - The config in `%ProgramData%\MPP Watcher` is readable by users, writable only by admins.
 - Exports go only where the admin configures. No data leaves the PC otherwise.
-  There is no network code in Phase 1.
+  There is no network code in Phases 1–2.
 
 ## Transparency
 

@@ -85,6 +85,45 @@ Only the **time** of the last keyboard/mouse input is used. No keys, no mouse po
 | `session_ending` | `kind`: `logoff` or `shutdown` |
 | `activity_gap` | `gap_start`, `gap_end`, `gap_seconds`, `explanation` |
 
+## UI Automation (Phase 2)
+
+Collector `ui_automation`. Common metadata for both types:
+
+| metadata | |
+|---|---|
+| `control_type` | `Edit`, `ComboBox`, `Button`, `Hyperlink`, `TabItem`, `CheckBox`, ... |
+| `name` | accessible name of the control |
+| `automation_id` | developer id of the control, if any (e.g. `searchBox`, `sku`) |
+| `class_name`, `framework` | e.g. `Chrome`, `WinForm`, `Win32`, `WPF`, `XAML` |
+| `context_path` | up to 4 named ancestors, closest first, e.g. `["Group 'Personalization'", "Document 'Etsy'"]` |
+
+`application`, `process_name`, `window_title` describe the window the control is in.
+
+### `ui_field_value`
+The **finished** value of a text field or drop-down. Never keystrokes.
+
+| metadata | |
+|---|---|
+| `label` | the field's label (labeled-by), else its name — e.g. `Search`, `SKU` |
+| `value` | the value, e.g. `personalized stationery` (URLs are sanitized) |
+| `value_omitted`, `value_omitted_reason` | value not stored because it is long (> `max_value_length`) or multi-line; only `value_length` is kept |
+| `value_length` | characters |
+| `trigger` | `focus_left` (user left the field) or `value_settled` (value unchanged for 4 s while the field kept focus, e.g. search + Enter) |
+| `edited` | `true` — only changed fields are reported |
+
+Sensitive fields never produce this event (see PRIVACY.md).
+
+### `ui_action`
+A click on a named control. Only the control is recorded, never the click position.
+
+| metadata | |
+|---|---|
+| `action` | `button_clicked`, `link_clicked`, `tab_selected`, `menu_item_clicked`, `item_selected`, `checkbox_toggled`, `option_selected` |
+| `control_name` | e.g. `Save`, `Publish`, `Inventory` |
+| `is_key_action` | `true` when the name contains a business keyword (Save, Publish, Upload, Import, Export, Search, Download, Print, Submit, Update, ...; configurable) |
+| `state_after` | for check boxes / radio buttons: `On`, `Off`, `Selected` |
+| `trigger` | `click` |
+
 ## Processes (background activity)
 
 | Type | metadata |
@@ -117,7 +156,7 @@ If a block rule matched, the event is kept for timing but details are removed:
 
 ## Planned (Phase 2–5)
 
-`ui_field_value`, `ui_action` (`button_clicked` etc.), `ui_focus`, `browser_page`,
+`browser_page`,
 `file_opened` / `file_saved` / `file_renamed` / `file_deleted`, `document_context`,
 `print_job`, `download_detected`, `upload_context`, `automation_run` (local API).
 These will be added to this document when built.

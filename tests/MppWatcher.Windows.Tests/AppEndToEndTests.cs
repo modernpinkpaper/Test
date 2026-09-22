@@ -37,19 +37,7 @@ public sealed class AppEndToEndTests : IDisposable
 
     private static string Json(string s) => System.Text.Json.JsonSerializer.Serialize(s);
 
-    private static string ExePath
-    {
-        get
-        {
-            var fromEnv = Environment.GetEnvironmentVariable("MPPWATCHER_EXE");
-            if (!string.IsNullOrEmpty(fromEnv)) return Path.GetFullPath(fromEnv);
-            var dir = new DirectoryInfo(AppContext.BaseDirectory);
-            while (dir is not null && !Directory.Exists(Path.Combine(dir.FullName, "src", "MppWatcher.App"))) dir = dir.Parent;
-            var found = dir is null ? null : Directory.EnumerateFiles(Path.Combine(dir.FullName, "src", "MppWatcher.App", "bin"), "MPPWatcher.exe", SearchOption.AllDirectories)
-                .OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault();
-            return found ?? throw new FileNotFoundException("Build MppWatcher.App first or set MPPWATCHER_EXE");
-        }
-    }
+    private static string ExePath => AppEndToEndTestsExe.Path;
 
     private Process Run(params string[] args)
     {

@@ -42,6 +42,7 @@ public static class EventSummaryFormatter
                 ? $"{where}: field \"{Str(m, "label") ?? Str(m, "name") ?? Str(m, "control_type")}\" edited (value not stored, {Num(m, "value_length")} chars){excluded}"
                 : $"{where}: field \"{Str(m, "label") ?? Str(m, "name") ?? Str(m, "control_type")}\" = \"{Str(m, "value")}\"{excluded}",
             EventTypes.UiAction => $"{where}: {Str(m, "action")?.Replace('_', ' ')} \"{Str(m, "control_name")}\"{(Bool(m, "is_key_action") ? " ★" : "")}{(Str(m, "state_after") is { } st ? $" → {st}" : "")}{excluded}",
+            EventTypes.BrowserPage => $"{where}: {PageSummary(m)} — \"{e.PageTitle}\"",
             EventTypes.ProcessStarted => $"Started {app}{(Bool(m, "has_window") ? "" : " (no window)")}",
             EventTypes.ProcessExited => $"Exited {app} after {Dur(m, "run_seconds")}",
             EventTypes.ProcessInventory => $"Running programs: {Inventory(m)}",
@@ -63,6 +64,17 @@ public static class EventSummaryFormatter
             SessionEndReasons.TitleChanged => $"moved to \"{Str(m, "next_window_title") ?? "another page"}\"",
             _ => reason.Replace('_', ' '),
         };
+    }
+
+    private static string PageSummary(JsonObject m)
+    {
+        var parts = new List<string>();
+        var site = Str(m, "site");
+        if (site is not null && site != "other") parts.Add(site.Replace('_', ' ') + " " + (Str(m, "module") ?? Str(m, "page_type")?.Replace('_', ' ')));
+        foreach (var (key, label) in new[] { ("asins", "ASIN"), ("skus", "SKU"), ("listing_ids", "listing"), ("product_ids", "product"), ("order_ids", "order") })
+            if (m[key] is JsonArray a && a.Count > 0) parts.Add($"{label} {string.Join(", ", a.Select(x => x?.ToString()))}");
+        if (Str(m, "search_term") is { } q) parts.Add($"search \"{q}\"");
+        return parts.Count == 0 ? "page" : string.Join(" · ", parts);
     }
 
     private static string Returning(JsonObject m) =>

@@ -21,13 +21,15 @@ public sealed class EventPipeline : IEventSink, IAsyncDisposable
     private readonly IEventStore _store;
     private readonly IDiagnosticLog _log;
     private readonly IClock _clock;
+    private readonly Activity.ActivityContext? _activity;
     private readonly Channel<WatchEvent> _queue = Channel.CreateUnbounded<WatchEvent>(new UnboundedChannelOptions { SingleReader = true });
     private readonly Task _writer;
     private long _written, _dropped, _failed;
 
     public EventPipeline(EventNormalizer normalizer, PrivacyFilter privacy, DuplicateSuppressor dedup,
-        IEventStore store, IDiagnosticLog log, IClock clock)
+        IEventStore store, IDiagnosticLog log, IClock clock, Activity.ActivityContext? activity = null)
     {
+        _activity = activity;
         _normalizer = normalizer;
         _privacy = privacy;
         _dedup = dedup;
@@ -37,11 +39,12 @@ public sealed class EventPipeline : IEventSink, IAsyncDisposable
         _writer = Task.Run(WriteLoopAsync);
     }
 
-    public static EventPipeline Create(ConfigProvider config, WatcherIdentity identity, IEventStore store, IDiagnosticLog log, IClock clock) =>
+    public static EventPipeline Create(ConfigProvider config, WatcherIdentity identity, IEventStore store, IDiagnosticLog log, IClock clock,
+        Activity.ActivityContext? activity = null) =>
         new(new EventNormalizer(identity, () => config.Current),
             new PrivacyFilter(() => config.Current),
             new DuplicateSuppressor(() => TimeSpan.FromSeconds(config.Current.Deduplication.WindowSeconds)),
-            store, log, clock);
+            store, log, clock, activity);
 
     /// <summary>Raised on the writer thread after events are safely stored. Used by the smoke test.</summary>
     public event Action<IReadOnlyList<WatchEvent>>? Stored;
@@ -57,6 +60,12 @@ public sealed class EventPipeline : IEventSink, IAsyncDisposable
         try
         {
             var now = _clock.Now;
+            if (_activity is not null)
+            {
+                // Tie the event to the open session and the page it happened on, before privacy rules run.
+                _activity.Enrich(e);
+                _activity.Observe(e);
+            }
             _normalizer.Normalize(e, now);
             if (_privacy.Apply(e) is null) { Interlocked.Increment(ref _dropped); return; }
             if (!_dedup.ShouldWrite(e, now)) return;

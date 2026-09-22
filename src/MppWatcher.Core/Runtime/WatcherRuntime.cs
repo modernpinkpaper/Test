@@ -55,6 +55,9 @@ public sealed class WatcherRuntime : IAsyncDisposable
     }
 
     public WatcherIdentity Identity { get; }
+
+    /// <summary>Shared current session / browser page, used to add context to every event.</summary>
+    public Activity.ActivityContext Activity { get; } = new();
     public RuntimePaths Paths { get; }
     public EventPipeline? Pipeline => _pipeline;
     public CollectorHost? Host => _host;
@@ -66,11 +69,11 @@ public sealed class WatcherRuntime : IAsyncDisposable
         Directory.CreateDirectory(Paths.DataFolder);
         _store = new SqliteEventStore(Paths.DatabasePath, Paths.FallbackFolder);
         var imported = SafeImportFallback();
-        _pipeline = EventPipeline.Create(_config, Identity, _store, _log, _clock);
+        _pipeline = EventPipeline.Create(_config, Identity, _store, _log, _clock, Activity);
 
         var context = new CollectorContext(_pipeline, _config, _log, _clock);
         _host = new CollectorHost(context);
-        var services = new RuntimeServices(Identity, Paths, _config, _log, _clock);
+        var services = new RuntimeServices(Identity, Paths, _config, _log, _clock, Activity);
         foreach (var c in _collectorFactory(services)) _host.Add(c);
 
         EmitStarted(imported, extraStartInfo);
@@ -297,4 +300,5 @@ public sealed class WatcherRuntime : IAsyncDisposable
 }
 
 /// <summary>What a collector factory may use when constructing collectors.</summary>
-public sealed record RuntimeServices(WatcherIdentity Identity, RuntimePaths Paths, ConfigProvider Config, IDiagnosticLog Log, IClock Clock);
+public sealed record RuntimeServices(WatcherIdentity Identity, RuntimePaths Paths, ConfigProvider Config, IDiagnosticLog Log, IClock Clock,
+    Activity.ActivityContext Activity);

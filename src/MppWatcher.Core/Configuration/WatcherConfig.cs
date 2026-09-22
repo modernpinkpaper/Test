@@ -43,6 +43,31 @@ public sealed class CollectorsConfig
     [JsonPropertyName("activity")] public ActivityCollectorConfig Activity { get; set; } = new();
     [JsonPropertyName("process")] public ProcessCollectorConfig Process { get; set; } = new();
     [JsonPropertyName("ui_automation")] public UiAutomationCollectorConfig UiAutomation { get; set; } = new();
+    [JsonPropertyName("browser")] public BrowserCollectorConfig Browser { get; set; } = new();
+}
+
+public sealed class BrowserCollectorConfig
+{
+    [JsonPropertyName("enabled")] public bool Enabled { get; set; } = true;
+
+    /// <summary>Process names treated as web browsers.</summary>
+    [JsonPropertyName("browsers")] public List<string> Browsers { get; set; } = new() { "chrome", "msedge", "firefox", "brave", "opera", "vivaldi" };
+
+    /// <summary>How often the front browser window is checked for a new page.</summary>
+    [JsonPropertyName("poll_ms")] public int PollMs { get; set; } = 1000;
+
+    /// <summary>
+    /// Only on these sites are page headings / product titles read (in addition to the URL and
+    /// title, which are read everywhere unless blocked). Wildcards allowed.
+    /// </summary>
+    [JsonPropertyName("page_text_domains")]
+    public List<string> PageTextDomains { get; set; } = new()
+    {
+        "amazon.*", "*.amazon.*", "keepa.com", "*.keepa.com", "etsy.com", "*.etsy.com", "admin.shopify.com", "*.myshopify.com",
+        "docs.google.com", "drive.google.com",
+    };
+
+    [JsonPropertyName("max_headings")] public int MaxHeadings { get; set; } = 8;
 }
 
 public sealed class UiAutomationCollectorConfig

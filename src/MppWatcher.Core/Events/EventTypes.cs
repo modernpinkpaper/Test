@@ -31,6 +31,9 @@ public static class EventTypes
     public const string UiFieldValue = "ui_field_value";
     public const string UiAction = "ui_action";
 
+    // Browser (Phase 3)
+    public const string BrowserPage = "browser_page";
+
     // Processes
     public const string ProcessInventory = "process_inventory";
     public const string ProcessStarted = "process_started";

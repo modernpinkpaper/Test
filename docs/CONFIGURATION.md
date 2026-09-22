@@ -49,6 +49,19 @@ read but not edit it). Full default file: [config/config.example.json](../config
 | `ignore_processes` | system list | Wildcards allowed. |
 | `collapse_multi_instance` | `true` | Treat Chrome's many processes as one app. |
 
+## `collectors.ui_automation` (Phase 2)
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enabled` | `true` | UI Automation collector (field values + clicks on named controls). |
+| `capture_field_values` | `true` | Record finished field values. |
+| `capture_actions` | `true` | Record clicks on buttons, links, tabs, menu items, check boxes. |
+| `max_value_length` | `200` | Longer or multi-line values are not stored (length only). |
+| `focused_field_poll_ms` | `500` | How often the focused field's value is re-read. |
+| `value_settle_seconds` | `4` | A changed value that stays this long is recorded even if focus stays. |
+| `action_keywords` | save, publish, upload, import, export, search, download, print, submit, update, apply, add, create, delete, ... | Names that mark `is_key_action`. |
+| `ignore_applications` | `[]` | Apps where UI Automation is not used at all. |
+
 ## `privacy`
 
 See [PRIVACY.md](PRIVACY.md).

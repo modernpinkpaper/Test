@@ -1,39 +1,40 @@
 # Roadmap, Phase 1 test checklist, and known limitations
 
-## Phase 1 — status: built, needs a real-PC test
+## How each phase is verified
 
-**Verified automatically**
-- 100+ unit tests: session rules (debounce, title split, cosmetic titles, idle inside
-  sessions, lock/sleep/gap, returns, crash recovery), idle detector, privacy filter,
-  sensitive-field detector, URL sanitizer, config loading, normalizer, dedup, SQLite
-  store (upload status, retries, retention, fallback, reader while writing), export
-  file layout, process tracking, collector isolation, full runtime start/stop/export.
-- All projects compile, and `MPPWatcher.exe` publishes as one self-contained file.
-- CI (Windows job) runs the real exe for 15 s as a smoke test.
+Every push runs the **build** workflow. The Windows job runs on a real Windows 11 desktop
+(GitHub-hosted runner) and:
 
-**Not yet verified — needs you on a real Windows PC.** This code was written and
-tested on a build server; nothing here assumes more than what plain Win32 gives.
-Please go through this list and report what you see:
+1. runs 130+ Core unit tests,
+2. publishes `MPPWatcher.exe`,
+3. runs the **Windows tests**, which act like an employee: open windows, switch between them,
+   change titles, stay idle, start/stop programs, type into fields (including a fake password
+   and card number), click buttons, use Microsoft Edge on a test listing-editor page, open the
+   live viewer and the inspector, kill the watcher to test crash recovery,
+4. runs a 15-second smoke test of the exe,
+5. installs, upgrades and uninstalls with the PowerShell scripts,
+6. uploads screenshots (`windows-test-output`) and the package (`MPPWatcher-win-x64`).
 
-| # | Test | Expected |
-|---|---|---|
-| 1 | Install with the script, sign out and in | Tray icon appears without doing anything |
-| 2 | Open the live viewer, switch Chrome → Excel → Photoshop | One `app_session_start` per switch within ~1–2 s; `app_session_end` shows duration and "switched to …" |
-| 3 | Alt+Tab quickly through several windows | No sessions for windows passed through for < 1 s |
-| 4 | In Chrome, open Keepa, then an Amazon product page, then switch tabs | New session per page/tab; product title visible in `window_title` |
-| 5 | Gmail with changing unread count | No new session just because `(3)` became `(4)` |
-| 6 | Leave the PC for 6 minutes (idle timeout 5) | `idle_start` back-dated to your last input; `idle_end` when you return; session `idle_seconds` ≈ 6 min |
-| 7 | Win+L, wait, unlock | `app_session_end` (workstation_locked), `workstation_locked`, `workstation_unlocked` with `locked_seconds` |
-| 8 | Sleep and wake the PC | `system_suspend`, `system_resume` (or `activity_gap` if Windows gave no notice) |
-| 9 | Open KeePass (or add Notepad to `blocked_applications`) | Session shows `[excluded]`; previous session says "switched to [excluded]" |
-| 10 | Run `python some_script.py` in a terminal | `process_started` / `process_exited` for python |
-| 11 | Multiple monitors: move a window between screens | `monitor` in `app_session_start` names the screen |
-| 12 | Kill `MPPWatcher.exe` in Task Manager, wait ≤ 5 min | Watcher restarts; the killed session ends with `watcher_crash_recovered` |
-| 13 | Run as a standard (non-admin) employee account | Everything above works the same |
-| 14 | A full workday | Task Manager: memory well under 200 MB, CPU ~0% while idle; heartbeat `memory_mb` confirms |
-| 15 | Tray → Export logs now | Hourly `.jsonl` files under the export folder |
+A phase is only called done when all of this is green.
 
-## Phase 1 known limitations
+## Phase 1 — done ✅
+Foreground sessions, idle, lock/sleep, processes, SQLite, export, viewer, installer, crash
+recovery. Verified on Windows (see above).
+
+## Phase 2 — UI Automation
+Field values (finished values only), clicks on named controls, sensitive-field refusal,
+diagnostic inspector (`MPPWatcher.exe --inspect`). Windows-verified cases:
+WinForms fields/buttons/check box, password and card fields never recorded, settled value
+while typing stops, Microsoft Edge web page fields + button, inspector report incl. hidden
+password.
+
+### Still worth checking on your own PCs
+Nothing here needs you before the next phase, but these can only be seen with your accounts:
+Keepa search box, Seller Central SKU/search fields, Etsy listing editor, Shopify product
+editor, Photoshop/InDesign/Excel. Open `MPPWatcher.exe --inspect`, point at the field, and
+press **Save report…** if something looks wrong.
+
+## Known limitations
 
 - **Browser URLs are not captured yet.** In Phase 1 only the window title
   (= current tab's page title) is recorded. URL/domain via UI Automation is Phase 3.
@@ -56,21 +57,18 @@ Please go through this list and report what you see:
   uploaded can duplicate lines. De-duplicate by `event_id`.
 - **An employee with local admin rights could stop or remove the watcher.** Tamper
   resistance (service watchdog, protected folders) is a Phase 5 topic.
+- **UI Automation depends on the app.** Chrome/Edge, WinForms, WPF, Office expose a lot;
+  some apps (games, older custom-drawn apps, parts of Adobe apps) expose little or nothing.
+  Use the inspector to see. Chromium builds its accessibility tree only once a UI Automation
+  client asks, which costs the browser a little extra memory/CPU.
+- **Keyboard-only actions** (pressing Enter on a button, keyboard shortcuts like Ctrl+S) are not
+  recorded as `ui_action`; the resulting field values and page/title changes still are.
+- **Clicks are looked up after the click**; if the button disappears instantly (closing
+  dialog), the control may not be identified and nothing is recorded.
 - **Not code-signed yet.** SmartScreen/antivirus may warn about an unsigned exe that uses
   window hooks. Plan a code-signing certificate before wide rollout.
 
 ## Next phases
-
-**Phase 2 – UI Automation**
-- UI Automation collector using focus-changed and invoke/selection/value-changed events
-  (event-driven, no tree dumps), with per-app throttling.
-- `ui_field_value`, `ui_action` (Save/Publish/Upload/Import/Export/Search/Download/Print),
-  `ui_focus` events; `blocked_controls`; sensitive-field filter (already built) on every value.
-- **Diagnostic inspector** (`MPPWatcher.exe --inspect`): hover/select any element and see
-  app, process, control type, name, value, automation id, patterns, "sensitive?" and
-  "would MPP Watcher log it?".
-- Report what Windows really exposes in Chrome, Edge, Photoshop, InDesign and Excel before
-  enabling broadly.
 
 **Phase 3 – Browser context** (no extension)
 - Address bar value via UI Automation → sanitized URL, domain, page title.
