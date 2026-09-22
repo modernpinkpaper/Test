@@ -194,6 +194,8 @@ public sealed class WindowsActivityCollector : ICollector
                 snapshot = _inspector.Inspect(hwnd);
             }
             _lastSnapshot = snapshot;
+            // The lock/sign-in screen is not work; lock events arrive separately via SystemEvents.
+            if (snapshot is not null && IsLockScreen(snapshot.ProcessName)) snapshot = null;
             tracker.ObserveForeground(snapshot, now);
 
             if (!fromHook)
@@ -215,6 +217,9 @@ public sealed class WindowsActivityCollector : ICollector
             }
         }
     }
+
+    private static bool IsLockScreen(string processName) =>
+        processName.Equals("LockApp", StringComparison.OrdinalIgnoreCase) || processName.Equals("LogonUI", StringComparison.OrdinalIgnoreCase);
 
     private void SaveCheckpointIfDue(DateTimeOffset now)
     {

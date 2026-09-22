@@ -264,4 +264,16 @@ public class ActivityTrackerTests
         Run(Chrome("Keepa"), TimeSpan.FromSeconds(5));
         Assert.Single(OfType(EventTypes.AppSessionStart));
     }
+
+    [Fact]
+    public void Cancelled_sign_out_resumes_tracking()
+    {
+        Run(Chrome("Keepa"), TimeSpan.FromSeconds(10));
+        _tracker.OnSessionEnding(_clock.Now, "logoff");
+        Assert.True(_tracker.IsPaused);
+        Run(Chrome("Keepa"), ActivityTracker.CancelledSessionEndAfter + TimeSpan.FromSeconds(5));
+        Assert.False(_tracker.IsPaused);
+        Assert.Equal(2, OfType(EventTypes.AppSessionStart).Count);
+        Assert.Empty(OfType(EventTypes.ActivityGap));
+    }
 }

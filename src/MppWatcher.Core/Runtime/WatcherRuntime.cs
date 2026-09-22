@@ -177,7 +177,7 @@ public sealed class WatcherRuntime : IAsyncDisposable
             var collector = _host!.Collectors.FirstOrDefault(x => x.Name == name);
             try
             {
-                foreach (var (k, v) in collector?.GetStats() ?? new Dictionary<string, object>()) c[k] = JsonValue.Create(v);
+                foreach (var (k, v) in collector?.GetStats() ?? new Dictionary<string, object>()) c[k] = ToJson(v);
             }
             catch { /* stats are best effort */ }
             collectors.Add(c);
@@ -213,7 +213,7 @@ public sealed class WatcherRuntime : IAsyncDisposable
         e.Metadata["collectors_enabled"] = new JsonArray(_host!.Collectors.Select(c => (JsonNode)JsonValue.Create(c.Name)!).ToArray());
         e.Metadata["database_path"] = Paths.DatabasePath;
         if (importedFallback > 0) e.Metadata["fallback_events_imported"] = importedFallback;
-        foreach (var (k, v) in extra ?? new Dictionary<string, object?>()) e.Metadata[k] = v is null ? null : JsonValue.Create(v);
+        foreach (var (k, v) in extra ?? new Dictionary<string, object?>()) e.Metadata[k] = ToJson(v);
         _pipeline!.Emit(e);
     }
 
@@ -271,6 +271,21 @@ public sealed class WatcherRuntime : IAsyncDisposable
             return 0;
         }
     }
+
+    /// <summary>Stats arrive as boxed values; store them with their real JSON type.</summary>
+    internal static JsonNode? ToJson(object? v) => v switch
+    {
+        null => null,
+        JsonNode n => n.DeepClone(),
+        bool b => JsonValue.Create(b),
+        int i => JsonValue.Create(i),
+        long l => JsonValue.Create(l),
+        double d => JsonValue.Create(d),
+        float f => JsonValue.Create(f),
+        decimal m => JsonValue.Create(m),
+        DateTimeOffset t => JsonValue.Create(TimeFormat.Iso(t)),
+        _ => JsonValue.Create(v.ToString()),
+    };
 
     private WatchEvent NewWatcherEvent(string type) => new()
     {

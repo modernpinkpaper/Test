@@ -24,6 +24,7 @@ public class WatcherRuntimeTests : IDisposable
             c.Sink.Emit(this.NewEvent(EventTypes.AppSessionStart, c.Clock.Now));
         }
         public void Stop(string reason) => _ctx!.Sink.Emit(this.NewEvent(EventTypes.AppSessionEnd, _ctx.Clock.Now).Set("end_reason", reason));
+        public IReadOnlyDictionary<string, object> GetStats() => new Dictionary<string, object> { ["ticks"] = 5L, ["is_idle"] = false, ["count"] = 3 };
     }
 
     [Fact]
@@ -39,6 +40,10 @@ public class WatcherRuntimeTests : IDisposable
         runtime.Start();
         var status = runtime.GetStatus();
         Assert.Equal("running", status["collectors"]![0]!["state"]!.GetValue<string>());
+        Assert.Equal(5L, status["collectors"]![0]!["ticks"]!.GetValue<long>());
+        var heartbeat = new WatchEvent();
+        foreach (var (k, v) in status) heartbeat.Metadata[k] = v?.DeepClone();
+        Assert.Contains("\"is_idle\":false", EventJson.Serialize(heartbeat)); // stats serialize cleanly
         await Task.Delay(300); // let the writer flush
         var export = await runtime.ExportNowAsync();
         Assert.True(export.Exported >= 3, $"exported {export.Exported}");

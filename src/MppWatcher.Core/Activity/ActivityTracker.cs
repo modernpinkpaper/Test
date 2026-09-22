@@ -44,7 +44,10 @@ public sealed class ActivityTracker
     private DateTimeOffset? _lastTick;
     private string? _lastEndedSessionId;
     private bool _locked, _suspended, _ending;
-    private DateTimeOffset? _lockedAt, _suspendedAt;
+    private DateTimeOffset? _lockedAt, _suspendedAt, _endingAt;
+
+    /// <summary>If Windows said "signing out" but we are still running after this, the sign-out was cancelled.</summary>
+    public static readonly TimeSpan CancelledSessionEndAfter = TimeSpan.FromMinutes(2);
 
     public ActivityTracker(Func<ActivityTrackerOptions> options, Func<TimeSpan> idleThreshold, Action<WatchEvent> emit,
         string collector, string collectorVersion)
@@ -110,6 +113,12 @@ public sealed class ActivityTracker
     public void Tick(DateTimeOffset now)
     {
         var o = _options();
+        if (_ending && _endingAt is { } endingAt && now - endingAt > CancelledSessionEndAfter)
+        {
+            _ending = false;
+            _endingAt = null;
+            AfterResume(now);
+        }
         if (_lastTick is { } last && now - last > o.GapThreshold)
         {
             HandleGap(last, now);
@@ -164,6 +173,7 @@ public sealed class ActivityTracker
         PauseActivity(now, SessionEndReasons.SessionEnding);
         _emit(e);
         _ending = true;
+        _endingAt = now;
     }
 
     /// <summary>The watcher is stopping: close everything that is open.</summary>
