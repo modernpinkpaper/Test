@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Windows-only collectors: Win32 foreground window hooks, idle time, lock/sleep, processes. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>MppWatcher.Windows</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MppWatcher.Core\MppWatcher.Core.csproj" />
+  </ItemGroup>
+
+</Project>

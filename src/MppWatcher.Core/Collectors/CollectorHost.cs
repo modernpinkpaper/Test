@@ -22,7 +22,7 @@ public sealed class CollectorHost
     private readonly object _gate = new();
     private bool _stopping;
 
-    public CollectorHost(CollectorContext context) => _context = context;
+    public CollectorHost(CollectorContext context) => _context = context with { ReportFailure = ReportFailure };
 
     public void Add(ICollector collector) => _entries.Add(new Entry(collector));
 

@@ -11,7 +11,14 @@ public interface IEventSink
 }
 
 /// <summary>Everything a collector may use. Collectors never touch storage directly.</summary>
-public sealed record CollectorContext(IEventSink Sink, ConfigProvider Config, IDiagnosticLog Log, IClock Clock);
+public sealed record CollectorContext(IEventSink Sink, ConfigProvider Config, IDiagnosticLog Log, IClock Clock)
+{
+    /// <summary>
+    /// Tell the host this collector hit an error it cannot recover from. The host stops it,
+    /// records a collector_status event and restarts it later. Set by <see cref="CollectorHost"/>.
+    /// </summary>
+    public Action<ICollector, Exception> ReportFailure { get; init; } = (_, _) => { };
+}
 
 /// <summary>
 /// A source of activity events (foreground windows, processes, UI Automation, files, ...).
