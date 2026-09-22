@@ -32,6 +32,8 @@ public sealed class UiAutomationCollector : ICollector
     private CancellationTokenSource? _cts;
     private IUIAutomationElement? _trackedElement;
     private (string? RuntimeId, DateTimeOffset At) _lastAction;
+    private string? _lastFocusRuntimeId;
+    private DateTimeOffset _lastFocusCheck;
     private long _focusEvents, _clicksSeen, _fieldsLogged, _actionsLogged, _refusedSensitive, _errors, _dropped;
 
     public UiAutomationCollector() : this(ignoreOwnProcess: true) { }
@@ -120,6 +122,7 @@ public sealed class UiAutomationCollector : ICollector
             {
                 if (_work.TryTake(out var item, poll, ct)) item();
                 PollTrackedField();
+                CheckFocusDirectly();
             }
             catch (OperationCanceledException) { break; }
             catch (Exception e)
@@ -141,6 +144,7 @@ public sealed class UiAutomationCollector : ICollector
         RefreshTrackedValue(now); // the user may have typed the last letters a moment ago
 
         var info = uia.Read(element, readValue: false, detailed: false, NativeMethods.GetForegroundWindow());
+        _lastFocusRuntimeId = info.RuntimeId;
         UiElementInfo? trackable = null;
         if (UiCapturePolicy.FieldControlTypes.Contains(info.ControlType))
         {
@@ -150,6 +154,24 @@ public sealed class UiAutomationCollector : ICollector
         }
         Commit(_tracker!.OnFocus(trackable, now));
         _trackedElement = trackable is null ? null : element;
+    }
+
+    /// <summary>
+    /// Windows does not always announce focus (e.g. a window opens with the cursor already in
+    /// its first field). Once a second, ask which element has focus and treat a change as a
+    /// focus event. Two cheap calls.
+    /// </summary>
+    private void CheckFocusDirectly()
+    {
+        var now = _ctx!.Clock.Now;
+        if (now - _lastFocusCheck < TimeSpan.FromSeconds(1)) return;
+        _lastFocusCheck = now;
+        var focused = _uia!.FocusedElement();
+        if (focused is null) return;
+        var id = _uia.RuntimeIdOf(focused);
+        if (id is null || id == _lastFocusRuntimeId) return;
+        _lastFocusRuntimeId = id; // remember even if OnFocus decides to skip it (e.g. our own window)
+        OnFocus(focused);
     }
 
     private void PollTrackedField()

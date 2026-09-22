@@ -60,6 +60,8 @@ public sealed class UiaClient
 
     public string ControlTypeOf(IUIAutomationElement el) => ControlTypeName(Try(() => el.CurrentControlType));
 
+    public string? RuntimeIdOf(IUIAutomationElement el) => Try(() => string.Join(".", el.GetRuntimeId()));
+
     /// <summary>Walks up from e.g. the text inside a button to the button itself.</summary>
     public IUIAutomationElement? FindActionable(IUIAutomationElement el, int maxLevelsUp = 3)
     {
