@@ -33,6 +33,12 @@ internal static class Program
         ApplicationConfiguration.Initialize();
         var configPath = cmd.ConfigPath ?? WatcherPaths.DefaultConfigPath;
 
+        if (cmd.Mode == RunMode.Inspect)
+        {
+            Application.Run(new InspectorForm(configPath));
+            return 0;
+        }
+
         if (cmd.Mode == RunMode.Viewer)
         {
             Application.Run(new ViewerForm(configPath, cmd.DataFolder));

@@ -27,5 +27,6 @@ internal static class WatcherFactory
         // Activity first: it is stopped last, so its final session closes after the others stop.
         if (c.Activity.Enabled) yield return new WindowsActivityCollector(s.Identity.WatcherRunId, s.Paths.CheckpointPath);
         if (c.Process.Enabled) yield return new ProcessCollector(new WindowsProcessSource());
+        if (c.UiAutomation.Enabled) yield return new MppWatcher.Windows.Ui.UiAutomationCollector();
     }
 }

@@ -66,6 +66,10 @@ public static class ConfigLoader
         a.CheckpointSeconds = Math.Clamp(a.CheckpointSeconds, 5, 600);
         a.ReturnWindowMinutes = Math.Clamp(a.ReturnWindowMinutes, 0, 24 * 60);
         c.Collectors.Process.ScanIntervalSeconds = Math.Clamp(c.Collectors.Process.ScanIntervalSeconds, 5, 600);
+        var u = c.Collectors.UiAutomation;
+        u.MaxValueLength = Math.Clamp(u.MaxValueLength, 0, 2000);
+        u.FocusedFieldPollMs = Math.Clamp(u.FocusedFieldPollMs, 200, 5000);
+        u.ValueSettleSeconds = Math.Clamp(u.ValueSettleSeconds, 1, 60);
         c.Export.IntervalMinutes = Math.Clamp(c.Export.IntervalMinutes, 1, 24 * 60);
         c.Export.BatchSize = Math.Clamp(c.Export.BatchSize, 100, 50_000);
         c.Deduplication.WindowSeconds = Math.Clamp(c.Deduplication.WindowSeconds, 0, 3600);

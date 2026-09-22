@@ -38,6 +38,10 @@ public static class EventSummaryFormatter
             EventTypes.SystemResume => $"PC woke up (slept {Dur(m, "suspended_seconds")})",
             EventTypes.SessionEnding => $"Windows {Str(m, "kind") ?? "session"} ending",
             EventTypes.ActivityGap => $"Gap of {Dur(m, "gap_seconds")} with no watcher activity",
+            EventTypes.UiFieldValue => Bool(m, "value_omitted")
+                ? $"{where}: field \"{Str(m, "label") ?? Str(m, "name") ?? Str(m, "control_type")}\" edited (value not stored, {Num(m, "value_length")} chars){excluded}"
+                : $"{where}: field \"{Str(m, "label") ?? Str(m, "name") ?? Str(m, "control_type")}\" = \"{Str(m, "value")}\"{excluded}",
+            EventTypes.UiAction => $"{where}: {Str(m, "action")?.Replace('_', ' ')} \"{Str(m, "control_name")}\"{(Bool(m, "is_key_action") ? " ★" : "")}{(Str(m, "state_after") is { } st ? $" → {st}" : "")}{excluded}",
             EventTypes.ProcessStarted => $"Started {app}{(Bool(m, "has_window") ? "" : " (no window)")}",
             EventTypes.ProcessExited => $"Exited {app} after {Dur(m, "run_seconds")}",
             EventTypes.ProcessInventory => $"Running programs: {Inventory(m)}",

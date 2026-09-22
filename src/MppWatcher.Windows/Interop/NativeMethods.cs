@@ -65,6 +65,39 @@ internal static class NativeMethods
 
     [DllImport("kernel32.dll")] public static extern bool AttachConsole(int processId);
 
+    // ---- Low-level mouse hook: used ONLY to learn that a click happened and where, so the
+    // clicked control can be looked up. Coordinates are never stored. ----
+    public const int WH_MOUSE_LL = 14;
+    public const int WM_LBUTTONUP = 0x0202;
+    public const uint GA_ROOT = 2;
+
+    public delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct POINT { public int X, Y; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MSLLHOOKSTRUCT
+    {
+        public POINT pt;
+        public uint mouseData, flags, time;
+        public IntPtr dwExtraInfo;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)] public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelMouseProc lpfn, IntPtr hMod, uint dwThreadId);
+    [DllImport("user32.dll")] public static extern bool UnhookWindowsHookEx(IntPtr hhk);
+    [DllImport("user32.dll")] public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr GetModuleHandle(string? lpModuleName);
+    [DllImport("user32.dll")] public static extern IntPtr WindowFromPoint(POINT p);
+    [DllImport("user32.dll")] public static extern IntPtr GetAncestor(IntPtr hwnd, uint flags);
+    [DllImport("user32.dll")] public static extern bool GetCursorPos(out POINT p);
+
+    public static IntPtr RootWindowFromPoint(int x, int y)
+    {
+        var w = WindowFromPoint(new POINT { X = x, Y = y });
+        return w == IntPtr.Zero ? IntPtr.Zero : GetAncestor(w, GA_ROOT);
+    }
+
     public static string GetWindowTitle(IntPtr hwnd)
     {
         var len = GetWindowTextLength(hwnd);

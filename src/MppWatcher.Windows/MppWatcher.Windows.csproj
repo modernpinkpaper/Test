@@ -8,6 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- COM interop for Windows UI Automation 3 (IUIAutomation). MIT licence. -->
+    <PackageReference Include="Interop.UIAutomationClient" Version="10.19041.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MPPWatcher" />
+    <InternalsVisibleTo Include="MppWatcher.Windows.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MppWatcher.Core\MppWatcher.Core.csproj" />
   </ItemGroup>
 

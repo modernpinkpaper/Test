@@ -179,6 +179,48 @@ public sealed class AppEndToEndTests : IDisposable
     }
 
     [Fact]
+    public void Inspector_shows_what_windows_exposes_and_hides_passwords()
+    {
+        using var w = new TestWindow("MPP Inspector Target", f =>
+        {
+            f.Controls.Add(new TextBox { Name = "skuBox", AccessibleName = "SKU", Text = "MA023", Left = 20, Top = 20, Width = 200 });
+            f.Controls.Add(new TextBox { Name = "pwBox", AccessibleName = "Password", Text = "hunter2", UseSystemPasswordChar = true, Left = 20, Top = 70, Width = 200 });
+        });
+        Desktop.BringToFront(w.Handle);
+        var inspector = Run("--inspect", "--config", ConfigPath);
+        Assert.True(Desktop.WaitUntil(() => { inspector.Refresh(); return inspector.MainWindowTitle.Contains("Diagnostic Inspector"); }, TimeSpan.FromSeconds(20)),
+            "inspector did not open");
+
+        var uia = new MppWatcher.Windows.Ui.UiaClient();
+        string ReportText()
+        {
+            var root = uia.Automation.ElementFromHandle(inspector.MainWindowHandle);
+            var edit = root?.FindFirst(global::Interop.UIAutomationClient.TreeScope.TreeScope_Descendants,
+                uia.Automation.CreatePropertyCondition(30003 /* ControlType */, 50004 /* Edit */));
+            return edit is null ? "" : uia.ReadValue(edit, out _) ?? "";
+        }
+
+        Desktop.MoveMouse(w.CenterOf("skuBox"));
+        Assert.True(Desktop.WaitUntil(() => ReportText().Contains("MA023"), TimeSpan.FromSeconds(10)), "inspector did not show the SKU field. Shown: " + ReportText());
+        var skuReport = ReportText();
+        _out.WriteLine(skuReport);
+        Assert.Contains("Edit", skuReport);
+        Assert.Contains("YES — value \"MA023\"", skuReport);
+        UiAutomationTests.SaveScreenshot("inspector-sku.png");
+
+        Desktop.MoveMouse(w.CenterOf("pwBox"));
+        Assert.True(Desktop.WaitUntil(() => ReportText().Contains("Password"), TimeSpan.FromSeconds(10)), "inspector did not show the password field");
+        var pwReport = ReportText();
+        _out.WriteLine(pwReport);
+        Assert.DoesNotContain("hunter2", pwReport);
+        Assert.Contains("Sensitive?", pwReport);
+        Assert.Contains("YES", pwReport);
+
+        inspector.CloseMainWindow();
+        Assert.True(inspector.WaitForExit(10_000), "inspector did not close");
+    }
+
+    [Fact]
     public void Stop_command_when_nothing_runs_is_harmless()
     {
         Assert.Equal(0, StopAgent());

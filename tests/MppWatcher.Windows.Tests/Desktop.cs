@@ -52,6 +52,54 @@ internal static class Desktop
         SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<INPUT>());
     }
 
+    private const uint KEYEVENTF_UNICODE = 0x0004;
+    private const uint INPUT_KEYBOARD = 1;
+    private const uint MOUSEEVENTF_LEFTDOWN = 0x0002, MOUSEEVENTF_LEFTUP = 0x0004;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct KEYBDINPUT { public ushort wVk, wScan; public uint dwFlags, time; public IntPtr dwExtraInfo; }
+
+    [StructLayout(LayoutKind.Explicit)]
+    private struct KINPUT
+    {
+        [FieldOffset(0)] public uint type;
+        [FieldOffset(8)] public KEYBDINPUT ki;
+        [FieldOffset(8)] public MOUSEINPUT mi;
+    }
+
+    [DllImport("user32.dll", EntryPoint = "SendInput", SetLastError = true)] private static extern uint SendKInput(uint count, KINPUT[] inputs, int size);
+    [DllImport("user32.dll")] private static extern bool SetCursorPos(int x, int y);
+
+    /// <summary>Types text like a person would (used only by tests to simulate an employee).</summary>
+    public static void TypeText(string text)
+    {
+        foreach (var ch in text)
+        {
+            var inputs = new[]
+            {
+                new KINPUT { type = INPUT_KEYBOARD, ki = new KEYBDINPUT { wScan = ch, dwFlags = KEYEVENTF_UNICODE } },
+                new KINPUT { type = INPUT_KEYBOARD, ki = new KEYBDINPUT { wScan = ch, dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP } },
+            };
+            SendKInput(2, inputs, Marshal.SizeOf<KINPUT>());
+            Thread.Sleep(15);
+        }
+    }
+
+    public static void MoveMouse(Point p) => SetCursorPos(p.X, p.Y);
+
+    public static void Click(Point p)
+    {
+        SetCursorPos(p.X, p.Y);
+        Thread.Sleep(50);
+        var inputs = new[]
+        {
+            new KINPUT { type = INPUT_MOUSE, mi = new MOUSEINPUT { dwFlags = MOUSEEVENTF_LEFTDOWN } },
+            new KINPUT { type = INPUT_MOUSE, mi = new MOUSEINPUT { dwFlags = MOUSEEVENTF_LEFTUP } },
+        };
+        SendKInput(2, inputs, Marshal.SizeOf<KINPUT>());
+        Thread.Sleep(250);
+    }
+
     public static bool WaitUntil(Func<bool> condition, TimeSpan timeout)
     {
         var sw = Stopwatch.StartNew();
@@ -71,11 +119,12 @@ internal sealed class TestWindow : IDisposable
     private Form? _form;
     private readonly ManualResetEventSlim _ready = new();
 
-    public TestWindow(string title)
+    public TestWindow(string title, Action<Form>? build = null)
     {
         _thread = new Thread(() =>
         {
             _form = new Form { Text = title, Width = 500, Height = 300, StartPosition = FormStartPosition.CenterScreen, ShowInTaskbar = true };
+            build?.Invoke(_form);
             _form.Shown += (_, _) => _ready.Set();
             Application.Run(_form);
         });
@@ -89,6 +138,14 @@ internal sealed class TestWindow : IDisposable
     public IntPtr Handle { get; }
 
     public void SetTitle(string title) => _form!.Invoke(() => _form.Text = title);
+
+    /// <summary>Screen centre of a child control, found by its Name.</summary>
+    public Point CenterOf(string controlName) => (Point)_form!.Invoke(() =>
+    {
+        var c = _form.Controls.Find(controlName, true).Single();
+        var r = c.RectangleToScreen(c.ClientRectangle);
+        return new Point(r.Left + r.Width / 2, r.Top + r.Height / 2);
+    });
 
     public void Dispose()
     {

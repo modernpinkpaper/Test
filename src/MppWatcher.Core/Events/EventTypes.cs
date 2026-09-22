@@ -27,6 +27,10 @@ public static class EventTypes
     public const string SessionEnding = "session_ending";
     public const string ActivityGap = "activity_gap";
 
+    // UI Automation (Phase 2)
+    public const string UiFieldValue = "ui_field_value";
+    public const string UiAction = "ui_action";
+
     // Processes
     public const string ProcessInventory = "process_inventory";
     public const string ProcessStarted = "process_started";

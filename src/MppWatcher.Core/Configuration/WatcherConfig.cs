@@ -42,6 +42,39 @@ public sealed class CollectorsConfig
 {
     [JsonPropertyName("activity")] public ActivityCollectorConfig Activity { get; set; } = new();
     [JsonPropertyName("process")] public ProcessCollectorConfig Process { get; set; } = new();
+    [JsonPropertyName("ui_automation")] public UiAutomationCollectorConfig UiAutomation { get; set; } = new();
+}
+
+public sealed class UiAutomationCollectorConfig
+{
+    [JsonPropertyName("enabled")] public bool Enabled { get; set; } = true;
+
+    /// <summary>Record the finished value of text fields/drop-downs (never keystrokes; sensitive fields are always skipped).</summary>
+    [JsonPropertyName("capture_field_values")] public bool CaptureFieldValues { get; set; } = true;
+
+    /// <summary>Record clicks on named buttons, links, tabs, menu items, check boxes (never click coordinates).</summary>
+    [JsonPropertyName("capture_actions")] public bool CaptureActions { get; set; } = true;
+
+    /// <summary>Longer or multi-line values are not stored (only their length). Keeps email bodies etc. out of the log.</summary>
+    [JsonPropertyName("max_value_length")] public int MaxValueLength { get; set; } = 200;
+
+    /// <summary>How often the value of the field that has focus is re-read.</summary>
+    [JsonPropertyName("focused_field_poll_ms")] public int FocusedFieldPollMs { get; set; } = 500;
+
+    /// <summary>A changed value that stays the same this long is recorded even if the field keeps focus (e.g. a search typed then Enter).</summary>
+    [JsonPropertyName("value_settle_seconds")] public int ValueSettleSeconds { get; set; } = 4;
+
+    /// <summary>Button/link names that count as key business actions (is_key_action = true). Whole words, case-insensitive.</summary>
+    [JsonPropertyName("action_keywords")]
+    public List<string> ActionKeywords { get; set; } = new()
+    {
+        "save", "publish", "upload", "import", "export", "search", "download", "print", "submit", "update", "apply",
+        "add", "create", "delete", "remove", "duplicate", "copy", "send", "confirm", "done", "run", "sync", "generate",
+        "renew", "relist", "archive", "activate", "deactivate", "approve", "ship", "refund", "edit", "preview",
+    };
+
+    /// <summary>Apps where UI Automation is not used at all (e.g. games, very heavy apps). Wildcards allowed.</summary>
+    [JsonPropertyName("ignore_applications")] public List<string> IgnoreApplications { get; set; } = new();
 }
 
 public sealed class ActivityCollectorConfig
