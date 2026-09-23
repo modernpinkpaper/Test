@@ -72,6 +72,8 @@ public static class ConfigLoader
         u.ValueSettleSeconds = Math.Clamp(u.ValueSettleSeconds, 1, 60);
         c.Collectors.Browser.PollMs = Math.Clamp(c.Collectors.Browser.PollMs, 250, 10_000);
         c.Collectors.Browser.MaxHeadings = Math.Clamp(c.Collectors.Browser.MaxHeadings, 0, 30);
+        c.Collectors.Files.QuietMs = Math.Clamp(c.Collectors.Files.QuietMs, 500, 30_000);
+        c.Collectors.Files.BulkThreshold = Math.Clamp(c.Collectors.Files.BulkThreshold, 5, 10_000);
         c.Export.IntervalMinutes = Math.Clamp(c.Export.IntervalMinutes, 1, 24 * 60);
         c.Export.BatchSize = Math.Clamp(c.Export.BatchSize, 100, 50_000);
         c.Deduplication.WindowSeconds = Math.Clamp(c.Deduplication.WindowSeconds, 0, 3600);

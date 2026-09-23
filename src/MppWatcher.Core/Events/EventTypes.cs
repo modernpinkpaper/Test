@@ -34,6 +34,19 @@ public static class EventTypes
     // Browser (Phase 3)
     public const string BrowserPage = "browser_page";
 
+    // Files, documents, printing (Phase 4)
+    public const string FileCreated = "file_created";
+    public const string FileSaved = "file_saved";
+    public const string FileRenamed = "file_renamed";
+    public const string FileMoved = "file_moved";
+    public const string FileDeleted = "file_deleted";
+    public const string FileDownloaded = "file_downloaded";
+    public const string FileOpened = "file_opened";
+    public const string FileBulkActivity = "file_bulk_activity";
+    public const string UploadFileSelected = "upload_file_selected";
+    public const string PrintJob = "print_job";
+    public const string PrintJobFinished = "print_job_finished";
+
     // Processes
     public const string ProcessInventory = "process_inventory";
     public const string ProcessStarted = "process_started";

@@ -10,6 +10,8 @@
   <ItemGroup>
     <!-- COM interop for Windows UI Automation 3 (IUIAutomation). MIT licence. -->
     <PackageReference Include="Interop.UIAutomationClient" Version="10.19041.0" />
+    <!-- WMI: print job notifications. -->
+    <PackageReference Include="System.Management" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

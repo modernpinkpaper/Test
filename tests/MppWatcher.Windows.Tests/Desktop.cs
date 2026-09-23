@@ -87,6 +87,13 @@ internal static class Desktop
 
     public static void MoveMouse(Point p) => SetCursorPos(p.X, p.Y);
 
+    public static void PressEnter()
+    {
+        keybd_event(0x0D, 0, 0, UIntPtr.Zero);
+        keybd_event(0x0D, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+        Thread.Sleep(200);
+    }
+
     public static void Click(Point p)
     {
         SetCursorPos(p.X, p.Y);

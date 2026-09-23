@@ -40,6 +40,14 @@ public sealed class PrivacyFilter
         }
         if (reason is null && !string.IsNullOrEmpty(e.Url) && WildcardMatcher.MatchesAny(e.Url, p.BlockedUrls))
             reason = "blocked_url";
+        if (reason is null && p.BlockedFolders.Count > 0)
+        {
+            foreach (var key in new[] { "path", "old_path" })
+            {
+                var path = e.Metadata[key]?.ToString();
+                if (path is not null && IsInBlockedFolder(path, p.BlockedFolders)) { reason = "blocked_folder"; break; }
+            }
+        }
 
         if (reason is null) return PrivacyDecision.Keep;
         return new(p.BlockedMode == "drop" ? PrivacyAction.Drop : PrivacyAction.Redact, reason);
@@ -117,6 +125,14 @@ public sealed class PrivacyFilter
         e.Metadata["excluded_reason"] = reason;
         e.DedupFingerprint = null;
     }
+
+    /// <summary>A path is blocked if it is inside a blocked folder (pattern may use wildcards).</summary>
+    public static bool IsInBlockedFolder(string path, IEnumerable<string> folders) =>
+        folders.Any(f =>
+        {
+            var pattern = Environment.ExpandEnvironmentVariables(f.Trim()).TrimEnd('\\', '/', '*');
+            return pattern.Length > 0 && (WildcardMatcher.IsMatch(path, pattern) || WildcardMatcher.IsMatch(path, pattern + "\\*") || WildcardMatcher.IsMatch(path, pattern + "/*"));
+        });
 
     private static bool IsAllowedDomain(string domain, IEnumerable<string> allowed) =>
         allowed.Any(a => WildcardMatcher.IsMatch(domain, a) || domain.EndsWith("." + a.TrimStart('*', '.'), StringComparison.OrdinalIgnoreCase));

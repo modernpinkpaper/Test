@@ -52,12 +52,13 @@ public sealed class WatcherRuntime : IAsyncDisposable
         Identity = identity;
         Paths = paths;
         _collectorFactory = collectorFactory;
+        Activity = new Activity.ActivityContext(() => config.Current.Collectors.Files.SkuPatterns);
     }
 
     public WatcherIdentity Identity { get; }
 
     /// <summary>Shared current session / browser page, used to add context to every event.</summary>
-    public Activity.ActivityContext Activity { get; } = new();
+    public Activity.ActivityContext Activity { get; }
     public RuntimePaths Paths { get; }
     public EventPipeline? Pipeline => _pipeline;
     public CollectorHost? Host => _host;

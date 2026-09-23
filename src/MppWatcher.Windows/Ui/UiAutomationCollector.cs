@@ -36,10 +36,17 @@ public sealed class UiAutomationCollector : ICollector
     private DateTimeOffset _lastFocusCheck;
     private long _focusEvents, _clicksSeen, _fieldsLogged, _actionsLogged, _refusedSensitive, _errors, _dropped;
 
-    public UiAutomationCollector() : this(ignoreOwnProcess: true) { }
+    private readonly MppWatcher.Core.Activity.ActivityContext? _activity;
+    private string? _trackedWindowClass;
+
+    public UiAutomationCollector(MppWatcher.Core.Activity.ActivityContext? activity = null) : this(ignoreOwnProcess: true, activity) { }
 
     /// <summary>Tests host their sample windows in the test process, so they turn the self-filter off.</summary>
-    internal UiAutomationCollector(bool ignoreOwnProcess) => _ownPid = ignoreOwnProcess ? Environment.ProcessId : -1;
+    internal UiAutomationCollector(bool ignoreOwnProcess, MppWatcher.Core.Activity.ActivityContext? activity = null)
+    {
+        _ownPid = ignoreOwnProcess ? Environment.ProcessId : -1;
+        _activity = activity;
+    }
 
     public string Name => UiEventFactory.CollectorName;
     public string Version => UiEventFactory.CollectorVersion;
@@ -58,7 +65,11 @@ public sealed class UiAutomationCollector : ICollector
             try
             {
                 _uia = new UiaClient();
-                _focusHandler = new FocusHandler(el => Enqueue(() => OnFocus(el)));
+                _focusHandler = new FocusHandler(el =>
+                {
+                    var at = DateTimeOffset.UtcNow; // when Windows told us, not when we get round to it
+                    Enqueue(() => OnFocus(el, announced: true, at));
+                });
                 _uia.Automation.AddFocusChangedEventHandler(null!, _focusHandler);
             }
             catch (Exception e)
@@ -134,16 +145,30 @@ public sealed class UiAutomationCollector : ICollector
         while (_work.TryTake(out var rest)) { try { rest(); } catch { } }
     }
 
-    private void OnFocus(IUIAutomationElement element) => OnFocus(element, announced: true);
+    private static readonly TimeSpan MaxFocusLag = TimeSpan.FromMilliseconds(300);
 
-    private void OnFocus(IUIAutomationElement element, bool announced)
+    private void OnFocus(IUIAutomationElement element, bool announced, DateTimeOffset? announcedAtUtc = null)
     {
         _focusEvents++;
         var uia = _uia!;
         var pid = uia.ProcessIdOf(element);
         if (pid == _ownPid) return;
         var now = _ctx!.Clock.Now;
-        RefreshTrackedValue(now); // the user may have typed the last letters a moment ago
+
+        // Read the new field's starting value first, as close to the focus moment as possible —
+        // but only after a quick check that it is not a password or sensitive-looking field.
+        string? startValue = null;
+        var quick = uia.QuickIdentity(element);
+        if (UiCapturePolicy.FieldControlTypes.Contains(quick.ControlType) && !quick.IsPassword
+            && _policy!.EvaluateField(quick with { Value = "x", HasValuePattern = true, ProcessName = null, WindowTitle = null }) is { IsSensitive: false })
+        {
+            startValue = uia.ReadValue(element, out _);
+        }
+        // If we got to this focus late, the person may already have typed: the starting value is then unknown.
+        var lag = announcedAtUtc is { } at ? DateTimeOffset.UtcNow - at : TimeSpan.Zero;
+        var initialKnown = announced && lag < MaxFocusLag;
+
+        RefreshTrackedValue(now); // the previous field: the person may have typed its last letters a moment ago
 
         var info = uia.Read(element, readValue: false, detailed: false, NativeMethods.GetForegroundWindow());
         _lastFocusRuntimeId = info.RuntimeId;
@@ -151,11 +176,12 @@ public sealed class UiAutomationCollector : ICollector
         if (UiCapturePolicy.FieldControlTypes.Contains(info.ControlType))
         {
             var pre = _policy!.EvaluateField(info with { Value = "x", HasValuePattern = true });
-            if (pre.Log) trackable = info with { Value = uia.ReadValue(element, out _) };
+            if (pre.Log) trackable = info with { Value = startValue ?? uia.ReadValue(element, out _) };
             else if (pre.IsSensitive) _refusedSensitive++;
         }
-        Commit(_tracker!.OnFocus(trackable, now, initialValueKnown: announced));
+        Commit(_tracker!.OnFocus(trackable, now, initialValueKnown: initialKnown));
         _trackedElement = trackable is null ? null : element;
+        _trackedWindowClass = trackable is null ? null : NativeMethods.GetWindowClass(NativeMethods.GetForegroundWindow());
     }
 
     /// <summary>
@@ -211,6 +237,51 @@ public sealed class UiAutomationCollector : ICollector
         }
         _ctx!.Sink.Emit(UiEventFactory.FieldValue(commit.Element, decision, commit.Trigger, commit.Edited, _ctx.Clock.Now));
         _fieldsLogged++;
+        if (decision.IncludeValue) EmitFileDialogSelection(commit.Element, decision.Value!);
+    }
+
+    /// <summary>
+    /// The standard Windows Open/Save dialog: its file-name box has control id 1148 in every language.
+    /// In a browser this means files were picked for an upload on the page that opened the dialog.
+    /// We record what was picked and where — not whether the website accepted the upload.
+    /// </summary>
+    private void EmitFileDialogSelection(MppWatcher.Core.Ui.UiElementInfo field, string value)
+    {
+        if (_trackedWindowClass != "#32770") return;
+        if (field.AutomationId != "1148" && !(field.Name ?? "").StartsWith("File name", StringComparison.OrdinalIgnoreCase)) return;
+        var files = ParseFileNames(value);
+        if (files.Count == 0) return;
+        var ctx = _ctx!;
+        var browsers = ctx.Config.Current.Collectors.Browser.Browsers;
+        var isBrowser = browsers.Any(b => string.Equals(b, field.ProcessName, StringComparison.OrdinalIgnoreCase));
+        var e = this.NewEvent(isBrowser ? MppWatcher.Core.Events.EventTypes.UploadFileSelected : "file_dialog_selection", ctx.Clock.Now);
+        e.Application = field.ApplicationName ?? field.ProcessName;
+        e.ProcessName = field.ProcessName;
+        e.ProcessId = field.ProcessId;
+        e.WindowTitle = field.WindowTitle;
+        e.Metadata["files"] = new System.Text.Json.Nodes.JsonArray(files.Select(f => (System.Text.Json.Nodes.JsonNode)System.Text.Json.Nodes.JsonValue.Create(f)!).ToArray());
+        e.Metadata["file_count"] = files.Count;
+        e.Metadata["dialog_title"] = field.WindowTitle;
+        var skus = files.SelectMany(f => MppWatcher.Core.Files.SkuFinder.Find(f, ctx.Config.Current.Collectors.Files.SkuPatterns)).Distinct().ToList();
+        if (skus.Count > 0) e.Metadata["sku_candidates"] = new System.Text.Json.Nodes.JsonArray(skus.Select(s => (System.Text.Json.Nodes.JsonNode)System.Text.Json.Nodes.JsonValue.Create(s)!).ToArray());
+        if (isBrowser && _activity?.LatestPageOfProcess(field.ProcessId) is { } page)
+        {
+            e.Url = page.Url;
+            e.Domain = page.Domain;
+            e.PageTitle = page.PageTitle;
+            var info = MppWatcher.Core.Activity.ActivityContext.PageJson(page.Info, compact: true);
+            if (info.Count > 0) e.Metadata["page"] = info;
+            e.Metadata["upload_confirmed"] = false; // only the choice of files is seen, not the website's result
+        }
+        ctx.Sink.Emit(e);
+    }
+
+    /// <summary>File name box text: one name, a full path, or several quoted names ("a.png" "b.png").</summary>
+    internal static List<string> ParseFileNames(string value)
+    {
+        var v = value.Trim();
+        if (!v.Contains('"')) return v.Length == 0 ? new() : new() { v };
+        return System.Text.RegularExpressions.Regex.Matches(v, "\"([^\"]+)\"").Select(m => m.Groups[1].Value.Trim()).Where(s => s.Length > 0).ToList();
     }
 
     private void OnClick(int x, int y)

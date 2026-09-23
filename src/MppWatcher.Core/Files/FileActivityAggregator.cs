@@ -45,8 +45,8 @@ public sealed class FileActivityAggregator
     public int Pending => _states.Count;
 
     // Windows paths, handled the same on any OS (tests run on Linux too).
-    internal static string NameOf(string path) => path[(path.LastIndexOfAny(new[] { '\\', '/' }) + 1)..];
-    internal static string FolderOf(string path) { var i = path.LastIndexOfAny(new[] { '\\', '/' }); return i < 0 ? "" : path[..i]; }
+    public static string NameOf(string path) => path[(path.LastIndexOfAny(new[] { '\\', '/' }) + 1)..];
+    public static string FolderOf(string path) { var i = path.LastIndexOfAny(new[] { '\\', '/' }); return i < 0 ? "" : path[..i]; }
 
     public void Add(RawFileEvent e)
     {

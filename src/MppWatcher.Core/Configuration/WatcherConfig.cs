@@ -44,6 +44,44 @@ public sealed class CollectorsConfig
     [JsonPropertyName("process")] public ProcessCollectorConfig Process { get; set; } = new();
     [JsonPropertyName("ui_automation")] public UiAutomationCollectorConfig UiAutomation { get; set; } = new();
     [JsonPropertyName("browser")] public BrowserCollectorConfig Browser { get; set; } = new();
+    [JsonPropertyName("files")] public FileCollectorConfig Files { get; set; } = new();
+    [JsonPropertyName("print")] public PrintCollectorConfig Print { get; set; } = new();
+}
+
+public sealed class FileCollectorConfig
+{
+    [JsonPropertyName("enabled")] public bool Enabled { get; set; } = true;
+
+    /// <summary>Folders watched for created/saved/renamed/moved/deleted files (with subfolders). Environment variables allowed.</summary>
+    [JsonPropertyName("watched_folders")]
+    public List<string> WatchedFolders { get; set; } = new()
+    {
+        @"%USERPROFILE%\Desktop", @"%USERPROFILE%\Documents", @"%USERPROFILE%\Downloads", @"%USERPROFILE%\Pictures",
+    };
+
+    /// <summary>New files here count as downloads.</summary>
+    [JsonPropertyName("downloads_folder")] public string DownloadsFolder { get; set; } = @"%USERPROFILE%\Downloads";
+
+    /// <summary>Paths never reported (in addition to privacy.blocked_folders). Wildcards allowed.</summary>
+    [JsonPropertyName("ignore_paths")]
+    public List<string> IgnorePaths { get; set; } = new() { @"*\AppData\*", @"*\.git\*", @"*\node_modules\*", @"*\$RECYCLE.BIN\*" };
+
+    /// <summary>Wait this long after the last notice before reporting (one event per save).</summary>
+    [JsonPropertyName("quiet_ms")] public int QuietMs { get; set; } = 2000;
+
+    /// <summary>More file actions than this in one go (e.g. unzipping) become one file_bulk_activity summary.</summary>
+    [JsonPropertyName("bulk_threshold")] public int BulkThreshold { get; set; } = 50;
+
+    /// <summary>Record "file opened" from Windows' Recent Items list.</summary>
+    [JsonPropertyName("track_opened_files")] public bool TrackOpenedFiles { get; set; } = true;
+
+    /// <summary>Regular expressions for product codes in file names. Empty = default (e.g. MA023, PS142).</summary>
+    [JsonPropertyName("sku_patterns")] public List<string> SkuPatterns { get; set; } = new();
+}
+
+public sealed class PrintCollectorConfig
+{
+    [JsonPropertyName("enabled")] public bool Enabled { get; set; } = true;
 }
 
 public sealed class BrowserCollectorConfig

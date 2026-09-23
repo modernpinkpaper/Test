@@ -35,7 +35,7 @@ public sealed class BrowserEndToEndTests : IDisposable
     private string DataDir => Path.Combine(_dir, "data");
 
     /// <summary>Simple look-alike pages. Structure (labels, headings, buttons) mirrors the real sites.</summary>
-    private static string Page(string host, string path)
+    internal static string Page(string host, string path)
     {
         static string Html(string title, string body) =>
             $"<!doctype html><html><head><meta charset='utf-8'><title>{title}</title></head><body style='font-family:Segoe UI;padding:20px'>{body}</body></html>";
@@ -50,7 +50,8 @@ public sealed class BrowserEndToEndTests : IDisposable
             "sellercentral.amazon.com" => Html("Search Query Performance | Amazon Seller Central",
                 "<h1>Search Query Performance</h1><h2>ASIN View</h2><p>Search Query</p>"),
             "keepa.com" => Html("Keepa - Amazon Price Tracker", "<h1>Keepa</h1><h2>Product</h2>"),
-            "www.etsy.com" => Html("Edit listing - Etsy", "<h1>Edit listing</h1><h2>Personalization</h2><h2>Photos</h2><button>Publish</button>"),
+            "www.etsy.com" => Html("Edit listing - Etsy", "<h1>Edit listing</h1><h2>Personalization</h2><h2>Photos</h2>" +
+                "<p><input type='file' id='photos' aria-label='Add photos' multiple style='font-size:18px'></p><button>Publish</button>"),
             "admin.shopify.com" => Html("Personalized Stationery Set · Products · MPP Shop · Shopify", "<h1>Personalized Stationery Set</h1><h2>Media</h2><h2>Inventory</h2><button>Save</button>"),
             _ => "",
         };

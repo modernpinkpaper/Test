@@ -60,6 +60,15 @@ public sealed class UiaClient
 
     public string ControlTypeOf(IUIAutomationElement el) => ControlTypeName(Try(() => el.CurrentControlType));
 
+    /// <summary>Just enough to decide whether a field may be read: type, name, id, password flag (4 calls).</summary>
+    public UiElementInfo QuickIdentity(IUIAutomationElement el) => new()
+    {
+        ControlType = ControlTypeName(Try(() => el.CurrentControlType)),
+        Name = Try(() => el.CurrentName),
+        AutomationId = Try(() => el.CurrentAutomationId),
+        IsPassword = Try(() => el.CurrentIsPassword) != 0,
+    };
+
     public string? RuntimeIdOf(IUIAutomationElement el) => Try(() => string.Join(".", el.GetRuntimeId()));
 
     /// <summary>Walks up from e.g. the text inside a button to the button itself.</summary>

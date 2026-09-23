@@ -30,6 +30,13 @@ jobs:
         run: dotnet test tests/MppWatcher.Core.Tests -c Release --no-build
       - name: Publish MPPWatcher.exe
         run: dotnet publish src/MppWatcher.App -c Release -o publish
+      - name: Create a test printer (Microsoft Print To PDF to a file)
+        shell: powershell
+        run: |
+          $port = Join-Path $env:RUNNER_TEMP 'mpp-print-output.pdf'
+          Add-PrinterPort -Name $port
+          Add-Printer -Name 'MPP Test Printer' -DriverName 'Microsoft Print To PDF' -PortName $port
+          Get-Printer -Name 'MPP Test Printer' | Format-List Name, DriverName, PortName
       - name: Windows tests (real windows, idle, processes, the published exe)
         shell: pwsh
         env:

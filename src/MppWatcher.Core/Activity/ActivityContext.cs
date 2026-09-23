@@ -17,17 +17,32 @@ public sealed record BrowserPage(long WindowHandle, int ProcessId, string Url, s
 public sealed class ActivityContext
 {
     private readonly ConcurrentDictionary<long, BrowserPage> _pages = new();
+    private readonly Func<IEnumerable<string>?> _skuPatterns;
     private volatile SessionRef? _session;
 
-    private sealed record SessionRef(string SessionId, long WindowHandle, int ProcessId);
+    public ActivityContext(Func<IEnumerable<string>?>? skuPatterns = null) => _skuPatterns = skuPatterns ?? (() => null);
+
+    private sealed record SessionRef(string SessionId, long WindowHandle, int ProcessId, string? Application, string? ProcessName, string? WindowTitle);
+
+    /// <summary>The app in front right now (null while locked/idle-paused or before the first session).</summary>
+    public (string SessionId, string? Application, string? ProcessName, string? WindowTitle)? CurrentApp =>
+        _session is { } s ? (s.SessionId, s.Application, s.ProcessName, s.WindowTitle) : null;
 
     public string? CurrentSessionId => _session?.SessionId;
+
+    /// <summary>Most recently read browser page (any window), if read within <paramref name="maxAge"/>.</summary>
+    public BrowserPage? LatestPage(DateTimeOffset now, TimeSpan maxAge) =>
+        _pages.Values.Where(p => now - p.ReadAt <= maxAge).OrderByDescending(p => p.ReadAt).FirstOrDefault();
+
+    /// <summary>Most recent page of one browser process (e.g. for a file dialog opened by that browser).</summary>
+    public BrowserPage? LatestPageOfProcess(int processId) =>
+        _pages.Values.Where(p => p.ProcessId == processId).OrderByDescending(p => p.ReadAt).FirstOrDefault();
 
     /// <summary>Called for every event before it is stored; keeps track of the open session.</summary>
     public void Observe(WatchEvent e)
     {
         if (e.EventType == EventTypes.AppSessionStart && e.SessionId is not null)
-            _session = new SessionRef(e.SessionId, ParseHandle(e.Metadata["window_handle"]?.ToString()), e.ProcessId ?? 0);
+            _session = new SessionRef(e.SessionId, ParseHandle(e.Metadata["window_handle"]?.ToString()), e.ProcessId ?? 0, e.Application, e.ProcessName, e.WindowTitle);
         else if (e.EventType == EventTypes.AppSessionEnd && _session?.SessionId == e.SessionId)
             _session = null;
     }
@@ -50,6 +65,17 @@ public sealed class ActivityContext
         var s = _session;
         if (e.SessionId is null && s is not null && e.ProcessId == s.ProcessId && e.EventType != EventTypes.AppSessionEnd)
             e.SessionId = s.SessionId;
+
+        // Desktop apps: the open document from the title bar (Photoshop, InDesign, Excel, ...).
+        if (e.EventType is EventTypes.AppSessionStart or EventTypes.AppSessionEnd && e.Metadata["document"] is null
+            && Files.DocumentTitleParser.Parse(e.ProcessName, e.WindowTitle) is { } doc)
+        {
+            var d = new JsonObject { ["name"] = doc.DocumentName, ["unsaved"] = doc.Unsaved };
+            if (doc.Extension is not null) d["extension"] = doc.Extension;
+            var skus = Files.SkuFinder.Find(doc.DocumentName, _skuPatterns());
+            if (skus.Count > 0) d["sku_candidates"] = new JsonArray(skus.Select(x => (JsonNode)JsonValue.Create(x)!).ToArray());
+            e.Metadata["document"] = d;
+        }
         if (e.Url is not null || e.WindowTitle is null || e.ProcessId is null) return;
 
         var key = TitleNormalizer.Normalize(e.WindowTitle);
