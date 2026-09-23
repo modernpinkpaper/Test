@@ -10,7 +10,7 @@ namespace MppWatcher.Windows.Tests;
 /// Runs the real MPPWatcher.exe (the published single file in CI, via MPPWATCHER_EXE)
 /// the way Windows would start it, and checks the database it writes.
 /// </summary>
-public sealed class AppEndToEndTests : IDisposable
+public sealed partial class AppEndToEndTests : IDisposable
 {
     private readonly ITestOutputHelper _out;
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "mppw-e2e-" + Guid.NewGuid().ToString("N"));

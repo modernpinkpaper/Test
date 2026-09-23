@@ -32,5 +32,6 @@ internal static class WatcherFactory
         if (c.Files.Enabled) yield return new MppWatcher.Core.Files.FileActivityCollector(s.Activity);
         if (c.Files.Enabled && c.Files.TrackOpenedFiles) yield return new MppWatcher.Windows.Files.RecentFilesCollector(s.Activity);
         if (c.Print.Enabled) yield return new MppWatcher.Windows.Files.PrintJobCollector(s.Activity);
+        if (c.LocalApi.Enabled) yield return new MppWatcher.Core.LocalApi.LocalApiCollector(Path.Combine(s.Paths.DataFolder, "api-secret.txt"));
     }
 }

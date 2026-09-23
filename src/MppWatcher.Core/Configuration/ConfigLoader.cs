@@ -74,6 +74,10 @@ public static class ConfigLoader
         c.Collectors.Browser.MaxHeadings = Math.Clamp(c.Collectors.Browser.MaxHeadings, 0, 30);
         c.Collectors.Files.QuietMs = Math.Clamp(c.Collectors.Files.QuietMs, 500, 30_000);
         c.Collectors.Files.BulkThreshold = Math.Clamp(c.Collectors.Files.BulkThreshold, 5, 10_000);
+        var api = c.Collectors.LocalApi;
+        api.Port = Math.Clamp(api.Port, 1024, 65535);
+        api.MaxClockSkewSeconds = Math.Clamp(api.MaxClockSkewSeconds, 30, 3600);
+        api.MaxEventsPerMinute = Math.Clamp(api.MaxEventsPerMinute, 10, 100_000);
         c.Export.IntervalMinutes = Math.Clamp(c.Export.IntervalMinutes, 1, 24 * 60);
         c.Export.BatchSize = Math.Clamp(c.Export.BatchSize, 100, 50_000);
         c.Deduplication.WindowSeconds = Math.Clamp(c.Deduplication.WindowSeconds, 0, 3600);

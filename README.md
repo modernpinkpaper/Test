@@ -15,9 +15,9 @@ It never records password or payment fields. See [docs/PRIVACY.md](docs/PRIVACY.
 |---|---|---|
 | 1 | App + autostart, foreground app/window sessions, processes, idle, lock/sleep, SQLite, live viewer | **Done ✅** (tested on Windows) |
 | 2 | UI Automation: finished field values, clicks on named controls, sensitive-field refusal, diagnostic inspector | **Done ✅** (tested on Windows incl. Edge) |
-| 3 | Browser context via UI Automation (URL, domain, page), Amazon/Seller Central/Keepa/Etsy/Shopify rules | In testing (last fixes running on Windows) |
-| 4 | Files, Photoshop/InDesign/Excel context, print jobs, downloads/uploads | Not started |
-| 5 | Local event API for scripts, Google Drive upload, `MPPWatcherSetup.exe`, watchdog service | Not started (local folder export already works) |
+| 3 | Browser context via UI Automation (URL, domain, page), Amazon/Seller Central/Keepa/Etsy/Shopify rules | **Done ✅** (passed two Windows runs in a row, Edge) |
+| 4 | Files, document names from app titles, files opened, print jobs, downloads/uploads | In testing (17/18 Windows tests pass) |
+| 5 | Local event API for scripts, Google Drive upload, `MPPWatcherSetup.exe`, watchdog service | In progress (local event API built — see [docs/LOCAL_API.md](docs/LOCAL_API.md)) |
 
 Details, test checklist and known limits: [docs/ROADMAP.md](docs/ROADMAP.md).
 

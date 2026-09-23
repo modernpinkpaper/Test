@@ -46,6 +46,28 @@ public sealed class CollectorsConfig
     [JsonPropertyName("browser")] public BrowserCollectorConfig Browser { get; set; } = new();
     [JsonPropertyName("files")] public FileCollectorConfig Files { get; set; } = new();
     [JsonPropertyName("print")] public PrintCollectorConfig Print { get; set; } = new();
+    [JsonPropertyName("local_api")] public LocalApiConfig LocalApi { get; set; } = new();
+}
+
+/// <summary>
+/// Local event API: lets the company's own scripts (e.g. Tampermonkey) report what they did.
+/// Listens on 127.0.0.1 only. Every request must be signed with the shared secret.
+/// </summary>
+public sealed class LocalApiConfig
+{
+    [JsonPropertyName("enabled")] public bool Enabled { get; set; } = true;
+    [JsonPropertyName("port")] public int Port { get; set; } = 47821;
+
+    /// <summary>
+    /// Shared secret used to sign requests (HMAC-SHA256). Empty = a random secret is created per user in
+    /// %LOCALAPPDATA%\MPP Watcher\api-secret.txt. Set it here to use one secret in all company scripts.
+    /// </summary>
+    [JsonPropertyName("shared_secret")] public string SharedSecret { get; set; } = "";
+
+    /// <summary>Requests with a timestamp further than this from now are refused (stops replaying old messages).</summary>
+    [JsonPropertyName("max_clock_skew_seconds")] public int MaxClockSkewSeconds { get; set; } = 300;
+
+    [JsonPropertyName("max_events_per_minute")] public int MaxEventsPerMinute { get; set; } = 600;
 }
 
 public sealed class FileCollectorConfig

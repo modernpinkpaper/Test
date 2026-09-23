@@ -51,6 +51,15 @@ public static class EventSummaryFormatter
             EventTypes.WatcherHeartbeat => $"Heartbeat — {Num(m, "events_written")} events written, {Num(m, "memory_mb")} MB RAM",
             EventTypes.CollectorStatus => $"Collector {Str(m, "collector_name")}: {Str(m, "status")}{(Str(m, "error") is { } err ? " — " + err : "")}",
             EventTypes.ConfigChanged => "Configuration reloaded",
+            _ when e.Collector == "local_api" =>
+                $"Script \"{Str(m, "script_name")}\": {e.EventType.Replace('_', ' ')}{(Str(m, "sku") is { } sku ? $" · SKU {sku}" : "")}{(Str(m, "listing_id") is { } lid ? $" · listing {lid}" : "")}{(Str(m, "description") is { } d ? $" — {d}" : "")}",
+            EventTypes.FileCreated or EventTypes.FileSaved or EventTypes.FileDeleted or EventTypes.FileDownloaded or EventTypes.FileOpened =>
+                $"{e.EventType.Replace("file_", "File ")} {Str(m, "file_name")}{(Str(m, "foreground_application") is { } fa ? $" ({fa})" : "")}{(m["source_page"]?["domain"] is { } dom ? $" from {dom}" : "")}",
+            EventTypes.FileRenamed or EventTypes.FileMoved => $"{e.EventType.Replace("file_", "File ")} {Str(m, "old_file_name") ?? Str(m, "old_path")} → {Str(m, "file_name")}",
+            EventTypes.FileBulkActivity => $"{Num(m, "total")} files changed at once in {m["folders"]?[0]?["folder"]}",
+            EventTypes.UploadFileSelected => $"{where}: picked for upload {string.Join(", ", (m["files"] as JsonArray ?? new JsonArray()).Select(x => x?.ToString()))}",
+            EventTypes.PrintJob => $"Print \"{Str(m, "document_name")}\" on {Str(m, "printer")}{(m["total_pages"] is { } tp && tp.ToString() != "0" ? $" ({tp} pages)" : "")}",
+            EventTypes.PrintJobFinished => $"Printed \"{Str(m, "document_name")}\" on {Str(m, "printer")}",
             _ => $"{e.EventType} {where}",
         };
     }
