@@ -115,6 +115,20 @@ public sealed class FileCollectorTests : IDisposable
     }
 
     [Fact]
+    public void Ignore_rules_apply_inside_the_watched_folder_only()
+    {
+        // The watched folder itself may live under AppData (the temp folder on Windows does);
+        // an AppData folder INSIDE it is still skipped.
+        Directory.CreateDirectory(Path.Combine(Work, "AppData"));
+        Thread.Sleep(500);
+        File.WriteAllText(Path.Combine(Work, "AppData", "cache.bin"), "x");
+        File.WriteAllText(Path.Combine(Work, "PS142.indd"), "x");
+        Wait(EventTypes.FileCreated, "PS142.indd");
+        Thread.Sleep(1000);
+        Assert.DoesNotContain(_sink.All, e => e.Metadata["file_name"]?.ToString() == "cache.bin");
+    }
+
+    [Fact]
     public void Files_in_blocked_folders_are_redacted_by_the_privacy_filter()
     {
         var cfg = new WatcherConfig();

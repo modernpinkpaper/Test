@@ -192,11 +192,18 @@ public sealed class FileActivityCollector : ICollector
         _ctx!.Sink.Emit(e);
     }
 
+    /// <summary>
+    /// Ignore rules apply to the part of the path INSIDE the watched folder, so a watched folder that
+    /// itself lives under e.g. AppData still works, while AppData folders inside it are skipped.
+    /// </summary>
     private bool IsIgnoredPath(string path)
     {
-        var cfg = _ctx!.Config.Current;
-        return WildcardMatcher.MatchesAny(path, cfg.Collectors.Files.IgnorePaths)
-               || WildcardMatcher.MatchesAny(path.Replace('/', '\\'), cfg.Collectors.Files.IgnorePaths);
+        var patterns = _ctx!.Config.Current.Collectors.Files.IgnorePaths;
+        if (patterns.Count == 0) return false;
+        var root = _watchers.Select(w => w.Path).Where(r => path.StartsWith(r, StringComparison.OrdinalIgnoreCase)).OrderByDescending(r => r.Length).FirstOrDefault();
+        var inside = (root is null ? path : path[root.Length..]).Replace('/', '\\');
+        if (!inside.StartsWith('\\')) inside = "\\" + inside;
+        return WildcardMatcher.MatchesAny(inside, patterns);
     }
 
     private bool IsInDownloads(string path) =>
