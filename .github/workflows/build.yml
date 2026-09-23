@@ -75,6 +75,20 @@ jobs:
           for ($i = 0; $i -lt 40 -and -not $running; $i++) { Start-Sleep -Milliseconds 500; $running = [bool](Get-Process MPPWatcher -ErrorAction SilentlyContinue) }
           Write-Host "[INFO] watcher started by the scheduled task: $running"
           Check (Test-Path "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\MPP Watcher\MPP Watcher Live Viewer.lnk") 'viewer shortcut created'
+          $svc = Get-Service -Name 'MPPWatcherService' -ErrorAction SilentlyContinue
+          Check ($null -ne $svc -and $svc.Status -eq 'Running') 'watchdog service installed and running'
+          Check ($svc.StartType -eq 'Automatic') 'watchdog starts with Windows'
+
+          # Watchdog: kill the watcher, it must come back in this session within ~70 s.
+          Get-CimInstance Win32_Process -Filter "Name='MPPWatcher.exe'" | Where-Object { $_.CommandLine -notmatch '--service' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+          Start-Sleep -Seconds 2
+          $back = $false
+          for ($i = 0; $i -lt 70 -and -not $back; $i++) {
+            Start-Sleep -Seconds 1
+            $back = [bool](Get-CimInstance Win32_Process -Filter "Name='MPPWatcher.exe'" | Where-Object { $_.CommandLine -notmatch '--service' })
+          }
+          Get-Content "$env:ProgramData\MPP Watcher\logs\*.log" -ErrorAction SilentlyContinue | Select-Object -Last 20
+          Check $back 'watchdog restarted the killed watcher'
 
           (Get-Content $cfg -Raw) -replace '"idle_timeout_seconds":\s*300', '"idle_timeout_seconds": 240' | Set-Content $cfg
           powershell -ExecutionPolicy Bypass -File installer\Install-MppWatcher.ps1 -SourceFolder publish -NoStart
@@ -86,6 +100,8 @@ jobs:
           Check ($LASTEXITCODE -eq 0) 'uninstall succeeded'
           Check (-not (Test-Path "$dir\MPPWatcher.exe")) 'program removed'
           Check ($null -eq (Get-ScheduledTask -TaskName 'MPP Watcher' -ErrorAction SilentlyContinue)) 'task removed'
+          Check ($null -eq (Get-Service -Name 'MPPWatcherService' -ErrorAction SilentlyContinue)) 'watchdog service removed'
+          Check (-not (Get-Process MPPWatcher -ErrorAction SilentlyContinue)) 'no watcher left running'
           Check (Test-Path $cfg) 'config kept by default'
           powershell -ExecutionPolicy Bypass -File installer\Uninstall-MppWatcher.ps1 -RemoveConfig
           Check (-not (Test-Path $cfg)) 'config removed with -RemoveConfig'

@@ -30,8 +30,14 @@ internal static class Program
                 return RequestStop();
         }
 
-        ApplicationConfiguration.Initialize();
         var configPath = cmd.ConfigPath ?? WatcherPaths.DefaultConfigPath;
+        if (cmd.Mode == RunMode.Service)
+        {
+            System.ServiceProcess.ServiceBase.Run(new WatchdogService(configPath));
+            return 0;
+        }
+
+        ApplicationConfiguration.Initialize();
 
         if (cmd.Mode == RunMode.Inspect)
         {

@@ -16,12 +16,19 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $TaskName = 'MPP Watcher'
+$ServiceName = 'MPPWatcherService'
 
 $id = [Security.Principal.WindowsIdentity]::GetCurrent()
 if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     throw 'Please run this script from an Administrator PowerShell.'
 }
 
+# The watchdog first — otherwise it would restart the watcher.
+if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
+    Stop-Service -Name $ServiceName -Force -ErrorAction SilentlyContinue
+    & sc.exe delete $ServiceName | Out-Null
+    Write-Host 'Watchdog service removed.'
+}
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false

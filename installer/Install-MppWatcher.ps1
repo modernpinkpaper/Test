@@ -22,11 +22,14 @@ param(
     # Optional: set employee_id in a NEWLY created config.
     [string]$EmployeeId = "",
     # Start the watcher right away for signed-in users.
-    [switch]$NoStart
+    [switch]$NoStart,
+    # Do not install the watchdog service (not recommended).
+    [switch]$NoWatchdog
 )
 
 $ErrorActionPreference = 'Stop'
 $TaskName = 'MPP Watcher'
+$ServiceName = 'MPPWatcherService'
 $ConfigDir = Join-Path $env:ProgramData 'MPP Watcher'
 $ConfigPath = Join-Path $ConfigDir 'config.json'
 
@@ -42,6 +45,10 @@ $exeSource = Join-Path $SourceFolder 'MPPWatcher.exe'
 if (-not (Test-Path $exeSource)) { throw "MPPWatcher.exe not found in $SourceFolder" }
 
 Write-Host '1/6 Stopping any running MPP Watcher...'
+# The watchdog first — otherwise it would restart the watcher we are about to stop.
+if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
+    Stop-Service -Name $ServiceName -Force -ErrorAction SilentlyContinue
+}
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 }
@@ -56,10 +63,13 @@ Start-Sleep -Seconds 1
 
 Write-Host "2/6 Copying program files to $InstallDir ..."
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-Copy-Item -Path $exeSource -Destination $InstallDir -Force
-foreach ($doc in @('README.md', 'PRIVACY.md')) {
-    $p = Join-Path $SourceFolder $doc
-    if (Test-Path $p) { Copy-Item $p $InstallDir -Force }
+$sameFolder = (Resolve-Path $SourceFolder).Path.TrimEnd('\') -eq (Resolve-Path $InstallDir).Path.TrimEnd('\')
+if (-not $sameFolder) {   # MPPWatcherSetup.exe has already placed the files
+    Copy-Item -Path $exeSource -Destination $InstallDir -Force
+    foreach ($doc in @('README.md', 'PRIVACY.md', 'LOCAL_API.md', 'mpp-watcher-client.user.js')) {
+        $p = Join-Path $SourceFolder $doc
+        if (Test-Path $p) { Copy-Item $p $InstallDir -Force }
+    }
 }
 $exe = Join-Path $InstallDir 'MPPWatcher.exe'
 
@@ -105,8 +115,20 @@ $lnk.Arguments = '--viewer'
 $lnk.WorkingDirectory = $InstallDir
 $lnk.Save()
 
+if (-not $NoWatchdog) {
+    Write-Host '   Installing the watchdog service (restarts a stopped watcher within ~30 s)...'
+    if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
+        & sc.exe delete $ServiceName | Out-Null
+        Start-Sleep -Seconds 1
+    }
+    New-Service -Name $ServiceName -BinaryPathName "`"$exe`" --service" -DisplayName 'MPP Watcher (watchdog)' `
+        -Description 'Keeps MPP Watcher running for signed-in users. Records nothing itself.' -StartupType Automatic | Out-Null
+    & sc.exe failure $ServiceName reset= 86400 actions= restart/60000/restart/60000/restart/60000 | Out-Null
+}
+
 if (-not $NoStart) {
     Write-Host '6/6 Starting MPP Watcher for signed-in users...'
+    if (-not $NoWatchdog) { Start-Service -Name $ServiceName }
     Start-ScheduledTask -TaskName $TaskName
 } else {
     Write-Host '6/6 Not started (-NoStart). It will start at next logon.'

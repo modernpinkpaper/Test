@@ -192,6 +192,8 @@ proof, of which program did it) or, for downloads, `source_page` (`url`, `domain
 `file_count`, `sku_candidates`, the page (`url`, `domain`, `metadata.page`) and
 `upload_confirmed: false` (the watcher sees the choice, not the website's result).
 In other apps the same dialog gives `file_dialog_selection` with `dialog_title`.
+Windows also adds files picked in an Open dialog to Recent Items, so the same file usually also
+appears as `file_opened` a moment later.
 
 ### Printing
 | Type | metadata |

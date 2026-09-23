@@ -264,7 +264,8 @@ public sealed class UiAutomationCollector : ICollector
         e.Metadata["dialog_title"] = field.WindowTitle;
         var skus = files.SelectMany(f => MppWatcher.Core.Files.SkuFinder.Find(f, ctx.Config.Current.Collectors.Files.SkuPatterns)).Distinct().ToList();
         if (skus.Count > 0) e.Metadata["sku_candidates"] = new System.Text.Json.Nodes.JsonArray(skus.Select(s => (System.Text.Json.Nodes.JsonNode)System.Text.Json.Nodes.JsonValue.Create(s)!).ToArray());
-        if (isBrowser && _activity?.LatestPageOfProcess(field.ProcessId) is { } page)
+        // Chromium shows file dialogs from a helper process, so fall back to the page last seen in the browser.
+        if (isBrowser && (_activity?.LatestPageOfProcess(field.ProcessId) ?? _activity?.LatestPage(ctx.Clock.Now, TimeSpan.FromMinutes(30))) is { } page)
         {
             e.Url = page.Url;
             e.Domain = page.Domain;
