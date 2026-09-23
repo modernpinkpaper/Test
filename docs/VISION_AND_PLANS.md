@@ -102,6 +102,35 @@ Combine the two and the AI can line up "paused this target" with "its search ter
 and ACOS was X over both 30 and 60 days", then write an SP-specific SOP separate from SB — and later a
 spec for the ads app.
 
+## Project 3 — "Why is this taking so long?" (time / friction analysis)
+
+Goal: beyond how long a task took and how many items were done, explain WHERE the time went.
+Strong fit for MT Log because it records the shape of the work, not just totals.
+
+Example: an employee updating all PS-SKU Amazon listings. A report could show:
+- Per-SKU time and spread (which SKUs ate the time, not just the average).
+- Interruptions: time spent off-task (email, chat, personal sites) and how often.
+- Waiting: idle gaps and page/save waits (e.g. Amazon slow to save).
+- Rework / loops: same listing reopened, same field re-edited, back-and-forth between tools.
+- Help detours: time asking ChatGPT/Google "how do I…" → flags a missing SOP or training gap.
+- Click-count friction: one item taking far more steps than needed.
+
+Honest limit: it explains slowness from switching/waiting/rework/help-lookups. It cannot tell that a
+listing was genuinely complex unless the log has a clue (SKU, file) or the paired platform data.
+
+## Near-term feature — auto-label the person from the PC (roster file)
+
+MT Log already captures `computer_id` (PC name) and `windows_username` on every event automatically.
+Today it shows "unassigned-<login>" only because there is no list mapping a PC to a person.
+
+Plan: keep one small roster file (PC name -> employee) in the Google Drive folder, e.g.
+`DALIALAPTOP = Dalia`, `WAREHOUSE-PC = Erika`. Each PC reads it (daily and at start) and labels its
+own logs. When an employee leaves and a new hire takes that PC, change one line in the roster file —
+every log after that is labeled correctly. No need to touch each PC. (Preferred key: PC name, since
+PC names rarely change. Could also key by Windows login.)
+
+This replaces typing an employee ID into each PC's config, and handles staff turnover in one place.
+
 ## Shared building block for both projects
 
 Both need the same thing: a **central "brain" job** that reads the uploaded logs (and, for ads, the
