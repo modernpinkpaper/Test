@@ -175,10 +175,24 @@ public sealed class Phase4EndToEndTests : IDisposable
         Desktop.WaitUntil(() =>
         {
             var root = uia.Automation.ElementFromHandle(MppWatcher.Windows.Interop.NativeMethods.GetForegroundWindow());
-            input = root?.FindFirst(global::Interop.UIAutomationClient.TreeScope.TreeScope_Descendants, uia.Automation.CreatePropertyCondition(30005, "Add photos"));
+            // Edge exposes the HTML id as the automation id (seen in earlier runs: id 'save' -> automation_id 'save').
+            input = root?.FindFirst(global::Interop.UIAutomationClient.TreeScope.TreeScope_Descendants, uia.Automation.CreatePropertyCondition(30011, "photos"))
+                ?? root?.FindFirst(global::Interop.UIAutomationClient.TreeScope.TreeScope_Descendants, uia.Automation.CreatePropertyCondition(30005, "Add photos"));
             return input is not null;
         }, TimeSpan.FromSeconds(20));
+        if (input is null)
+        {
+            // Report what Edge does expose so the next attempt is based on facts.
+            var root = uia.Automation.ElementFromHandle(MppWatcher.Windows.Interop.NativeMethods.GetForegroundWindow());
+            var all = root?.FindAll(global::Interop.UIAutomationClient.TreeScope.TreeScope_Descendants, uia.Automation.CreateTrueCondition());
+            for (var i = 0; all is not null && i < Math.Min(all.Length, 200); i++)
+            {
+                var el = all.GetElement(i);
+                _out.WriteLine($"exposed: {MppWatcher.Windows.Ui.UiaClient.ControlTypeName(el.CurrentControlType)} name='{el.CurrentName}' id='{el.CurrentAutomationId}'");
+            }
+        }
         Assert.True(input is not null, "file input not exposed");
+        _out.WriteLine($"file input seen as {MppWatcher.Windows.Ui.UiaClient.ControlTypeName(input!.CurrentControlType)} name='{input.CurrentName}'");
         var r = input!.CurrentBoundingRectangle;
         Desktop.Click(new Point((r.left + r.right) / 2, (r.top + r.bottom) / 2));
         Assert.True(Desktop.WaitUntil(() => MppWatcher.Windows.Interop.NativeMethods.GetWindowClass(MppWatcher.Windows.Interop.NativeMethods.GetForegroundWindow()) == "#32770",
