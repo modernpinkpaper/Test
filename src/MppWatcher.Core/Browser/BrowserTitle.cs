@@ -17,4 +17,12 @@ public static class BrowserTitle
         var t = Suffix.Replace(windowTitle, "").Trim();
         return t.Length == 0 ? null : t;
     }
+
+    private static readonly HashSet<string> Placeholders = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Untitled", "New Tab", "New tab", "Loading", "Loading...", "Loading…", "about:blank",
+    };
+
+    /// <summary>True for titles browsers show while a page is still loading or empty.</summary>
+    public static bool IsPlaceholder(string? pageTitle) => string.IsNullOrWhiteSpace(pageTitle) || Placeholders.Contains(pageTitle.Trim());
 }

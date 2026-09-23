@@ -80,6 +80,13 @@ public class UrlSanitizerTests
         Assert.True(r.WasModified);
     }
 
+    [Theory]
+    [InlineData("https://www.amazon.com/dp/B0CXYZ1234/ref=sr_1_1?keywords=stationery&session-id=123-456", "https://www.amazon.com/dp/B0CXYZ1234/ref=sr_1_1?keywords=stationery")]
+    [InlineData("https://example.com/p?sessionToken=abc&x_auth=1&userPassword=2&id=7", "https://example.com/p?id=7")]
+    [InlineData("https://example.com/p?author=jane&sku=MA023", "https://example.com/p?sku=MA023")] // "author" contains "auth": dropped, harmless
+    public void Parameter_names_containing_sensitive_words_are_removed(string raw, string expected) =>
+        Assert.Equal(expected, _s.Sanitize(raw)!.Url);
+
     [Fact]
     public void Removes_credentials_and_oauth_fragments()
     {

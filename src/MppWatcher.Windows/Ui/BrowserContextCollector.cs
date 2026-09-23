@@ -31,7 +31,8 @@ public sealed class BrowserContextCollector : ICollector
     private UiaClient? _uia;
     private Thread? _thread;
     private CancellationTokenSource? _cts;
-    private (long Hwnd, string Title, string? Url, DateTimeOffset At) _last;
+    private (long Hwnd, string Title, string? Url, DateTimeOffset At) _emitted;
+    private (long Hwnd, string Title, string Url, DateTimeOffset Since, int Attempts)? _pending;
     private long _pagesLogged, _reads, _noAddressBar, _errors;
 
     public BrowserContextCollector(ActivityContext activity) => _activity = activity;
@@ -95,31 +96,53 @@ public sealed class BrowserContextCollector : ICollector
 
         var title = NativeMethods.GetWindowTitle(hwnd);
         var now = _ctx.Clock.Now;
-        // Re-read when the window or title changed, and every 15 s anyway (some pages keep their title).
-        if (_last.Hwnd == hwnd.ToInt64() && _last.Title == title && now - _last.At < TimeSpan.FromSeconds(15)) return;
+        var handle = hwnd.ToInt64();
+        // Nothing changed and nothing pending: re-check the address only every 15 s (single-page apps may keep their title).
+        if (_pending is null && _emitted.Hwnd == handle && _emitted.Title == title && now - _emitted.At < TimeSpan.FromSeconds(15)) return;
+        if (BrowserTitle.IsPlaceholder(BrowserTitle.PageTitle(title))) { _pending = null; return; } // still loading
 
         var bar = AddressBar(hwnd, proc.Name);
-        if (bar is null) { _noAddressBar++; _last = (hwnd.ToInt64(), title, _last.Url, now); return; }
+        if (bar is null) { _noAddressBar++; _emitted = (handle, title, _emitted.Url, now); return; }
         if (Try(() => bar.CurrentHasKeyboardFocus) != 0) return; // person is typing in it: that text is not a page yet
 
         _reads++;
         var raw = _uia!.ReadValue(bar, out var gone);
-        if (gone) { _addressBars.Remove(hwnd.ToInt64()); return; }
+        if (gone) { _addressBars.Remove(handle); return; }
         var sanitizer = cfg.Privacy.SensitiveUrlParameters.Count == 0 ? _defaultSanitizer : new UrlSanitizer(cfg.Privacy.SensitiveUrlParameters);
         var clean = sanitizer.Sanitize(raw);
-        if (clean is null) { _last = (hwnd.ToInt64(), title, null, now); return; } // new tab, settings page, file:// ...
+        if (clean is null) { _pending = null; _emitted = (handle, title, null, now); return; } // new tab, settings page, file:// ...
 
-        var sameAsBefore = _last.Hwnd == hwnd.ToInt64() && _last.Url == clean.Url && _last.Title == title;
-        _last = (hwnd.ToInt64(), title, clean.Url, now);
-        if (sameAsBefore) return;
+        if (_emitted.Hwnd == handle && _emitted.Url == clean.Url && _emitted.Title == title)
+        {
+            _emitted = (handle, title, clean.Url, now);
+            _pending = null;
+            return;
+        }
+
+        // A new page: wait until address and title have stayed the same for a moment (page loaded),
+        // and give the browser a few polls to build its accessibility view before reading headings.
+        if (_pending is not { } p || p.Hwnd != handle || p.Url != clean.Url || p.Title != title)
+        {
+            _pending = (handle, title, clean.Url, now, 0);
+            return;
+        }
+        if (now - p.Since < TimeSpan.FromMilliseconds(900)) return;
 
         var readText = cfg.Collectors.Browser.PageTextDomains.Any(d => WildcardMatcher.IsMatch(clean.Domain, d));
         var document = Document(hwnd);
+        var headings = readText && document is not null ? Headings(document, cfg.Collectors.Browser.MaxHeadings) : new List<string>();
+        if (readText && headings.Count == 0 && p.Attempts < 3)
+        {
+            _pending = p with { Attempts = p.Attempts + 1 };
+            return;
+        }
+        _pending = null;
+        _emitted = (handle, title, clean.Url, now);
+
         // The page's own title as the browser exposes it; fall back to trimming the window title.
         var pageTitle = document is not null && Try(() => document.CurrentName) is { Length: > 0 } docName ? docName : BrowserTitle.PageTitle(title);
-        var headings = readText && document is not null ? Headings(document, cfg.Collectors.Browser.MaxHeadings) : new List<string>();
         var info = SiteProfiles.Analyze(new Uri(clean.Url), pageTitle, headings);
-        _activity.SetPage(new BrowserPage(hwnd.ToInt64(), pid, clean.Url, clean.Domain, pageTitle, title, info, now));
+        _activity.SetPage(new BrowserPage(handle, pid, clean.Url, clean.Domain, pageTitle, title, info, now));
 
         var e = this.NewEvent(EventTypes.BrowserPage, now);
         e.Application = proc.ApplicationName ?? proc.Name;
@@ -133,7 +156,7 @@ public sealed class BrowserContextCollector : ICollector
         foreach (var (k, v) in ActivityContext.PageJson(info, compact: false)) e.Metadata[k] = v?.DeepClone();
         if (headings.Count > 0) e.Metadata["headings"] = new System.Text.Json.Nodes.JsonArray(headings.Select(h => (System.Text.Json.Nodes.JsonNode)System.Text.Json.Nodes.JsonValue.Create(h)!).ToArray());
         if (clean.WasModified) e.Metadata["url_sanitized"] = true;
-        e.DedupFingerprint = hwnd.ToInt64() + "|" + clean.Url + "|" + title;
+        e.DedupFingerprint = handle + "|" + clean.Url + "|" + title;
         _ctx.Sink.Emit(e);
         _pagesLogged++;
     }

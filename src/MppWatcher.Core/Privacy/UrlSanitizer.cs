@@ -24,6 +24,14 @@ public sealed class UrlSanitizer
     // Prefixes: any parameter starting with these is dropped (covers openid.*, oauth_*, etc.).
     private static readonly string[] SensitivePrefixes = { "openid.", "oauth_", "x-amz-", "x-goog-" };
 
+    // Any parameter whose name CONTAINS one of these (ignoring - _ . and case) is dropped,
+    // whatever the site calls it: session-id, sessionToken, x_auth, userPassword, ...
+    private static readonly string[] SensitiveParts =
+    {
+        "session", "sessid", "token", "auth", "passw", "secret", "signature", "credential", "apikey", "accesskey",
+        "privatekey", "csrf", "xsrf", "nonce", "cookie", "ticket", "saml", "jwt", "bearer",
+    };
+
     private readonly HashSet<string> _names;
 
     public UrlSanitizer(IEnumerable<string>? extraParameters = null)
@@ -85,8 +93,12 @@ public sealed class UrlSanitizer
         return fragment;
     }
 
-    private bool IsSensitiveName(string name) =>
-        _names.Contains(name) || SensitivePrefixes.Any(p => name.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+    private bool IsSensitiveName(string name)
+    {
+        if (_names.Contains(name) || SensitivePrefixes.Any(p => name.StartsWith(p, StringComparison.OrdinalIgnoreCase))) return true;
+        var squashed = new string(name.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+        return SensitiveParts.Any(part => squashed.Contains(part, StringComparison.Ordinal));
+    }
 
     private static bool LooksLikeHost(string text)
     {

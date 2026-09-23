@@ -90,4 +90,11 @@ public class BrowserTitleExtraTests
     [InlineData("Keepa - Amazon Price Tracker - Microsoft​ Edge", "Keepa - Amazon Price Tracker")]
     [InlineData("Orders - Profile 1 - Microsoft Edge", "Orders")]
     public void Edge_profiles_versus_page_title_parts(string window, string page) => Assert.Equal(page, BrowserTitle.PageTitle(window));
+
+    [Theory]
+    [InlineData("Untitled - Profile 1 - Microsoft\u200B Edge", true)]   // seen on real Edge while a page loads
+    [InlineData("New Tab - Google Chrome", true)]
+    [InlineData("Keepa - Google Chrome", false)]
+    public void Loading_titles_are_recognised(string window, bool placeholder) =>
+        Assert.Equal(placeholder, BrowserTitle.IsPlaceholder(BrowserTitle.PageTitle(window)));
 }
