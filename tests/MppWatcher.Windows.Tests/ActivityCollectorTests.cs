@@ -53,6 +53,47 @@ public sealed class ActivityCollectorTests : IDisposable
     private bool WaitForStart(string title, int count = 1, int seconds = 10) =>
         Desktop.WaitUntil(() => _sink.OfType(EventTypes.AppSessionStart).Count(e => e.WindowTitle == title) >= count, TimeSpan.FromSeconds(seconds));
 
+    /// <summary>
+    /// Seen on a real PC: the first start was slow, the watcher gave up and restarted the collector,
+    /// then the slow thread came up too. Two threads fed one tracker: doubled events and sessions
+    /// starting in the year 0001. The late thread must stop on its own.
+    /// </summary>
+    [Fact]
+    public void A_start_that_times_out_does_not_leave_a_second_thread_running()
+    {
+        using var alpha = new TestWindow("MPP Slow Start Alpha");
+        using var bravo = new TestWindow("MPP Slow Start Bravo");
+        var cfg = new WatcherConfig();
+        cfg.Collectors.Activity.PollIntervalMs = 200;
+        cfg.Collectors.Activity.ForegroundStableMs = 300;
+        var context = new CollectorContext(_sink, new ConfigProvider(cfg), _log, SystemClock.Instance);
+        _collector = new WindowsActivityCollector("test-run", CheckpointPath)
+        {
+            StartTimeout = TimeSpan.FromSeconds(1),
+            SlowStartForTests = TimeSpan.FromSeconds(3),
+        };
+        Assert.Throws<TimeoutException>(() => _collector.Start(context)); // the late thread still finishes its setup
+        _collector.StartTimeout = TimeSpan.FromSeconds(30);
+        _collector.SlowStartForTests = TimeSpan.Zero;
+        _collector.Start(context); // what the watcher does after a failed start
+
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.True(Desktop.BringToFront(alpha.Handle));
+            Thread.Sleep(1200);
+            Assert.True(Desktop.BringToFront(bravo.Handle));
+            Thread.Sleep(1200);
+        }
+        StopCollector();
+
+        var ends = _sink.OfType(EventTypes.AppSessionEnd);
+        Assert.All(ends.GroupBy(e => e.SessionId), g => Assert.Single(g));
+        Assert.DoesNotContain(_sink.OfType(EventTypes.AppSessionStart).Concat(ends),
+            e => e.Metadata["session_start"]!.GetValue<string>().StartsWith("0001"));
+        Assert.All(ends, e => Assert.InRange(e.Metadata["duration_seconds"]!.GetValue<double>(), 0, 120));
+        Assert.True(_sink.OfType(EventTypes.AppSessionStart).Count(e => e.WindowTitle == "MPP Slow Start Bravo") >= 3, "switches were not recorded");
+    }
+
     [Fact]
     public void Switching_between_windows_creates_sessions_with_real_window_details()
     {

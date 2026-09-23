@@ -41,6 +41,15 @@ public sealed class WindowsActivityCollector : ICollector
     private long _ticks, _hookEvents, _errors;
     private Exception? _startError;
 
+    // Each Start() gets a new generation. A message-loop thread whose generation is no longer current
+    // (Start gave up waiting for it) must stop, so two threads never feed the same tracker.
+    private readonly object _startLock = new();
+    private int _generation;
+
+    /// <summary>Tests shorten this and slow the start down to recreate a start that times out.</summary>
+    internal TimeSpan StartTimeout { get; set; } = TimeSpan.FromSeconds(30);
+    internal TimeSpan SlowStartForTests { get; set; }
+
     public WindowsActivityCollector(string watcherRunId, string checkpointPath)
     {
         _watcherRunId = watcherRunId;
@@ -56,10 +65,17 @@ public sealed class WindowsActivityCollector : ICollector
         _ctx = context;
         _startError = null;
         _started.Reset();
-        _thread = new Thread(ThreadMain) { Name = "MPP activity collector", IsBackground = true };
+        int gen;
+        lock (_startLock) gen = ++_generation;
+        _thread = new Thread(() => ThreadMain(gen)) { Name = "MPP activity collector", IsBackground = true };
         _thread.SetApartmentState(ApartmentState.STA);
         _thread.Start();
-        if (!_started.Wait(TimeSpan.FromSeconds(10))) throw new TimeoutException("Activity collector thread did not start");
+        if (!_started.Wait(StartTimeout))
+        {
+            // Retire this thread: if it starts late it sees a newer generation and exits on its own.
+            lock (_startLock) _generation++;
+            throw new TimeoutException("Activity collector thread did not start");
+        }
         if (_startError is not null) throw new InvalidOperationException("Activity collector failed to start", _startError);
 
         // Subscribe from a thread-pool thread so Windows gives SystemEvents its own message thread
@@ -117,9 +133,39 @@ public sealed class WindowsActivityCollector : ICollector
         ["is_idle"] = _tracker?.IsIdle ?? false,
     };
 
-    private void ThreadMain()
+    private void ThreadMain(int gen)
     {
-        try
+        IntPtr hook;
+        NativeMethods.WinEventDelegate hookDelegate = (_, _, _, _, _, _, _) =>
+        {
+            _hookEvents++;
+            Poll(gen, fromHook: true);
+        };
+        WinFormsTimer timer;
+        lock (_startLock)
+        {
+            if (gen != _generation) return; // Start() already gave up on this thread
+            try
+            {
+                SetUpLoop(gen, hookDelegate, out hook, out timer);
+            }
+            catch (Exception e)
+            {
+                _startError = e;
+                _started.Set();
+                return;
+            }
+            _started.Set(); // inside the lock, so a retired thread never signals a newer Start()
+        }
+        System.Windows.Forms.Application.Run(); // message loop until Stop() (or a newer generation) calls ExitThread
+        if (hook != IntPtr.Zero) NativeMethods.UnhookWinEvent(hook);
+        timer.Dispose();
+        GC.KeepAlive(hookDelegate);
+    }
+
+    private void SetUpLoop(int gen, NativeMethods.WinEventDelegate hookDelegate, out IntPtr hook, out WinFormsTimer timer)
+    {
+        if (SlowStartForTests > TimeSpan.Zero) Thread.Sleep(SlowStartForTests);
         {
             _sync = new System.Windows.Forms.WindowsFormsSynchronizationContext();
             SynchronizationContext.SetSynchronizationContext(_sync);
@@ -143,34 +189,26 @@ public sealed class WindowsActivityCollector : ICollector
 
             RecoverCheckpoint();
 
-            _hookDelegate = OnWinEvent;
-            _hook = NativeMethods.SetWinEventHook(NativeMethods.EVENT_SYSTEM_FOREGROUND, NativeMethods.EVENT_SYSTEM_FOREGROUND,
-                IntPtr.Zero, _hookDelegate, 0, 0, NativeMethods.WINEVENT_OUTOFCONTEXT | NativeMethods.WINEVENT_SKIPOWNPROCESS);
-            if (_hook == IntPtr.Zero) _ctx.Log.Warn(Name, "Foreground hook unavailable; using polling only");
+            _hookDelegate = hookDelegate;
+            _hook = hook = NativeMethods.SetWinEventHook(NativeMethods.EVENT_SYSTEM_FOREGROUND, NativeMethods.EVENT_SYSTEM_FOREGROUND,
+                IntPtr.Zero, hookDelegate, 0, 0, NativeMethods.WINEVENT_OUTOFCONTEXT | NativeMethods.WINEVENT_SKIPOWNPROCESS);
+            if (hook == IntPtr.Zero) _ctx.Log.Warn(Name, "Foreground hook unavailable; using polling only");
 
-            _timer = new WinFormsTimer { Interval = cfg.Current.Collectors.Activity.PollIntervalMs };
-            _timer.Tick += (_, _) => Poll(fromHook: false);
-            _timer.Start();
-            Poll(fromHook: false);
+            _timer = timer = new WinFormsTimer { Interval = cfg.Current.Collectors.Activity.PollIntervalMs };
+            timer.Tick += (_, _) => Poll(gen, fromHook: false);
+            timer.Start();
+            Poll(gen, fromHook: false);
         }
-        catch (Exception e)
+    }
+
+    private void Poll(int gen, bool fromHook)
+    {
+        if (gen != Volatile.Read(ref _generation))
         {
-            _startError = e;
-            _started.Set();
+            // A newer start owns the collector now: leave the shared tracker alone and end this thread.
+            System.Windows.Forms.Application.ExitThread();
             return;
         }
-        _started.Set();
-        System.Windows.Forms.Application.Run(); // message loop until Stop() calls ExitThread
-    }
-
-    private void OnWinEvent(IntPtr hook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint thread, uint time)
-    {
-        _hookEvents++;
-        Poll(fromHook: true);
-    }
-
-    private void Poll(bool fromHook)
-    {
         var ctx = _ctx;
         var tracker = _tracker;
         if (ctx is null || tracker is null) return;
