@@ -1,0 +1,35 @@
+{% macro icon(name, cls='') -%}
+<svg class="ic {{ cls }}" viewBox="0 0 48 48" aria-hidden="true">{{ ICONS[name]|safe }}</svg>
+{%- endmacro %}
+
+{% macro page(p, n) -%}
+<section class="page t-{{ p.theme or 'sage' }} k-{{ p.kind }}" data-n="{{ n }}" data-id="{{ p.id }}">
+  {% if p.header is not sameas false %}
+  <header class="ph">
+    <div class="ph-main">
+      <div class="kicker"><i></i>{{ p.kicker }}</div>
+      <h1>{{ p.title|safe }}</h1>
+      {% if p.sub %}<div class="sub">{{ p.sub }}</div>{% endif %}
+    </div>
+    <div class="ph-side">
+      {% if p.icon %}<div class="ph-icon">{{ icon(p.icon) }}</div>{% endif %}
+      {% for f in p.fields or [] %}<div class="field"><span>{{ f }}</span><b></b></div>{% endfor %}
+    </div>
+  </header>
+  {% endif %}
+  {% if p.header is sameas false %}{{ caller() }}{% else %}<div class="pb">{{ caller() }}</div>{% endif %}
+  {% if not p.nofoot %}
+  <footer class="pf"><span>Messy Brain, Tidy Home</span><span>The Tidy Brain Printable Pack<span class="dot"></span>{{ "%02d"|format(n) }}</span></footer>
+  {% endif %}
+</section>
+{%- endmacro %}
+
+{% macro checklist(title, items, note='', blanks=0) -%}
+<div class="card">
+  <div class="h3">{{ title }}{% if note %}<small>{{ note }}</small>{% endif %}</div>
+  {% for it in items %}<div class="ci"><span class="cb"></span><span>{{ it|safe }}</span></div>{% endfor %}
+  {% for _ in range(blanks) %}<div class="ci"><span class="cb"></span><span class="bl"></span></div>{% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro lines(n) %}{% for _ in range(n) %}<div class="wl"></div>{% endfor %}{% endmacro %}

@@ -1,0 +1,15 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="tablewrap">
+<table class="grid hab">
+  <colgroup><col style="width:150px">{% for _ in range(31) %}<col>{% endfor %}</colgroup>
+  <thead><tr><th>Habit</th>{% for d in range(1, 32) %}<th{% if ((d - 1) // 7) % 2 == 1 %} class="wk"{% endif %}>{{ d }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for _ in range(p.rows) %}<tr><td></td>{% for d in range(31) %}<td{% if (d // 7) % 2 == 1 %} class="wk"{% endif %}><i></i></td>{% endfor %}</tr>{% endfor %}</tbody>
+</table>
+</div>
+<div class="two grow">
+  <div class="card"><div class="h3">Tiny habit ideas</div><div class="ideachips" style="margin-top:6px">{% for i in p.ideas %}<span>{{ i }}</span>{% endfor %}</div>
+    <div class="hand muted" style="font-size:18px;margin-top:auto;padding-bottom:4px">Start with one. Add another when it feels easy.</div></div>
+  <div class="card"><div class="h3">What helped this month</div><div class="lines grow"></div></div>
+</div>
+{% endcall %}

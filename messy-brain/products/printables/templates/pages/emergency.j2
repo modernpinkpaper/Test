@@ -1,0 +1,12 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="tl">
+  {% for t, title, items in p.blocks %}
+  <div class="tlr"><div class="tlt">{{ t }}<small>min</small></div>
+    <div class="tlb"><div class="tt">{{ title }}</div><div class="chips">{% for i in items %}<span class="chip"><span class="cb"></span>{{ i }}</span>{% endfor %}</div></div>
+  </div>
+  {% endfor %}
+</div>
+<div class="tip"><span class="l">psst:</span><span>The basket is allowed to exist. Sort it tomorrow, or on Sunday. Today the goal is a calmer room, not a perfect one.</span></div>
+<div style="display:flex;align-items:center;gap:16px"><div class="h3" style="margin:0">Times I've done this</div><div class="dots">{% for i in range(16) %}<span></span>{% endfor %}</div></div>
+{% endcall %}
