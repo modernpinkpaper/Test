@@ -38,8 +38,13 @@ public class NormalizerTests
     }
 
     [Fact]
-    public void Missing_employee_id_is_obvious() =>
+    public void Missing_employee_id_uses_the_pc_name()
+    {
+        // With no employee id set, the PC name is used (one PC = one person, no list to maintain).
+        Assert.Equal("FRONT-DESK", EventNormalizer.ResolveEmployeeId(new WatcherConfig(), "OFFICE\\jane", "FRONT-DESK"));
+        // Only if the PC name is somehow unknown does it fall back to the login.
         Assert.Equal("unassigned-jane", EventNormalizer.ResolveEmployeeId(new WatcherConfig(), "OFFICE\\jane"));
+    }
 
     [Fact]
     public void Very_long_titles_are_trimmed()

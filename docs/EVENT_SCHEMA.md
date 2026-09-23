@@ -12,7 +12,7 @@ JSON Lines (one event per line).
 | `timestamp_utc` | string | When it happened, UTC, fixed format `2026-09-22T13:31:20.500Z`. |
 | `timestamp_local` | string | Same moment in the PC's local time with offset, `2026-09-22T09:31:20.500-04:00`. |
 | `computer_id` | string | `computer_id` from config, else the Windows computer name. |
-| `employee_id` | string | From config (per Windows user map, else default). `unassigned-<user>` if not set. |
+| `employee_id` | string | From config (per Windows user map, else default). Falls back to the PC name when not set, so one PC = one person with no list to maintain. |
 | `windows_username` | string | `DOMAIN\user`. |
 | `event_type` | string | See below. |
 | `application` | string? | Friendly app name from the exe ("Google Chrome", "Adobe Photoshop 2025"). |

@@ -42,7 +42,7 @@ public sealed class EventNormalizer
         e.TimestampLocal = TimeFormat.Iso(local);
         e.ComputerId = string.IsNullOrWhiteSpace(cfg.ComputerId) ? _identity.ComputerName : cfg.ComputerId.Trim();
         e.WindowsUsername = _identity.WindowsUsername;
-        e.EmployeeId = ResolveEmployeeId(cfg, _identity.WindowsUsername);
+        e.EmployeeId = ResolveEmployeeId(cfg, _identity.WindowsUsername, e.ComputerId);
         e.WatcherRunId = _identity.WatcherRunId;
         e.Sequence = Interlocked.Increment(ref _sequence);
         e.SchemaVersion = WatchEvent.CurrentSchemaVersion;
@@ -53,12 +53,18 @@ public sealed class EventNormalizer
         return e;
     }
 
-    public static string ResolveEmployeeId(WatcherConfig cfg, string windowsUsername)
+    /// <summary>
+    /// The employee id, or — when none is configured — the PC name. One PC is used by one person,
+    /// so the PC name identifies who without needing any list to maintain. Set employee_id (or the
+    /// per-Windows-user map) only if you want a different label than the PC name.
+    /// </summary>
+    public static string ResolveEmployeeId(WatcherConfig cfg, string windowsUsername, string? computerName = null)
     {
         if (cfg.EmployeeIdByWindowsUser.TryGetValue(windowsUsername, out var id) && !string.IsNullOrWhiteSpace(id)) return id.Trim();
         var shortName = windowsUsername.Contains('\\') ? windowsUsername[(windowsUsername.LastIndexOf('\\') + 1)..] : windowsUsername;
         if (cfg.EmployeeIdByWindowsUser.TryGetValue(shortName, out id) && !string.IsNullOrWhiteSpace(id)) return id.Trim();
         if (!string.IsNullOrWhiteSpace(cfg.EmployeeId)) return cfg.EmployeeId.Trim();
+        if (!string.IsNullOrWhiteSpace(computerName)) return computerName.Trim();
         return "unassigned-" + shortName;
     }
 

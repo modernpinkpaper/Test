@@ -120,7 +120,7 @@ internal sealed class AgentContext : ApplicationContext
         MessageBox.Show(
             $"""
             MT Log {MppWatcher.Core.Collectors.WatcherVersion.Current}
-            Employee: {Core.Pipeline.EventNormalizer.ResolveEmployeeId(_config.Current, _runtime.Identity.WindowsUsername)}
+            Employee: {Core.Pipeline.EventNormalizer.ResolveEmployeeId(_config.Current, _runtime.Identity.WindowsUsername, _runtime.Identity.ComputerName)}
             Windows user: {_runtime.Identity.WindowsUsername}
 
             Running for: {TimeFormat.Human(TimeSpan.FromSeconds(s["uptime_seconds"]!.GetValue<double>()))}

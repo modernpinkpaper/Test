@@ -118,18 +118,16 @@ Example: an employee updating all PS-SKU Amazon listings. A report could show:
 Honest limit: it explains slowness from switching/waiting/rework/help-lookups. It cannot tell that a
 listing was genuinely complex unless the log has a clue (SKU, file) or the paired platform data.
 
-## Near-term feature — auto-label the person from the PC (roster file)
+## Done — identify each PC's logs by the PC name (no list to maintain)
 
-MT Log already captures `computer_id` (PC name) and `windows_username` on every event automatically.
-Today it shows "unassigned-<login>" only because there is no list mapping a PC to a person.
+MT Log captures `computer_id` (PC name) and `windows_username` on every event automatically, and the
+log file name already ends with the PC name, e.g. `events_1000_1100_DALIALAPTOP.jsonl`.
 
-Plan: keep one small roster file (PC name -> employee) in the Google Drive folder, e.g.
-`DALIALAPTOP = Dalia`, `WAREHOUSE-PC = Erika`. Each PC reads it (daily and at start) and labels its
-own logs. When an employee leaves and a new hire takes that PC, change one line in the roster file —
-every log after that is labeled correctly. No need to touch each PC. (Preferred key: PC name, since
-PC names rarely change. Could also key by Windows login.)
-
-This replaces typing an employee ID into each PC's config, and handles staff turnover in one place.
+Change made: when no employee id is configured, the `employee_id` field and the export folder now use
+the **PC name** instead of "unassigned-<login>". One PC = one person, so the PC name identifies who,
+with nothing to maintain. When an employee leaves and a new hire takes that PC, the PC name is
+unchanged and the logs keep flowing under it — no roster, no per-PC edit. Setting employee_id is
+optional, only if a different label than the PC name is wanted.
 
 ## Shared building block for both projects
 
