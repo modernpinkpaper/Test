@@ -1,0 +1,62 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="{{ assets }}/brand.css">
+<style>
+  html, body { margin: 0; width: 1080px; height: 1350px; overflow: hidden; }
+  body { font-family: var(--font-body); color: var(--ink); background: var(--cream); position: relative; }
+  .wrap { position: absolute; inset: 0; padding: 110px 96px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
+  h1 { font-family: var(--font-display); font-weight: 800; margin: 0; line-height: 1.04; letter-spacing: -.01em; }
+  .foot { position: absolute; left: 96px; right: 96px; bottom: 56px; display: flex; justify-content: space-between;
+          font: 600 28px var(--font-body); color: var(--ink-soft); }
+  .dots { display: flex; gap: 10px; align-items: center; }
+  .dots i { width: 14px; height: 14px; border-radius: 50%; background: var(--line); }
+  .dots i.on { background: var(--ink); }
+
+  .hook { background: var(--bg); }
+  .hook h1 { font-size: {{ 118 if (slide.title|length) < 45 else 98 }}px; }
+  .hook .sub { font-family: var(--font-hand); font-size: 68px; margin-top: 34px; }
+  .hook .swipe { position: absolute; right: 96px; bottom: 120px; font-family: var(--font-hand); font-size: 60px; }
+  .hook .ring { position: absolute; width: 700px; height: 700px; border-radius: 50%; border: 80px solid rgba(255,255,255,.35); right: -300px; top: -300px; }
+
+  .point .num { font: 800 180px/1 var(--font-display); color: var(--bg); -webkit-text-stroke: 4px var(--ink); margin-bottom: 30px; }
+  .point h1 { font-size: 82px; }
+  .point .body { font-size: 44px; line-height: 1.45; margin-top: 40px; color: var(--ink); }
+  .point .bar { width: 120px; height: 14px; border-radius: 99px; background: var(--bg); margin-top: 44px; }
+
+  .list h1 { font-size: 76px; margin-bottom: 44px; }
+  .list ul { list-style: none; margin: 0; padding: 0; }
+  .list li { display: flex; gap: 28px; align-items: center; background: var(--paper); border-radius: 22px; padding: 26px 32px; margin-bottom: 18px;
+             font: 600 42px/1.2 var(--font-body); box-shadow: 0 4px 0 var(--line); }
+  .list li i { flex: none; width: 46px; height: 46px; border-radius: 12px; border: 5px solid var(--sage); position: relative; }
+  .list li i::after { content: ""; position: absolute; left: 12px; top: 2px; width: 12px; height: 24px; border: solid var(--sage); border-width: 0 6px 6px 0; transform: rotate(45deg); }
+
+  .quote { background: var(--ink); color: #fff; }
+  .quote h1 { font-family: var(--font-hand); font-weight: 700; font-size: {{ 104 if (slide.title|length) < 70 else 88 }}px; line-height: 1.08; color: #fff; }
+  .quote .mark { font: 800 260px/0.6 var(--font-display); color: var(--bg); margin-bottom: 40px; }
+  .quote .foot { color: rgba(255,255,255,.7); }
+  .quote .dots i { background: rgba(255,255,255,.25); } .quote .dots i.on { background: #fff; }
+
+  .cta { background: var(--bg); }
+  .cta h1 { font-size: 92px; }
+  .cta .body { font-size: 46px; line-height: 1.4; margin-top: 40px; }
+  .cta .btn { align-self: flex-start; margin-top: 60px; background: var(--ink); color: #fff; border-radius: 999px; padding: 28px 52px; font: 700 44px var(--font-body); }
+  .cta .save { font-family: var(--font-hand); font-size: 58px; margin-top: 44px; }
+</style></head>
+<body class="{{ slide.kind }}" style="--bg: var(--{{ color }})">
+{% if slide.kind == 'hook' %}
+  <div class="ring"></div>
+  <div class="wrap"><span class="tag" style="align-self:flex-start;font-size:28px;background:rgba(255,255,255,.6);margin-bottom:40px">ADHD home</span>
+    <h1>{{ slide.title }}</h1>{% if slide.sub %}<div class="sub">{{ slide.sub }}</div>{% endif %}</div>
+  <div class="swipe">swipe →</div>
+{% elif slide.kind == 'point' %}
+  <div class="wrap"><div class="num">{{ slide.num }}</div><h1>{{ slide.title }}</h1><div class="bar"></div><div class="body">{{ slide.body }}</div></div>
+{% elif slide.kind == 'list' %}
+  <div class="wrap"><h1>{{ slide.title }}</h1><ul>{% for it in slide["items"] %}<li><i></i>{{ it }}</li>{% endfor %}</ul></div>
+{% elif slide.kind == 'quote' %}
+  <div class="wrap"><div class="mark">“</div><h1>{{ slide.title }}</h1></div>
+{% elif slide.kind == 'cta' %}
+  <div class="wrap"><h1>{{ slide.title }}</h1>{% if slide.body %}<div class="body">{{ slide.body }}</div>{% endif %}
+    <div class="btn">Link in bio</div><div class="save">save this for later ♡</div></div>
+{% endif %}
+  <div class="foot"><span>@{{ handle }}</span><span class="dots">{% for i in range(total) %}<i class="{{ 'on' if i == index else '' }}"></i>{% endfor %}</span></div>
+</body></html>

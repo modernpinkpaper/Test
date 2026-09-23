@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% from "macros.html" import promo, card with context %}
+{% block main %}
+<article class="narrow">
+  <span class="tag">Amazon find · {{ find.category }}</span>
+  <h1>{{ find.hook }}</h1>
+  <p class="disclose">Affiliate link: as an Amazon Associate I earn from qualifying purchases. It costs you nothing extra.</p>
+  <div class="find"><div class="n">★</div><h3>{{ find.name }}</h3><p>{{ find.why }}</p>
+    <a class="btn" href="{{ find.link }}" target="_blank" rel="sponsored nofollow noopener">See it on Amazon</a></div>
+  <img class="pinimg" src="{{ find.img }}" alt="{{ find.hook }}">
+  {{ promo(cfg.shop) }}
+</article>
+<h2>More {{ find.category }} finds</h2>
+<div class="grid">{% for f in related %}{{ card(f.url, f.img, f.hook, f.name) }}{% endfor %}</div>
+{% endblock %}

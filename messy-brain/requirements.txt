@@ -1,0 +1,4 @@
+playwright==1.63.0
+pillow
+markdown
+jinja2

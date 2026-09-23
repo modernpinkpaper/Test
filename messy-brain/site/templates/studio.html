@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Studio — ready-to-post slides{% endblock %}
+{% block head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block main %}
+<div class="narrow">
+<h1>Studio</h1>
+<p>Your ready-to-post TikTok &amp; Instagram carousels. Suggested plan: <strong>{{ per_day }} a day</strong> on TikTok and the same carousel on Instagram.
+On your phone: tap a slide → press and hold → <em>Save to Photos</em> (or tap <em>Download all</em>). Copy the caption with the button, then post as a photo carousel.
+Schedule a week at a time: TikTok (tiktok.com/tiktokstudio on a computer → Upload → Schedule) and Instagram (Meta Business Suite → Planner).</p>
+{% for c in carousels %}
+<section class="find" style="display:block">
+  <p class="small">Suggested date: <strong>{{ c.suggested }}</strong> · CTA: {{ c.cta }} · {{ c.id }}</p>
+  <h3>{{ c.slides[0].title }}</h3>
+  <div style="display:flex;gap:8px;overflow-x:auto;padding:8px 0">
+    {% for img in c.images %}<a href="{{ img }}" download><img src="{{ img }}" alt="slide {{ loop.index }}" loading="lazy" style="width:140px;border-radius:8px"></a>{% endfor %}
+  </div>
+  <textarea id="cap-{{ loop.index }}" rows="4" style="width:100%;font:15px var(--font-body);border-radius:10px;border:1px solid var(--line);padding:10px">{{ c.caption_text }}</textarea>
+  <p><button class="btn-small" onclick="navigator.clipboard.writeText(document.getElementById('cap-{{ loop.index }}').value);this.textContent='Copied ✓'">Copy caption</button>
+     &nbsp;<a class="btn-small" href="{{ c.zip }}" download>Download all (zip)</a></p>
+</section>
+{% endfor %}
+</div>
+{% endblock %}

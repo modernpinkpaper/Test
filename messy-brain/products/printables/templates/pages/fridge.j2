@@ -1,0 +1,18 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="card soft" style="--as:var(--butter-soft)"><div class="h3" style="--a:var(--butter)">Eat me first!<small>use these up before shopping</small></div>
+  <div class="two" style="gap:0 24px">{% for _ in range(6) %}<div class="ci"><span class="cb sm"></span><span class="bl" style="border-bottom:1px solid var(--rule);height:22px"></span></div>{% endfor %}</div>
+</div>
+<div class="two grow">
+  {% for t in ['Fridge', 'Freezer'] %}
+  <div class="tablewrap" style="display:flex;flex-direction:column">
+  <div class="h3" style="margin:0 8px 10px">{{ t }}</div>
+  <table class="grid">
+    <colgroup><col><col style="width:58px"><col style="width:58px"><col style="width:36px"></colgroup>
+    <thead><tr><th>Item</th><th class="c">In</th><th class="c">{{ 'Eat by' if t == 'Fridge' else 'Use by' }}</th><th class="c">&#10003;</th></tr></thead>
+    <tbody>{% for _ in range(18) %}<tr><td></td><td></td><td></td><td class="c"><span class="cb sm o"></span></td></tr>{% endfor %}</tbody>
+  </table>
+  </div>
+  {% endfor %}
+</div>
+{% endcall %}

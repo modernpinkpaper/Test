@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% from "macros.html" import card %}
+{% block main %}
+<h1>Tips for a home that works with your brain</h1>
+<div class="grid">{% for p in posts %}{{ card(p.url, p.img, p.title, p.description) }}{% endfor %}</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{
+  "brand": "Messy Brain, Tidy Home",
+  "tagline": "ADHD-friendly ways to keep a home that doesn't fight you back.",
+  "handle": "messybraintidyhome",
+  "site_url": "https://modernpinkpaper.github.io",
+  "amazon": {
+    "_note": "Put your Amazon Associates tracking IDs here. One per channel so you can see which channel earns.",
+    "tag_site": "YOURTAG-20",
+    "tag_pinterest": "YOURTAG-20",
+    "tag_bluesky": "YOURTAG-20",
+    "tag_social": "YOURTAG-20",
+    "marketplace": "https://www.amazon.com"
+  },
+  "shop": {
+    "_note": "Paste your Payhip product links here after you upload the PDFs.",
+    "ebook_url": "https://payhip.com/YOURSTORE",
+    "ebook_price": "$9.99",
+    "printables_url": "https://payhip.com/YOURSTORE",
+    "printables_price": "$14",
+    "bundle_url": "https://payhip.com/YOURSTORE",
+    "bundle_price": "$19"
+  },
+  "pinterest": {
+    "_note": "Paste the content of Pinterest's claim meta tag here (the long code only).",
+    "domain_verify": "",
+    "boards": [
+      "ADHD Home Organization",
+      "Amazon Home Finds",
+      "ADHD Cleaning Tips",
+      "Small Space Organizing",
+      "Printable Cleaning Checklists"
+    ]
+  },
+  "schedule": {
+    "_note": "Posts go live on their own date. Finds drip out on this ramp: [day number, finds per day]. A slow start keeps a new Pinterest account safe.",
+    "start": "2026-09-24",
+    "finds_per_day_ramp": [
+      [
+        0,
+        3
+      ],
+      [
+        14,
+        6
+      ],
+      [
+        30,
+        10
+      ],
+      [
+        60,
+        15
+      ]
+    ],
+    "pinterest_csv_pins_per_day": [
+      [
+        0,
+        4
+      ],
+      [
+        14,
+        8
+      ],
+      [
+        30,
+        12
+      ],
+      [
+        60,
+        20
+      ]
+    ],
+    "bluesky_posts_per_day": 5,
+    "carousels_per_day": 2
+  }
+}

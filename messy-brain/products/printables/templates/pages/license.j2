@@ -1,0 +1,35 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="card">
+  <div class="h3">Printing tips</div>
+  <ul class="ul">
+    <li>{{ icon('check') }}<span>Made for <b>US Letter</b> paper. Print at "Actual size" or "Fit to page". On A4, choose "Fit".</span></li>
+    <li>{{ icon('check') }}<span>Print only the pages you need, as many times as you like. A fresh copy is always one click away.</span></li>
+    <li>{{ icon('check') }}<span>Low on ink? "Draft" or grayscale mode works great. Every page is designed to stay readable.</span></li>
+    <li>{{ icon('check') }}<span>Slip the pages you reuse (routines, chore chart, menus) into a sheet protector and use a dry-erase marker.</span></li>
+    <li>{{ icon('check') }}<span>Cardstock makes a sturdy copy for the fridge or the launch pad by the door.</span></li>
+  </ul>
+</div>
+<div class="card soft" style="--as:var(--lilac-soft)">
+  <div class="h3" style="--a:var(--lilac)">The house rules</div>
+  <div class="rules">
+    <div>Done is better than perfect.</div>
+    <div>Half a checklist still counts.</div>
+    <div>Missed a day? Nothing broke.</div>
+    <div>Start again from right here.</div>
+    <div>Rest is part of the routine.</div>
+    <div>Change any page to fit you.</div>
+  </div>
+</div>
+<div class="lic">
+  <h3>Personal use only</h3>
+  <p>Thank you for supporting a small brand! You're welcome to print this pack as often as you like for <b>your own home and family</b>.</p>
+  <p>Please don't share, resell, or upload the file, or print copies for other people. Want to share it with a friend? Send them to our website so they can grab their own copy. Sharing a photo of your filled-in pages is always welcome (and makes our day).</p>
+</div>
+<div class="grow" style="display:flex;align-items:center;justify-content:center"><div class="hand" style="font-size:34px;color:var(--ink-soft);text-align:center;line-height:1.1">You've got this. One page at a time.<br><span style="font-size:24px;color:#A07718">&hearts; Messy Brain, Tidy Home</span></div></div>
+<div class="small">
+  These pages are here to make everyday home tasks a little easier. They're not medical advice.<br>
+  More free ideas and tools: <b>{{ site }}</b> &nbsp;&middot;&nbsp; @{{ handle }}<br>
+  &copy; {{ year }} Messy Brain, Tidy Home. All rights reserved.
+</div>
+{% endcall %}

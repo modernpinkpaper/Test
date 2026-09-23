@@ -1,0 +1,16 @@
+{% from "macros.j2" import page, icon, lines %}
+{% call page(p, n) %}
+<div class="tablewrap">
+<table class="grid routine">
+  <colgroup><col><col style="width:46px">{% for _ in range(7) %}<col style="width:38px">{% endfor %}</colgroup>
+  <thead><tr><th>Step</th><th class="c">Min</th>{% for d in ['M','T','W','T','F','S','S'] %}<th class="c">{{ d }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for s, m in p.steps %}<tr><td class="stp"><span class="num">{{ loop.index }}</span>{{ s }}</td><td class="c tmc">{{ m }}</td>{% for _ in range(7) %}<td class="c"><span class="cb sm"></span></td>{% endfor %}</tr>{% endfor %}
+  {% for _ in range(p.blanks) %}<tr class="blankrow"><td class="stp"><span class="num">{{ p.steps|length + loop.index }}</span></td><td></td>{% for _ in range(7) %}<td class="c"><span class="cb sm"></span></td>{% endfor %}</tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+<div class="two grow">
+  {% for q in p.prompts %}<div class="card"><div class="h3">{{ q }}</div><div class="lines grow"></div></div>{% endfor %}
+</div>
+{% endcall %}

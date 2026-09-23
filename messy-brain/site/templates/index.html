@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% from "macros.html" import promo, card with context %}
+{% block main %}
+<section class="hero">
+  <div>
+    <span class="tag">ADHD-friendly home organizing</span>
+    <h1>A home that doesn't fight your brain.</h1>
+    <p class="lead">Shame-free systems, 15-minute resets and the Amazon finds that make keeping house easier when your brain is busy doing twelve other things.</p>
+    <p><a class="btn coral" href="/shop/">Start the 7-day reset</a> &nbsp; <a class="btn ghost" href="/finds/">See Amazon finds</a></p>
+  </div>
+  <div class="art">{% if has_ebook %}<img src="/shop-img/ebook-cover.png" alt="The Messy Brain Home Reset ebook">{% endif %}</div>
+</section>
+<h2>Newest tips</h2>
+<div class="grid">{% for p in posts[:8] %}{{ card(p.url, p.img, p.title, p.description) }}{% endfor %}</div>
+{{ promo(cfg.shop) }}
+<h2>Newest Amazon finds</h2>
+<div class="grid">{% for f in finds[:8] %}{{ card(f.url, f.img, f.hook, f.name) }}{% endfor %}</div>
+<p style="margin-top:24px"><a class="btn ghost" href="/finds/">All Amazon finds →</a></p>
+{% endblock %}
