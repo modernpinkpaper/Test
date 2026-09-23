@@ -256,7 +256,9 @@ public sealed class ActivityTracker
     private void TryCommit(DateTimeOffset now)
     {
         var o = _options();
-        if (_pendingWindow is { } pw && now - pw.Since >= o.ForegroundStable)
+        if (_pendingWindow is { } pw && now - pw.Since >= o.ForegroundStable
+            // A new browser window still titled "Untitled"/"New Tab": wait (up to 5 s) for the real page title.
+            && !(IsLoadingTitle(pw.Window.Title) && now - pw.Since < TimeSpan.FromSeconds(5)))
         {
             _pendingWindow = null;
             _pendingTitle = null;
@@ -284,6 +286,9 @@ public sealed class ActivityTracker
             }
         }
     }
+
+    private static bool IsLoadingTitle(string? title) => Browser.BrowserTitle.IsPlaceholder(Browser.BrowserTitle.PageTitle(title))
+        && title is not null && title.Contains(" - ", StringComparison.Ordinal); // only browser-style titles, not a bare "Untitled" app window
 
     private void StartSession(WindowSnapshot w, DateTimeOffset at)
     {

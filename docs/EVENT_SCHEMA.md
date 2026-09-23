@@ -124,6 +124,42 @@ A click on a named control. Only the control is recorded, never the click positi
 | `state_after` | for check boxes / radio buttons: `On`, `Off`, `Selected` |
 | `trigger` | `click` |
 
+## Browser pages (Phase 3)
+
+### `browser_page`
+A new page became visible in the front browser window (Chrome, Edge, Firefox, Brave, Opera,
+Vivaldi). Read from the browser's own address bar through UI Automation — no extension.
+Recorded once the address and title have stayed the same for about a second (page loaded).
+
+Common fields: `url` (sanitized), `domain` (without `www.`), `page_title` (the page's own title).
+
+| metadata | |
+|---|---|
+| `browser` | `msedge`, `chrome`, ... |
+| `site` | `amazon`, `seller_central`, `amazon_ads`, `keepa`, `etsy`, `shopify`, `google_sheets`, `google_docs`, `google_slides`, `google_drive`, `gmail`, `chatgpt`, `other` |
+| `page_type` | e.g. `product`, `search`, `listing_editor`, `inventory`, `search_query_performance`, `orders`, `order_detail`, `product_editor`, `product_import`, `listings_manager`, `document` |
+| `module` | readable screen name, e.g. `Search Query Performance`, `Manage All Inventory`, `Edit Listing` |
+| `asins`, `skus`, `listing_ids`, `product_ids`, `order_ids` | identifiers found in the URL (and in headings like "Seller SKU: MA023") |
+| `search_term` | e.g. Amazon `k=`, Keepa `#!search/1-term`, Seller Central `searchTerm=`, Shopify `query=` |
+| `filters` | report settings from the URL, e.g. `{"reporting-range": "weekly", "weekly-week": "2026-09-13"}` |
+| `item_title` | product/listing/document title when it can be told from the page title |
+| `document_id` | Google Sheets/Docs/Drive id, ChatGPT conversation id |
+| `headings` | up to 8 page headings — **only on business sites** (`collectors.browser.page_text_domains`) |
+| `url_sanitized` | `true` if tokens/session ids were removed |
+
+### Page context on other events
+Every `app_session_start`/`app_session_end`, `ui_field_value` and `ui_action` that happens in a
+browser window gets the page's `url`, `domain`, `page_title` and a compact `metadata.page`
+object (`site`, `page_type`, `module`, `asins`, `skus`, ...). Events also get the open
+`session_id`. Example:
+
+```json
+{"event_type":"ui_action","application":"Microsoft Edge","domain":"sellercentral.amazon.com",
+ "url":"https://sellercentral.amazon.com/abis/listing/edit?sku=MA023&asin=B0CXYZ1234",
+ "metadata":{"action":"button_clicked","control_name":"Save and finish","is_key_action":true,
+   "page":{"site":"seller_central","page_type":"listing_editor","module":"Edit Listing","asins":["B0CXYZ1234"],"skus":["MA023"]}}}
+```
+
 ## Processes (background activity)
 
 | Type | metadata |
@@ -156,7 +192,6 @@ If a block rule matched, the event is kept for timing but details are removed:
 
 ## Planned (Phase 2–5)
 
-`browser_page`,
 `file_opened` / `file_saved` / `file_renamed` / `file_deleted`, `document_context`,
 `print_job`, `download_detected`, `upload_context`, `automation_run` (local API).
 These will be added to this document when built.

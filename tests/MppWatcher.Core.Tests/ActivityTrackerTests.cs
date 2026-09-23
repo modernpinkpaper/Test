@@ -115,6 +115,19 @@ public class ActivityTrackerTests
     }
 
     [Fact]
+    public void New_browser_window_waits_for_the_real_title()
+    {
+        Run(Excel(), TimeSpan.FromSeconds(5));
+        var appeared = _clock.Now.AddMilliseconds(500);
+        Run(Chrome("Untitled - Google Chrome", handle: 999), TimeSpan.FromSeconds(2));
+        Run(Chrome("Keepa - Google Chrome", handle: 999), TimeSpan.FromSeconds(5));
+        var starts = OfType(EventTypes.AppSessionStart);
+        Assert.Equal(2, starts.Count);
+        Assert.Equal("Keepa - Google Chrome", starts[1].WindowTitle);
+        Assert.Equal(appeared, starts[1].TimestampUtc); // still counted from when the window came to the front
+    }
+
+    [Fact]
     public void Title_that_changes_back_quickly_does_not_split()
     {
         Run(Chrome("Keepa"), TimeSpan.FromSeconds(10));

@@ -62,6 +62,16 @@ read but not edit it). Full default file: [config/config.example.json](../config
 | `action_keywords` | save, publish, upload, import, export, search, download, print, submit, update, apply, add, create, delete, ... | Names that mark `is_key_action`. |
 | `ignore_applications` | `[]` | Apps where UI Automation is not used at all. |
 
+## `collectors.browser` (Phase 3)
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enabled` | `true` | Read the page address from the front browser window. |
+| `browsers` | chrome, msedge, firefox, brave, opera, vivaldi | Process names treated as browsers. |
+| `poll_ms` | `1000` | How often the front browser window is checked. |
+| `page_text_domains` | amazon, keepa, etsy, Shopify admin, Google Docs/Drive | Only here are page headings read. |
+| `max_headings` | `8` | |
+
 ## `privacy`
 
 See [PRIVACY.md](PRIVACY.md).

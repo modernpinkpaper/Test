@@ -15,7 +15,7 @@ It never records password or payment fields. See [docs/PRIVACY.md](docs/PRIVACY.
 |---|---|---|
 | 1 | App + autostart, foreground app/window sessions, processes, idle, lock/sleep, SQLite, live viewer | **Done ✅** (tested on Windows) |
 | 2 | UI Automation: finished field values, clicks on named controls, sensitive-field refusal, diagnostic inspector | **Done ✅** (tested on Windows incl. Edge) |
-| 3 | Browser context via UI Automation (URL, domain, page), Amazon/Seller Central/Keepa/Etsy/Shopify rules | In testing |
+| 3 | Browser context via UI Automation (URL, domain, page), Amazon/Seller Central/Keepa/Etsy/Shopify rules | In testing (last fixes running on Windows) |
 | 4 | Files, Photoshop/InDesign/Excel context, print jobs, downloads/uploads | Not started |
 | 5 | Local event API for scripts, Google Drive upload, `MPPWatcherSetup.exe`, watchdog service | Not started (local folder export already works) |
 
@@ -52,6 +52,13 @@ Password, PIN, card, CVV, code fields are never recorded. `MPPWatcher.exe --insp
 what Windows exposes for anything under the mouse:
 
 ![Inspector](docs/images/inspector-phase2.png)
+
+## What Phase 3 adds
+
+Each page in the front browser is recognised from the real address bar, and every field value
+and click is tied to it:
+
+![Live viewer with browser pages](docs/images/live-viewer-phase3.png)
 
 ## Quick start (admin)
 

@@ -15,7 +15,7 @@ record *what kind of work* happened, not private content.
 - Program command lines (they can contain secrets)
 - File contents (no reading or hashing of files)
 
-## What is collected (Phases 1–2)
+## What is collected (Phases 1–3)
 
 - Which app/window is in front, its **window title**, and for how long
 - Active vs idle time (no keyboard/mouse for 5 minutes by default)
@@ -24,6 +24,8 @@ record *what kind of work* happened, not private content.
 - Watcher health information
 - Finished values of changed, non-sensitive form fields (e.g. Search, SKU) and the names of
   buttons/links/tabs clicked (e.g. Save, Publish)
+- The address and title of the page in the front browser window, business facts worked out
+  from it (ASIN, SKU, listing id, report name, search term), and headings on business sites
 
 Window titles can contain document names, web page titles and email subjects. If a
 title must not be logged, block it (below).
@@ -56,12 +58,25 @@ decision is made before anything is written. This built-in list **cannot be turn
 (`privacy.sensitive_field_terms`). The matching is word-based, so "Shipping address"
 is not confused with "PIN".
 
-## URLs (Phase 3 onward, sanitizer already built)
+## Websites (Phase 3)
+
+- The address is read from the browser's own address bar through Windows Accessibility —
+  **no browser extension**, no cookies, no page source, no browsing history.
+- It is **not read while the person is typing in the address bar**.
+- Page **headings** (e.g. "Edit Product Info", "Personalization") are read **only on business
+  sites** (`page_text_domains`: Amazon, Keepa, Etsy, Shopify admin, Google Docs/Drive).
+  Elsewhere only the address and page title are kept.
+- Blocked domains/URLs (banking, sign-in, checkout, ...) are redacted for **every** event that
+  happens on that page, not just the page event.
+
+## URLs
 
 Before any URL is stored: `user:password@` is removed; query parameters such as
 `token`, `access_token`, `code`, `state`, `session_id`, `sid`, `key`, `signature`,
 `X-Amz-Signature`, `oauth_*`, `openid.*` are removed; OAuth tokens in `#fragment`s are
-removed. Only `http`/`https` URLs are kept. Admins can add parameter names.
+removed. **Any parameter whose name contains** session, token, auth, passw, secret, signature,
+credential, csrf, nonce, cookie, ticket, jwt... is removed too, whatever the spelling (e.g.
+Amazon's `session-id`). Only `http`/`https` URLs are kept. Admins can add parameter names.
 
 ## Exclusions
 
@@ -94,7 +109,7 @@ and checkout/payment/login URLs.
   (normal Windows file permissions).
 - The config in `%ProgramData%\MPP Watcher` is readable by users, writable only by admins.
 - Exports go only where the admin configures. No data leaves the PC otherwise.
-  There is no network code in Phases 1–2.
+  There is no network code in Phases 1–3 (the watcher only reads what is on screen).
 
 ## Transparency
 

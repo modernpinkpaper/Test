@@ -28,6 +28,17 @@ WinForms fields/buttons/check box, password and card fields never recorded, sett
 while typing stops, Microsoft Edge web page fields + button, inspector report incl. hidden
 password.
 
+## Phase 3 — browser context
+Address bar through UI Automation (not while typing), URL sanitizing, page title from the
+page itself, site rules (Amazon, Seller Central incl. Search Query Performance, Keepa, Etsy,
+Shopify, Google Docs/Sheets/Drive, Gmail, ChatGPT), headings on business sites, and page
+context on sessions, field values and clicks. Windows-verified with Microsoft Edge visiting
+look-alike pages served under the real addresses (amazon.com, sellercentral.amazon.com,
+keepa.com, etsy.com, admin.shopify.com) on the test machine.
+
+Found and fixed thanks to the real runs: pages read while still "Untitled"; Amazon's
+`session-id` not removed; Edge's "and N more pages" splitting sessions.
+
 ### Still worth checking on your own PCs
 Nothing here needs you before the next phase, but these can only be seen with your accounts:
 Keepa search box, Seller Central SKU/search fields, Etsy listing editor, Shopify product
@@ -70,11 +81,12 @@ press **Save report…** if something looks wrong.
 
 ## Next phases
 
-**Phase 3 – Browser context** (no extension)
-- Address bar value via UI Automation → sanitized URL, domain, page title.
-- Site profiles for amazon.com, Seller Central (incl. Search Query Performance),
-  Keepa, Etsy, Shopify admin, Google Sheets/Drive, Gmail, ChatGPT: ASIN / SKU / listing ID
-  extraction from URL + visible text, page type, editor section, Save/Publish.
+**Phase 3 – remaining ideas** (not needed to call Phase 3 done)
+- Seller Central report settings that live only in the page (date pickers, ASIN scope) rather
+  than the URL: read the selected values of those controls when the report page is shown.
+- Keepa mode tabs and "products being compared" from the page, not only the `#!` route.
+- Firefox is supported by design (address bar `urlbar-input`) but only Edge is tested in CI.
+- Check with real logged-in pages using `MPPWatcher.exe --inspect` (see above).
 
 **Phase 4 – Files and business apps**
 - File system watcher on configured work folders (created/saved/renamed/moved/deleted),

@@ -188,7 +188,8 @@ public sealed class BrowserEndToEndTests : IDisposable
 
         // Foreground sessions in the browser carry the page too. (Pages shown for < 2 s do not get their own
         // session by design; the listing editor stayed open while typing, so it has one.)
-        var editorSession = Events().FirstOrDefault(e => e.EventType == EventTypes.AppSessionStart && e.Domain == "sellercentral.amazon.com");
+        var editorSession = Events().FirstOrDefault(e => e.EventType == EventTypes.AppSessionStart && e.Domain == "sellercentral.amazon.com"
+            && e.Metadata["page"]?.ToJsonString().Contains("listing_editor") == true);
         Assert.True(editorSession is not null, "no app session carries the Seller Central page");
         Assert.Contains("MA023", editorSession!.Metadata["page"]?.ToJsonString());
 
