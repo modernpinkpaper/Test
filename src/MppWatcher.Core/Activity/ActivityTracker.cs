@@ -237,6 +237,12 @@ public sealed class ActivityTracker
             _pendingTitle = null;
             return;
         }
+        if (Browser.BrowserTitle.IsPlaceholder(Browser.BrowserTitle.PageTitle(title)))
+        {
+            // Browser "Untitled"/"New Tab" while a page loads: wait for the real title.
+            _pendingTitle = null;
+            return;
+        }
         if (TitleNormalizer.Normalize(title) == s.NormalizedTitle)
         {
             // Cosmetic change only (unread counter, zoom level...): keep the session, remember the latest text.

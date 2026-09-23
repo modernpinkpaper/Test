@@ -104,6 +104,17 @@ public class ActivityTrackerTests
     }
 
     [Fact]
+    public void Browser_loading_title_does_not_start_a_session()
+    {
+        Run(Chrome("Keepa - Google Chrome"), TimeSpan.FromSeconds(5));
+        Run(Chrome("Untitled - Google Chrome"), TimeSpan.FromSeconds(5));   // slow page load
+        Run(Chrome("Amazon.com: Stationery - Google Chrome"), TimeSpan.FromSeconds(5));
+        var starts = OfType(EventTypes.AppSessionStart);
+        Assert.Equal(2, starts.Count);
+        Assert.DoesNotContain(starts, s => s.WindowTitle!.StartsWith("Untitled"));
+    }
+
+    [Fact]
     public void Title_that_changes_back_quickly_does_not_split()
     {
         Run(Chrome("Keepa"), TimeSpan.FromSeconds(10));

@@ -112,8 +112,10 @@ public sealed class BrowserContextCollector : ICollector
         var clean = sanitizer.Sanitize(raw);
         if (clean is null) { _pending = null; _emitted = (handle, title, null, now); return; } // new tab, settings page, file:// ...
 
-        if (_emitted.Hwnd == handle && _emitted.Url == clean.Url && _emitted.Title == title)
+        if (_emitted.Hwnd == handle && _emitted.Url == clean.Url && TitleNormalizer.Normalize(_emitted.Title) == TitleNormalizer.Normalize(title))
         {
+            // Same page; only a cosmetic title change (e.g. Edge's "and 3 more pages"): keep the context in step, no new event.
+            if (_emitted.Title != title && _activity.PageFor(handle) is { } known) _activity.SetPage(known with { WindowTitle = title });
             _emitted = (handle, title, clean.Url, now);
             _pending = null;
             return;

@@ -9,6 +9,7 @@ public class TitleNormalizerTests
     [InlineData("● app.cs - VS Code", "app.cs - VS Code")]
     [InlineData("MA023-main.psd @ 66.7% (Layer 1, RGB/8) *", "MA023-main.psd @ 100% (Layer 2, RGB/8)")]
     [InlineData("Book1.xlsx - Saved - Excel", "Book1.xlsx - Excel")]
+    [InlineData("Orders and 2 more pages - Profile 1 - Microsoft Edge", "Orders and 3 more pages - Profile 1 - Microsoft Edge")] // seen on real Edge
     public void Cosmetic_differences_normalize_equal(string a, string b) =>
         Assert.Equal(TitleNormalizer.Normalize(a), TitleNormalizer.Normalize(b));
 

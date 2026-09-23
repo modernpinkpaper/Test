@@ -32,6 +32,16 @@ public class BrowserContextTests
     }
 
     [Fact]
+    public void Edge_tab_count_in_title_does_not_break_the_page_link()
+    {
+        var ctx = new ActivityContext();
+        ctx.SetPage(KeepaPage("Keepa and 2 more pages - Profile 1 - Microsoft Edge"));
+        var e = new WatchEvent { EventType = EventTypes.UiAction, ProcessId = 8812, WindowTitle = "Keepa and 3 more pages - Profile 1 - Microsoft Edge" };
+        ctx.Enrich(e);
+        Assert.Equal("keepa.com", e.Domain);
+    }
+
+    [Fact]
     public void Old_page_is_not_attached_when_the_title_changed()
     {
         var ctx = new ActivityContext();
@@ -89,6 +99,7 @@ public class BrowserTitleExtraTests
     [Theory]
     [InlineData("Keepa - Amazon Price Tracker - Microsoft​ Edge", "Keepa - Amazon Price Tracker")]
     [InlineData("Orders - Profile 1 - Microsoft Edge", "Orders")]
+    [InlineData("Edit listing - Etsy and 4 more pages - Profile 1 - Microsoft\u200B Edge", "Edit listing - Etsy")]
     public void Edge_profiles_versus_page_title_parts(string window, string page) => Assert.Equal(page, BrowserTitle.PageTitle(window));
 
     [Theory]

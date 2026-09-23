@@ -15,6 +15,7 @@ public static class TitleNormalizer
         new(@"^\s*[●•*]\s*", RegexOptions.Compiled),                         // "● file.cs - VS Code"
         new(@"\s*[●•*]\s*$", RegexOptions.Compiled),                         // "Untitled *"
         new(@"\s*@\s*\d+(?:[.,]\d+)?%\s*(?:\([^)]*\))?\s*\*?", RegexOptions.Compiled), // "MA023.psd @ 66.7% (Layer 1, RGB/8) *"
+        new(@"\s+and\s+\d+\s+more\s+pages?(?=\s+[-–—]|$)", RegexOptions.Compiled | RegexOptions.IgnoreCase), // Edge: "X and 2 more pages - Profile 1 - Microsoft Edge"
         new(@"\s*-\s*(?:Saving|Saved|Saved to this PC|AutoSave (?:On|Off))\s*(?=-|$)", RegexOptions.Compiled | RegexOptions.IgnoreCase),
     };
 

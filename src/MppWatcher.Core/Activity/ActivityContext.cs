@@ -52,7 +52,8 @@ public sealed class ActivityContext
             e.SessionId = s.SessionId;
         if (e.Url is not null || e.WindowTitle is null || e.ProcessId is null) return;
 
-        var page = _pages.Values.FirstOrDefault(p => p.ProcessId == e.ProcessId && p.WindowTitle == e.WindowTitle);
+        var key = TitleNormalizer.Normalize(e.WindowTitle);
+        var page = _pages.Values.FirstOrDefault(p => p.ProcessId == e.ProcessId && TitleNormalizer.Normalize(p.WindowTitle) == key);
         if (page is null) return;
         e.Url = page.Url;
         e.Domain = page.Domain;

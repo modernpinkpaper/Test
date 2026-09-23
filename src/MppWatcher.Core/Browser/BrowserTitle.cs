@@ -10,11 +10,15 @@ public static class BrowserTitle
         @"\s+[-–—]\s+(?:(?:\S+(?:\s\S+)?\s+[-–—]\s+)?Microsoft\W{0,3}Edge|Google Chrome|Mozilla Firefox|Brave|Opera|Vivaldi)\s*$",
         RegexOptions.Compiled);
 
+    private static readonly Regex MorePages = new(@"\s+and\s+\d+\s+more\s+pages?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
     /// <summary>The web page's own title, without the browser/profile suffix.</summary>
     public static string? PageTitle(string? windowTitle)
     {
         if (string.IsNullOrWhiteSpace(windowTitle)) return null;
         var t = Suffix.Replace(windowTitle, "").Trim();
+        t = MorePages.Replace(t, "").Trim(); // Edge: "Orders and 3 more pages"
+
         return t.Length == 0 ? null : t;
     }
 

@@ -186,8 +186,11 @@ public sealed class BrowserEndToEndTests : IDisposable
         Assert.Equal("product_editor", M(shopify, "page_type"));
         Assert.Contains("8123456789012", M(shopify, "product_ids"));
 
-        // Foreground sessions in the browser carry the page too.
-        Assert.Contains(Events(), e => e.EventType == EventTypes.AppSessionStart && e.Domain == "keepa.com" || e.EventType == EventTypes.AppSessionEnd && e.Domain == "keepa.com");
+        // Foreground sessions in the browser carry the page too. (Pages shown for < 2 s do not get their own
+        // session by design; the listing editor stayed open while typing, so it has one.)
+        var editorSession = Events().FirstOrDefault(e => e.EventType == EventTypes.AppSessionStart && e.Domain == "sellercentral.amazon.com");
+        Assert.True(editorSession is not null, "no app session carries the Seller Central page");
+        Assert.Contains("MA023", editorSession!.Metadata["page"]?.ToJsonString());
 
         var viewer = Run(AppEndToEndTestsExe.Path, "--viewer", "--config", ConfigPath, "--data", DataDir);
         Desktop.WaitUntil(() => { viewer.Refresh(); return viewer.MainWindowTitle.Contains("Live Event Viewer"); }, TimeSpan.FromSeconds(20));
