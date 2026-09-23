@@ -205,6 +205,8 @@ public sealed class Phase4EndToEndTests : IDisposable
 
         var upload = WaitFor("upload_file_selected", e => e.EventType == EventTypes.UploadFileSelected);
         Assert.Contains("PS142-main.png", M(upload, "files"));
+        Thread.Sleep(1000);
+        Assert.Single(Events(), e => e.EventType == EventTypes.UploadFileSelected); // logged once, with the final name
         Assert.Equal("etsy.com", upload.Domain);
         Assert.Contains("1234567890", upload.Metadata["page"]?.ToJsonString());
         Assert.Contains("PS142", M(upload, "sku_candidates"));

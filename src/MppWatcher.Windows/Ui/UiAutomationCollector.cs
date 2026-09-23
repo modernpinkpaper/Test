@@ -38,6 +38,8 @@ public sealed class UiAutomationCollector : ICollector
 
     private readonly MppWatcher.Core.Activity.ActivityContext? _activity;
     private string? _trackedWindowClass;
+    private IntPtr _trackedWindow;
+    private (MppWatcher.Core.Ui.UiElementInfo Field, string Value, IntPtr Dialog)? _pendingDialogChoice;
 
     public UiAutomationCollector(MppWatcher.Core.Activity.ActivityContext? activity = null) : this(ignoreOwnProcess: true, activity) { }
 
@@ -103,6 +105,7 @@ public sealed class UiAutomationCollector : ICollector
             {
                 RefreshTrackedValue(_ctx!.Clock.Now);
                 Commit(_tracker?.Flush());
+                EmitFileDialogChoiceIfClosed(dialogStillOpen: _ => false);
                 if (_focusHandler is not null) _uia?.Automation.RemoveFocusChangedEventHandler(_focusHandler);
             }
             catch (Exception e) { _ctx?.Log.Warn(Name, "Error while removing UI Automation handler", e); }
@@ -134,6 +137,7 @@ public sealed class UiAutomationCollector : ICollector
                 if (_work.TryTake(out var item, poll, ct)) item();
                 PollTrackedField();
                 CheckFocusDirectly();
+                EmitFileDialogChoiceIfClosed(dialogStillOpen: h => NativeMethods.IsWindow(h));
             }
             catch (OperationCanceledException) { break; }
             catch (Exception e)
@@ -181,7 +185,8 @@ public sealed class UiAutomationCollector : ICollector
         }
         Commit(_tracker!.OnFocus(trackable, now, initialValueKnown: initialKnown));
         _trackedElement = trackable is null ? null : element;
-        _trackedWindowClass = trackable is null ? null : NativeMethods.GetWindowClass(NativeMethods.GetForegroundWindow());
+        _trackedWindow = trackable is null ? IntPtr.Zero : NativeMethods.GetForegroundWindow();
+        _trackedWindowClass = trackable is null ? null : NativeMethods.GetWindowClass(_trackedWindow);
     }
 
     /// <summary>
@@ -237,18 +242,32 @@ public sealed class UiAutomationCollector : ICollector
         }
         _ctx!.Sink.Emit(UiEventFactory.FieldValue(commit.Element, decision, commit.Trigger, commit.Edited, _ctx.Clock.Now));
         _fieldsLogged++;
-        if (decision.IncludeValue) EmitFileDialogSelection(commit.Element, decision.Value!);
+        if (decision.IncludeValue) RememberFileDialogChoice(commit.Element, decision.Value!);
     }
 
     /// <summary>
     /// The standard Windows Open/Save dialog: its file-name box has control id 1148 in every language.
     /// In a browser this means files were picked for an upload on the page that opened the dialog.
     /// We record what was picked and where — not whether the website accepted the upload.
+    /// The box can be read while the name is still being typed (its suggestion list takes focus for
+    /// a moment), so only the last value is kept and it is logged once, when the dialog closes.
     /// </summary>
-    private void EmitFileDialogSelection(MppWatcher.Core.Ui.UiElementInfo field, string value)
+    private void RememberFileDialogChoice(MppWatcher.Core.Ui.UiElementInfo field, string value)
     {
         if (_trackedWindowClass != "#32770") return;
         if (field.AutomationId != "1148" && !(field.Name ?? "").StartsWith("File name", StringComparison.OrdinalIgnoreCase)) return;
+        _pendingDialogChoice = (field, value, _trackedWindow);
+    }
+
+    private void EmitFileDialogChoiceIfClosed(Func<IntPtr, bool> dialogStillOpen)
+    {
+        if (_pendingDialogChoice is not { } pending || dialogStillOpen(pending.Dialog)) return;
+        _pendingDialogChoice = null;
+        EmitFileDialogSelection(pending.Field, pending.Value);
+    }
+
+    private void EmitFileDialogSelection(MppWatcher.Core.Ui.UiElementInfo field, string value)
+    {
         var files = ParseFileNames(value);
         if (files.Count == 0) return;
         var ctx = _ctx!;
