@@ -72,6 +72,25 @@ read but not edit it). Full default file: [config/config.example.json](../config
 | `page_text_domains` | amazon, keepa, etsy, Shopify admin, Google Docs/Drive | Only here are page headings read. |
 | `max_headings` | `8` | |
 
+## `collectors.files` (Phase 4)
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enabled` | `true` | File actions in watched folders. |
+| `watched_folders` | Desktop, Documents, Downloads, Pictures | With subfolders. Add e.g. `"D:\\Designs"`. |
+| `downloads_folder` | `%USERPROFILE%\\Downloads` | New files here are `file_downloaded`. |
+| `ignore_paths` | `*\\AppData\\*`, `.git`, `node_modules`, recycle bin | Matched against the part of the path inside a watched folder. |
+| `quiet_ms` | `2000` | Wait after the last notice (one event per save). |
+| `bulk_threshold` | `50` | More actions at once → one `file_bulk_activity`. |
+| `track_opened_files` | `true` | `file_opened` from Windows Recent Items. |
+| `sku_patterns` | `[]` (= `[A-Z]{2,4}\\d{2,5}`, e.g. MA023) | Regular expressions for product codes in file names. |
+
+## `collectors.print` (Phase 4)
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enabled` | `true` | Print jobs of the signed-in user (printer, document name, pages). |
+
 ## `privacy`
 
 See [PRIVACY.md](PRIVACY.md).

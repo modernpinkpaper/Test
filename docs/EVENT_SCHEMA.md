@@ -160,6 +160,45 @@ object (`site`, `page_type`, `module`, `asins`, `skus`, ...). Events also get th
    "page":{"site":"seller_central","page_type":"listing_editor","module":"Edit Listing","asins":["B0CXYZ1234"],"skus":["MA023"]}}}
 ```
 
+## Files, documents and printing (Phase 4)
+
+### Document on app sessions
+`app_session_start`/`app_session_end` of Photoshop, InDesign, Illustrator, Excel, Word, Acrobat,
+Notepad, Notepad++ and VS Code get `metadata.document`, read from the title bar:
+`{"name": "MA023-main.psd", "extension": "psd", "unsaved": true, "sku_candidates": ["MA023"]}`.
+
+### File events
+Watched folders (default Desktop, Documents, Downloads, Pictures + subfolders). One event per
+real action; temp/lock files ignored. **File contents are never read.**
+
+| Type | Meaning |
+|---|---|
+| `file_created` | a new file appeared |
+| `file_saved` | an existing file was saved (many notices / Office "safe save" = one event) |
+| `file_renamed` | renamed in the same folder (`old_path`, `old_file_name`) |
+| `file_moved` | moved between watched folders (`old_path`) |
+| `file_deleted` | deleted |
+| `file_downloaded` | finished download in the Downloads folder (browser temp file renamed to the real name) |
+| `file_opened` | Windows added the file to Recent Items (most programs do this when opening a file) |
+| `file_bulk_activity` | more than `bulk_threshold` actions at once (e.g. unzip): `total`, `counts`, `folders`, `sample_files`, `sku_candidates` |
+
+Metadata: `path`, `file_name`, `folder`, `extension`, `size_bytes`, `sku_candidates`, and either
+`foreground_application`/`foreground_process` (app in front at the time — a strong hint, not
+proof, of which program did it) or, for downloads, `source_page` (`url`, `domain`, `site`,
+`page_type`, ... of the page open just before) with `source_is_inferred: true`.
+
+### Uploads
+`upload_file_selected`: files picked in a browser's standard "Open" dialog — `files`,
+`file_count`, `sku_candidates`, the page (`url`, `domain`, `metadata.page`) and
+`upload_confirmed: false` (the watcher sees the choice, not the website's result).
+In other apps the same dialog gives `file_dialog_selection` with `dialog_title`.
+
+### Printing
+| Type | metadata |
+|---|---|
+| `print_job` | `printer`, `document_name`, `job_id`, `total_pages`, `size_bytes`, `status`, `sku_candidates`, `foreground_application` |
+| `print_job_finished` | same + `pages_printed`, `seconds_in_queue` |
+
 ## Processes (background activity)
 
 | Type | metadata |
@@ -192,8 +231,7 @@ If a block rule matched, the event is kept for timing but details are removed:
 
 ## Planned (Phase 2–5)
 
-`file_opened` / `file_saved` / `file_renamed` / `file_deleted`, `document_context`,
-`print_job`, `download_detected`, `upload_context`, `automation_run` (local API).
+`automation_run` and other events from the local API for scripts (Phase 5).
 These will be added to this document when built.
 
 ## Example

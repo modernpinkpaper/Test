@@ -69,6 +69,15 @@ is not confused with "PIN".
 - Blocked domains/URLs (banking, sign-in, checkout, ...) are redacted for **every** event that
   happens on that page, not just the page event.
 
+## Files and printing (Phase 4)
+
+- Only file **names, folders, extensions and sizes** are recorded — never contents, never hashes.
+- Only watched folders are observed (default Desktop, Documents, Downloads, Pictures).
+- `privacy.blocked_folders` hides every event whose path is inside a blocked folder
+  (e.g. `C:\Users\*\Documents\Personal`).
+- Printing records printer, document name and page count — never what was printed.
+- For uploads only the chosen file names and the page are recorded.
+
 ## URLs
 
 Before any URL is stored: `user:password@` is removed; query parameters such as
