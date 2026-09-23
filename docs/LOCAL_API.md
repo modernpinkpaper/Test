@@ -1,6 +1,6 @@
 # Local event API (for your own scripts and tools)
 
-Your Tampermonkey scripts and other tools can tell MPP Watcher what they did, e.g.
+Your Tampermonkey scripts and other tools can tell MT Log what they did, e.g.
 
 ```
 event_type:  automation_run
@@ -24,7 +24,7 @@ The event is stored like every other event (same employee, computer, time fields
   not a determined insider. Keep the secret in company scripts only.
 
 The secret: set `local_api.shared_secret` in `config.json` (one secret for all PCs and scripts).
-If it is empty, each user gets a random secret in `%LOCALAPPDATA%\MPP Watcher\data\api-secret.txt`.
+If it is empty, each user gets a random secret in `%LOCALAPPDATA%\MT Log\data\api-secret.txt`.
 
 ## Request
 

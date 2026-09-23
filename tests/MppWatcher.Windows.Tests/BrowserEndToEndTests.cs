@@ -6,7 +6,7 @@ using Xunit.Abstractions;
 namespace MppWatcher.Windows.Tests;
 
 /// <summary>
-/// Phase 3 end to end: the real MPPWatcher.exe watches Microsoft Edge while it visits look-alike
+/// Phase 3 end to end: the real MTLog.exe watches Microsoft Edge while it visits look-alike
 /// pages served under the real business site addresses (amazon.com, Seller Central, Keepa, Etsy, Shopify).
 /// </summary>
 public sealed class BrowserEndToEndTests : IDisposable

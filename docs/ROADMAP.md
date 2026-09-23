@@ -6,14 +6,14 @@ Every push runs the **build** workflow. The Windows job runs on a real Windows 1
 (GitHub-hosted runner) and:
 
 1. runs 130+ Core unit tests,
-2. publishes `MPPWatcher.exe`,
+2. publishes `MTLog.exe`,
 3. runs the **Windows tests**, which act like an employee: open windows, switch between them,
    change titles, stay idle, start/stop programs, type into fields (including a fake password
    and card number), click buttons, use Microsoft Edge on a test listing-editor page, open the
    live viewer and the inspector, kill the watcher to test crash recovery,
 4. runs a 15-second smoke test of the exe,
 5. installs, upgrades and uninstalls with the PowerShell scripts,
-6. uploads screenshots (`windows-test-output`) and the package (`MPPWatcher-win-x64`).
+6. uploads screenshots (`windows-test-output`) and the package (`MTLog-win-x64`).
 
 A phase is only called done when all of this is green.
 
@@ -23,7 +23,7 @@ recovery. Verified on Windows (see above).
 
 ## Phase 2 — UI Automation ✅
 Field values (finished values only), clicks on named controls, sensitive-field refusal,
-diagnostic inspector (`MPPWatcher.exe --inspect`). Windows-verified cases:
+diagnostic inspector (`MTLog.exe --inspect`). Windows-verified cases:
 WinForms fields/buttons/check box, password and card fields never recorded, settled value
 while typing stops, Microsoft Edge web page fields + button, inspector report incl. hidden
 password.
@@ -42,7 +42,7 @@ Found and fixed thanks to the real runs: pages read while still "Untitled"; Amaz
 ### Still worth checking on your own PCs
 Nothing here needs you before the next phase, but these can only be seen with your accounts:
 Keepa search box, Seller Central SKU/search fields, Etsy listing editor, Shopify product
-editor, Photoshop/InDesign/Excel. Open `MPPWatcher.exe --inspect`, point at the field, and
+editor, Photoshop/InDesign/Excel. Open `MTLog.exe --inspect`, point at the field, and
 press **Save report…** if something looks wrong.
 
 ## Phase 4 — files and business apps ✅
@@ -59,19 +59,19 @@ watched folders that live under AppData; Edge shows file dialogs from a helper p
 - Local event API for scripts (signed, localhost only) — see [LOCAL_API.md](LOCAL_API.md).
 - Watchdog Windows service (restarts a stopped watcher within ~30 s) — verified by killing the
   watcher on the test machine.
-- `MPPWatcherSetup.exe` (Inno Setup): wizard or silent install, Add/Remove Programs, upgrade keeps
+- `MTLogSetup.exe` (Inno Setup): wizard or silent install, Add/Remove Programs, upgrade keeps
   config, clean uninstall — verified by silent install → upgrade → uninstall on the test machine.
 
 ### Google Drive (done: Google Drive for desktop)
 - Default export folder: `{GoogleDrive}\My Drive\Personal\mpp activity`. The watcher finds the
   Google Drive letter by itself at every export (the drive with a `My Drive` folder, G: first).
   If Drive is closed or signed out, events stay pending on the PC and are exported later.
-- `MPPWatcher.exe --export-now` exports right away (also in the tray menu).
+- `MTLog.exe --export-now` exports right away (also in the tray menu).
 - Verified on the test machine with a `subst` drive that looks like Google Drive.
 - Not built: direct Drive API upload (needs a Google Cloud service-account key).
 
 ### Before a wide rollout
-- **Code-sign** `MPPWatcher.exe` and `MPPWatcherSetup.exe` (needs a code-signing certificate) so
+- **Code-sign** `MTLog.exe` and `MTLogSetup.exe` (needs a code-signing certificate) so
   SmartScreen and antivirus trust them.
 - Try the inspector on your real logged-in pages (Keepa, Seller Central, Etsy editor, Shopify) and
   in Photoshop/InDesign/Excel.

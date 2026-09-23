@@ -120,7 +120,7 @@ public sealed class LocalApiCollector : ICollector
     {
         var ctx = _ctx!;
         if (method == "GET" && path == "/v1/health")
-            return (200, new JsonObject { ["ok"] = true, ["service"] = "MPP Watcher", ["version"] = WatcherVersion.Current });
+            return (200, new JsonObject { ["ok"] = true, ["service"] = "MT Log", ["version"] = WatcherVersion.Current });
         if (path != "/v1/events") return (404, new JsonObject { ["error"] = "not found" });
         if (method != "POST") return (405, new JsonObject { ["error"] = "use POST" });
 

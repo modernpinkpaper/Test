@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Removes MPP Watcher. By default the config and the employees' collected data are KEPT.
+  Removes MT Log. By default the config and the employees' collected data are KEPT.
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File .\Uninstall-MppWatcher.ps1
@@ -8,17 +8,17 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$InstallDir = "$env:ProgramFiles\MPP Watcher",
+    [string]$InstallDir = "$env:ProgramFiles\MT Log",
     [switch]$RemoveConfig,
-    # Deletes every user's %LOCALAPPDATA%\MPP Watcher folder (database, logs, un-exported events!).
+    # Deletes every user's %LOCALAPPDATA%\MT Log folder (database, logs, un-exported events!).
     [switch]$RemoveUserData,
-    # Used by MPPWatcherSetup's uninstaller, which removes the program files itself.
+    # Used by MTLogSetup's uninstaller, which removes the program files itself.
     [switch]$KeepProgramFiles
 )
 
 $ErrorActionPreference = 'Stop'
-$TaskName = 'MPP Watcher'
-$ServiceName = 'MPPWatcherService'
+$TaskName = 'MT Log'
+$ServiceName = 'MTLogService'
 
 $id = [Security.Principal.WindowsIdentity]::GetCurrent()
 if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -36,27 +36,27 @@ if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
     Write-Host 'Logon task removed.'
 }
-$installedExe = Join-Path $InstallDir 'MPPWatcher.exe'
+$installedExe = Join-Path $InstallDir 'MTLog.exe'
 if (Test-Path $installedExe) {
     Start-Process -FilePath $installedExe -ArgumentList '--stop' -Wait -WindowStyle Hidden -ErrorAction SilentlyContinue
 }
-Get-Process -Name 'MPPWatcher' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-Process -Name 'MTLog' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 
 if (-not $KeepProgramFiles -and (Test-Path $InstallDir)) { Remove-Item -Recurse -Force $InstallDir; Write-Host "Removed $InstallDir" }
-$startMenu = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\MPP Watcher'
+$startMenu = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\MT Log'
 if (Test-Path $startMenu) { Remove-Item -Recurse -Force $startMenu }
 
-$configDir = Join-Path $env:ProgramData 'MPP Watcher'
+$configDir = Join-Path $env:ProgramData 'MT Log'
 if ($RemoveConfig -and (Test-Path $configDir)) { Remove-Item -Recurse -Force $configDir; Write-Host "Removed $configDir" }
 elseif (Test-Path $configDir) { Write-Host "Config kept: $configDir" }
 
 if ($RemoveUserData) {
     Get-ChildItem 'C:\Users' -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-        $p = Join-Path $_.FullName 'AppData\Local\MPP Watcher'
+        $p = Join-Path $_.FullName 'AppData\Local\MT Log'
         if (Test-Path $p) { Remove-Item -Recurse -Force $p; Write-Host "Removed $p" }
     }
 } else {
-    Write-Host 'Collected data kept in each user''s %LOCALAPPDATA%\MPP Watcher (use -RemoveUserData to delete).'
+    Write-Host 'Collected data kept in each user''s %LOCALAPPDATA%\MT Log (use -RemoveUserData to delete).'
 }
-Write-Host 'MPP Watcher uninstalled.' -ForegroundColor Green
+Write-Host 'MT Log uninstalled.' -ForegroundColor Green

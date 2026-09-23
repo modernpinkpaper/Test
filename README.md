@@ -1,6 +1,6 @@
-# MPP Watcher
+# MT Log
 
-MPP Watcher is a Windows background program for company-owned PCs. It writes a
+MT Log is a Windows background program for company-owned PCs. It writes a
 **structured activity log** (JSON events) that can later be analysed to understand
 what work was done, when, in which apps and websites, and for how long.
 
@@ -17,7 +17,7 @@ It never records password or payment fields. See [docs/PRIVACY.md](docs/PRIVACY.
 | 2 | UI Automation: finished field values, clicks on named controls, sensitive-field refusal, diagnostic inspector | **Done ✅** (tested on Windows incl. Edge) |
 | 3 | Browser context via UI Automation (URL, domain, page), Amazon/Seller Central/Keepa/Etsy/Shopify rules | **Done ✅** (passed two Windows runs in a row, Edge) |
 | 4 | Files, document names from app titles, files opened, print jobs, downloads/uploads | **Done ✅** (passed two Windows runs in a row) |
-| 5 | Local event API for scripts, `MPPWatcherSetup.exe`, watchdog service | **Done ✅** except Google Drive upload (waiting for your choice, see ROADMAP) |
+| 5 | Local event API for scripts, `MTLogSetup.exe`, watchdog service | **Done ✅** except Google Drive upload (waiting for your choice, see ROADMAP) |
 
 Details, test checklist and known limits: [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -48,7 +48,7 @@ Microsoft Edge: button clicked "Save listing" ★        (★ = key business act
 MPP UI Test Form: checkbox toggled "Gift wrap" → On
 ```
 
-Password, PIN, card, CVV, code fields are never recorded. `MPPWatcher.exe --inspect` shows
+Password, PIN, card, CVV, code fields are never recorded. `MTLog.exe --inspect` shows
 what Windows exposes for anything under the mouse:
 
 ![Inspector](docs/images/inspector-phase2.png)
@@ -62,14 +62,14 @@ and click is tied to it:
 
 ## Quick start (admin)
 
-1. Download the **MPPWatcher-win-x64** artifact from the latest GitHub Actions **build**
-   run and unzip it. It contains **`MPPWatcherSetup.exe`**.
-2. Double-click `MPPWatcherSetup.exe` (or, for many PCs, run it silently:
-   `MPPWatcherSetup.exe /VERYSILENT /SUPPRESSMSGBOXES /EMPLOYEEID=EMP001`).
-3. Open **Start Menu → MPP Watcher → MPP Watcher Live Viewer** and use the PC.
+1. Download the **MTLog-win-x64** artifact from the latest GitHub Actions **build**
+   run and unzip it. It contains **`MTLogSetup.exe`**.
+2. Double-click `MTLogSetup.exe` (or, for many PCs, run it silently:
+   `MTLogSetup.exe /VERYSILENT /SUPPRESSMSGBOXES /EMPLOYEEID=EMP001`).
+3. Open **Start Menu → MT Log → MT Log Live Viewer** and use the PC.
    Events appear within a second or two.
 
-Uninstall from **Settings → Apps → MPP Watcher** (settings and collected data are kept).
+Uninstall from **Settings → Apps → MT Log** (settings and collected data are kept).
 
 More: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
@@ -77,11 +77,11 @@ More: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 | What | Where |
 |---|---|
-| Program | `C:\Program Files\MPP Watcher\MPPWatcher.exe` |
-| Settings (admin) | `%ProgramData%\MPP Watcher\config.json` – see [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
-| Event database (per user) | `%LOCALAPPDATA%\MPP Watcher\data\events.db` |
-| Exported JSONL files | `G:\My Drive\Personal\mpp activity\<employee>\<date>\events_0900_1000_<PC>.jsonl` (Google Drive for desktop; the Drive letter is found automatically; folder is configurable). `MPPWatcher.exe --export-now` exports right away. |
-| Troubleshooting logs | `%LOCALAPPDATA%\MPP Watcher\logs\diagnostics-YYYY-MM-DD.log` |
+| Program | `C:\Program Files\MT Log\MTLog.exe` |
+| Settings (admin) | `%ProgramData%\MT Log\config.json` – see [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
+| Event database (per user) | `%LOCALAPPDATA%\MT Log\data\events.db` |
+| Exported JSONL files | `G:\My Drive\Personal\mpp activity\<employee>\<date>\events_0900_1000_<PC>.jsonl` (Google Drive for desktop; the Drive letter is found automatically; folder is configurable). `MTLog.exe --export-now` exports right away. |
+| Troubleshooting logs | `%LOCALAPPDATA%\MT Log\logs\diagnostics-YYYY-MM-DD.log` |
 
 ## Documentation
 

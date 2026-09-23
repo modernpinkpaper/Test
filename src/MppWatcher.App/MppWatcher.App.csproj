@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- MPPWatcher.exe: background agent (tray), live viewer and smoke test modes. -->
+  <!-- MTLog.exe: background agent (tray), live viewer and smoke test modes. -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <AssemblyName>MPPWatcher</AssemblyName>
+    <AssemblyName>MTLog</AssemblyName>
     <RootNamespace>MppWatcher.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>

@@ -1,6 +1,6 @@
 # Privacy and security
 
-MPP Watcher is for **company-owned PCs** to understand business work. It is built to
+MT Log is for **company-owned PCs** to understand business work. It is built to
 record *what kind of work* happened, not private content.
 
 ## Never collected (by design, not by setting)
@@ -114,14 +114,14 @@ and checkout/payment/login URLs.
 
 ## Where data lives and who can see it
 
-- Each Windows user's events are stored under their own `%LOCALAPPDATA%\MPP Watcher`
+- Each Windows user's events are stored under their own `%LOCALAPPDATA%\MT Log`
   (normal Windows file permissions).
-- The config in `%ProgramData%\MPP Watcher` is readable by users, writable only by admins.
+- The config in `%ProgramData%\MT Log` is readable by users, writable only by admins.
 - Exports go only where the admin configures. No data leaves the PC otherwise.
   There is no network code in Phases 1–3 (the watcher only reads what is on screen).
 
 ## Transparency
 
-By default a tray icon says *"MPP Watcher – activity logging is on"*. We recommend
+By default a tray icon says *"MT Log – activity logging is on"*. We recommend
 telling employees in writing what is collected (this document can be shared) and
 checking local law on workplace monitoring and notice.

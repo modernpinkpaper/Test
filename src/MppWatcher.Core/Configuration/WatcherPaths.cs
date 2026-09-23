@@ -3,13 +3,13 @@ namespace MppWatcher.Core.Configuration;
 /// <summary>Resolves the standard folders. Everything can be overridden in config.json.</summary>
 public static class WatcherPaths
 {
-    public const string ProductFolderName = "MPP Watcher";
+    public const string ProductFolderName = "MT Log";
 
-    /// <summary>Machine-wide config, managed by the admin / installer: %ProgramData%\MPP Watcher\config.json.</summary>
+    /// <summary>Machine-wide config, managed by the admin / installer: %ProgramData%\MT Log\config.json.</summary>
     public static string DefaultConfigPath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), ProductFolderName, "config.json");
 
-    /// <summary>Per-user base folder: %LOCALAPPDATA%\MPP Watcher.</summary>
+    /// <summary>Per-user base folder: %LOCALAPPDATA%\MT Log.</summary>
     public static string UserBaseFolder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ProductFolderName);
 

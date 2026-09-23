@@ -72,7 +72,7 @@ public static class UiEventFactory
 
     /// <summary>
     /// Human-readable report for the diagnostic inspector: what Windows exposes about the
-    /// element and what MPP Watcher would do with it. Sensitive values are never shown.
+    /// element and what MT Log would do with it. Sensitive values are never shown.
     /// </summary>
     public static string InspectionReport(UiElementInfo e, UiFieldDecision field, UiActionDecision action)
     {

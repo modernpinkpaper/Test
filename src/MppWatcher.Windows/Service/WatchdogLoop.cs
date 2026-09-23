@@ -6,7 +6,7 @@ namespace MppWatcher.Windows.Service;
 
 /// <summary>
 /// The watchdog's work: every 30 seconds, for each signed-in user with an active desktop, make sure
-/// that user's MPP Watcher is running; if not, start it in their session. At most 5 restarts per
+/// that user's MT Log is running; if not, start it in their session. At most 5 restarts per
 /// user per hour. Does nothing if the admin allows employees to exit the watcher.
 /// </summary>
 public sealed class WatchdogLoop
@@ -42,7 +42,7 @@ public sealed class WatchdogLoop
                 }
                 var pid = SessionLauncher.StartInSession(session.SessionId, _exe, "");
                 list.Add(DateTime.UtcNow);
-                _log.Info("watchdog", $"Started MPP Watcher for {session.Domain}\\{session.UserName} in session {session.SessionId} (pid {pid})");
+                _log.Info("watchdog", $"Started MT Log for {session.Domain}\\{session.UserName} in session {session.SessionId} (pid {pid})");
             }
             catch (Exception e)
             {
@@ -54,7 +54,7 @@ public sealed class WatchdogLoop
     /// <summary>The background watcher (no --viewer/--inspect/--service argument) is running in that session.</summary>
     private static bool AgentRunningIn(int sessionId)
     {
-        using var searcher = new ManagementObjectSearcher($"SELECT CommandLine FROM Win32_Process WHERE Name = 'MPPWatcher.exe' AND SessionId = {sessionId}");
+        using var searcher = new ManagementObjectSearcher($"SELECT CommandLine FROM Win32_Process WHERE Name = 'MTLog.exe' AND SessionId = {sessionId}");
         foreach (var p in searcher.Get())
         {
             var cmd = p["CommandLine"]?.ToString() ?? "";

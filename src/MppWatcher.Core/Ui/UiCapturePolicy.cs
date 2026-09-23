@@ -10,7 +10,7 @@ public sealed record UiActionDecision(bool Log, string? Action, string? ControlN
 
 /// <summary>
 /// The single place that decides what UI information may be recorded. The collector and the
-/// diagnostic inspector both use it, so "would MPP Watcher log this?" is always answered the
+/// diagnostic inspector both use it, so "would MT Log log this?" is always answered the
 /// same way. Sensitive fields are refused before anything else is considered.
 /// </summary>
 public sealed class UiCapturePolicy

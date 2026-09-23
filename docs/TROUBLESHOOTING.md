@@ -1,15 +1,15 @@
 # Troubleshooting
 
-First look at the diagnostics log: `%LOCALAPPDATA%\MPP Watcher\logs\diagnostics-YYYY-MM-DD.log`
+First look at the diagnostics log: `%LOCALAPPDATA%\MT Log\logs\diagnostics-YYYY-MM-DD.log`
 (tray → **Open diagnostic logs**). Set `"debug_mode": true` for more detail.
 
 | Problem | What to check |
 |---|---|
-| No tray icon | Task Scheduler → "MPP Watcher" → History / Last Run Result. Is `show_tray_icon` false? Is `MPPWatcher.exe` in Task Manager → Details? |
-| Watcher not starting at logon | Task exists? Run `Start-ScheduledTask "MPP Watcher"`. Check the task's user group is "Users". |
+| No tray icon | Task Scheduler → "MT Log" → History / Last Run Result. Is `show_tray_icon` false? Is `MTLog.exe` in Task Manager → Details? |
+| Watcher not starting at logon | Task exists? Run `Start-ScheduledTask "MT Log"`. Check the task's user group is "Users". |
 | Viewer says "Watcher NOT running" | The agent is not running in *this* Windows session. Start it from the Start Menu task or sign out/in. |
 | Viewer says "Waiting for database" | The watcher has not written yet, or runs with a different `data_folder`/`--data`. |
-| No `app_session_*` events | Windows may be blocking foreground info (remote session without desktop, locked screen). Run `MPPWatcher.exe --smoke-test 20` and read the report. |
+| No `app_session_*` events | Windows may be blocking foreground info (remote session without desktop, locked screen). Run `MTLog.exe --smoke-test 20` and read the report. |
 | Elevated (admin) apps show only a name | Normal: an un-elevated program can read the title and exe path of elevated windows, but Phase 2 UI Automation will be limited for them. |
 | Store apps show as `ApplicationFrameHost` | Should be resolved automatically; if not, report the window title. |
 | Sessions too short / too many | Increase `title_stable_ms`, or set `split_sessions_on_title_change` to false. |
@@ -24,10 +24,10 @@ First look at the diagnostics log: `%LOCALAPPDATA%\MPP Watcher\logs\diagnostics-
 
 ```powershell
 # self-test with a report
-& "C:\Program Files\MPP Watcher\MPPWatcher.exe" --smoke-test 20 --result C:\Temp\smoke.txt
+& "C:\Program Files\MT Log\MTLog.exe" --smoke-test 20 --result C:\Temp\smoke.txt
 
 # restart the watcher for all signed-in users
-Stop-ScheduledTask "MPP Watcher"; Get-Process MPPWatcher -ea 0 | Stop-Process -Force; Start-ScheduledTask "MPP Watcher"
+Stop-ScheduledTask "MT Log"; Get-Process MTLog -ea 0 | Stop-Process -Force; Start-ScheduledTask "MT Log"
 ```
 
 The database is plain SQLite and can be opened with "DB Browser for SQLite" (read-only

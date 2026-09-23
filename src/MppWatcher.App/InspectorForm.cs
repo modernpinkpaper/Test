@@ -10,7 +10,7 @@ namespace MppWatcher.App;
 /// Diagnostic inspector: "What does Windows currently expose?"
 /// Point the mouse at anything (or click into a field with "Focused element" on) and see the
 /// control type, name, value, automation id, patterns, whether it is sensitive, and whether
-/// MPP Watcher would log it. F8 freezes the display so you can move the mouse away.
+/// MT Log would log it. F8 freezes the display so you can move the mouse away.
 /// Sensitive values are never shown.
 /// </summary>
 internal sealed class InspectorForm : Form
@@ -36,7 +36,7 @@ internal sealed class InspectorForm : Form
         _config = new ConfigProvider(configPath, MppWatcher.Core.Diagnostics.NullDiagnosticLog.Instance);
         _policy = new UiCapturePolicy(() => _config.Current);
 
-        Text = "MPP Watcher – Diagnostic Inspector";
+        Text = "MT Log – Diagnostic Inspector";
         Icon = AppIcon.Get();
         Width = 640;
         Height = 720;

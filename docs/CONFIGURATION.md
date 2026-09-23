@@ -1,6 +1,6 @@
 # Configuration
 
-File: `%ProgramData%\MPP Watcher\config.json` (created by the installer; employees can
+File: `%ProgramData%\MT Log\config.json` (created by the installer; employees can
 read but not edit it). Full default file: [config/config.example.json](../config/config.example.json).
 
 - Keys are `snake_case`. Missing keys use defaults. `//` comments and trailing commas are allowed.
@@ -23,8 +23,8 @@ read but not edit it). Full default file: [config/config.example.json](../config
 | `debug_mode` | `false` | More detail in the diagnostics log. |
 | `show_tray_icon` | `true` | Tray icon telling the employee logging is on. |
 | `allow_user_exit` | `false` | Show "Exit" in the tray menu. |
-| `data_folder` | `""` | Empty = `%LOCALAPPDATA%\MPP Watcher\data`. Environment variables allowed. |
-| `log_folder` | `""` | Empty = `%LOCALAPPDATA%\MPP Watcher\logs`. |
+| `data_folder` | `""` | Empty = `%LOCALAPPDATA%\MT Log\data`. Environment variables allowed. |
+| `log_folder` | `""` | Empty = `%LOCALAPPDATA%\MT Log\logs`. |
 
 ## `collectors.activity`
 
@@ -114,7 +114,7 @@ See [PRIVACY.md](PRIVACY.md).
 |---|---|---|
 | `enabled` | `true` | |
 | `uploader` | `"local_folder"` | `google_drive` planned. |
-| `destination_folder` | `"{GoogleDrive}\\My Drive\\Personal\\mpp activity"` | `{GoogleDrive}` = the Google Drive for desktop drive, found automatically at every export (G: first). Files go to `<folder>\<employee>\<date>\events_0900_1000_<PC>.jsonl`. Can also be a plain folder or network share (`\\server\logs`). Empty = `%LOCALAPPDATA%\MPP Watcher\export\MPP Activity Logs`. If the folder is not reachable, events wait on the PC and retry. |
+| `destination_folder` | `"{GoogleDrive}\\My Drive\\Personal\\mpp activity"` | `{GoogleDrive}` = the Google Drive for desktop drive, found automatically at every export (G: first). Files go to `<folder>\<employee>\<date>\events_0900_1000_<PC>.jsonl`. Can also be a plain folder or network share (`\\server\logs`). Empty = `%LOCALAPPDATA%\MT Log\export\MPP Activity Logs`. If the folder is not reachable, events wait on the PC and retry. |
 | `interval_minutes` | `15` | |
 | `batch_size` | `2000` | |
 

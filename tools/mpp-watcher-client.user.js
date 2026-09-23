@@ -1,11 +1,11 @@
-// MPP Watcher — helper for Tampermonkey / Violentmonkey scripts.
+// MT Log — helper for Tampermonkey / Violentmonkey scripts.
 // Paste this into your userscript (or @require it) and call mppReport({...}) when the script does work.
 //
 // Your script header needs:
 //   // @grant        GM_xmlhttpRequest
 //   // @connect      127.0.0.1
 //
-// MPP_SECRET must match "local_api.shared_secret" in %ProgramData%\MPP Watcher\config.json
+// MPP_SECRET must match "local_api.shared_secret" in %ProgramData%\MT Log\config.json
 // (ask the admin). Events are only accepted from this PC, signed with this secret.
 
 const MPP_SECRET = 'PUT-THE-SHARED-SECRET-HERE';

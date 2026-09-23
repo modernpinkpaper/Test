@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!-- Real-Windows tests: open windows, switch focus, wait for idle, start/stop programs,
-       run MPPWatcher.exe. Run on Windows only (CI windows job). -->
+       run MTLog.exe. Run on Windows only (CI windows job). -->
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>

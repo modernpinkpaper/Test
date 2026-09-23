@@ -9,7 +9,7 @@ using Xunit.Abstractions;
 namespace MppWatcher.Windows.Tests;
 
 /// <summary>
-/// Phase 4 end to end with the real MPPWatcher.exe: files, documents in app titles, files opened
+/// Phase 4 end to end with the real MTLog.exe: files, documents in app titles, files opened
 /// through Windows, print jobs, and files picked for upload in a browser.
 /// </summary>
 public sealed class Phase4EndToEndTests : IDisposable

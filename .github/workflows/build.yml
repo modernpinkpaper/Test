@@ -28,7 +28,7 @@ jobs:
         run: dotnet build -c Release
       - name: Unit tests
         run: dotnet test tests/MppWatcher.Core.Tests -c Release --no-build
-      - name: Publish MPPWatcher.exe
+      - name: Publish MTLog.exe
         run: dotnet publish src/MppWatcher.App -c Release -o publish
       - name: Create a test printer (Microsoft Print To PDF to a file)
         shell: powershell
@@ -40,8 +40,8 @@ jobs:
       - name: Windows tests (real windows, idle, processes, the published exe)
         shell: pwsh
         env:
-          MPPWATCHER_EXE: ${{ github.workspace }}\publish\MPPWatcher.exe
-          MPPWATCHER_SCREENSHOTS: ${{ github.workspace }}\test-output\screenshots
+          MTLOG_EXE: ${{ github.workspace }}\publish\MTLog.exe
+          MTLOG_SCREENSHOTS: ${{ github.workspace }}\test-output\screenshots
         run: >
           dotnet test tests/MppWatcher.Windows.Tests -c Release --no-build
           --logger "console;verbosity=detailed" --logger "trx;LogFileName=windows-tests.trx"
@@ -52,7 +52,7 @@ jobs:
           $result = Join-Path $env:RUNNER_TEMP 'smoke.txt'
           $smokeArgs = @('--smoke-test', '15', '--config', (Join-Path $env:RUNNER_TEMP 'no-config.json'),
                     '--data', (Join-Path $env:RUNNER_TEMP 'smoke-data'), '--result', $result)
-          $p = Start-Process -FilePath 'publish\MPPWatcher.exe' -ArgumentList $smokeArgs -Wait -PassThru
+          $p = Start-Process -FilePath 'publish\MTLog.exe' -ArgumentList $smokeArgs -Wait -PassThru
           Get-Content $result
           exit $p.ExitCode
       - name: Installer test (install, upgrade keeps config, uninstall)
@@ -60,90 +60,90 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           function Check($ok, $what) { if ($ok) { Write-Host "[PASS] $what" } else { Write-Host "[FAIL] $what"; exit 1 } }
-          $dir = "$env:ProgramFiles\MPP Watcher"
-          $cfg = "$env:ProgramData\MPP Watcher\config.json"
+          $dir = "$env:ProgramFiles\MT Log"
+          $cfg = "$env:ProgramData\MT Log\config.json"
 
           powershell -ExecutionPolicy Bypass -File installer\Install-MppWatcher.ps1 -SourceFolder publish -EmployeeId EMP-CI
           Check ($LASTEXITCODE -eq 0) 'install script succeeded'
-          Check (Test-Path "$dir\MPPWatcher.exe") 'exe installed'
+          Check (Test-Path "$dir\MTLog.exe") 'exe installed'
           Check ((Get-Content $cfg -Raw) -match 'EMP-CI') 'config created with employee id'
-          $task = Get-ScheduledTask -TaskName 'MPP Watcher'
+          $task = Get-ScheduledTask -TaskName 'MT Log'
           Check ($null -ne $task) 'logon task registered'
           Check ($task.Triggers[0].Repetition.Interval -eq 'PT5M') 'task re-checks every 5 minutes'
           Check ($task.Principal.GroupId -ne $null) 'task runs for every user (group principal)'
           $running = $false
-          for ($i = 0; $i -lt 40 -and -not $running; $i++) { Start-Sleep -Milliseconds 500; $running = [bool](Get-Process MPPWatcher -ErrorAction SilentlyContinue) }
+          for ($i = 0; $i -lt 40 -and -not $running; $i++) { Start-Sleep -Milliseconds 500; $running = [bool](Get-Process MTLog -ErrorAction SilentlyContinue) }
           Write-Host "[INFO] watcher started by the scheduled task: $running"
-          Check (Test-Path "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\MPP Watcher\MPP Watcher Live Viewer.lnk") 'viewer shortcut created'
-          $svc = Get-Service -Name 'MPPWatcherService' -ErrorAction SilentlyContinue
+          Check (Test-Path "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\MT Log\MT Log Live Viewer.lnk") 'viewer shortcut created'
+          $svc = Get-Service -Name 'MTLogService' -ErrorAction SilentlyContinue
           Check ($null -ne $svc -and $svc.Status -eq 'Running') 'watchdog service installed and running'
           Check ($svc.StartType -eq 'Automatic') 'watchdog starts with Windows'
 
           # Watchdog: kill the watcher, it must come back in this session within ~70 s.
-          Get-CimInstance Win32_Process -Filter "Name='MPPWatcher.exe'" | Where-Object { $_.CommandLine -notmatch '--service' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+          Get-CimInstance Win32_Process -Filter "Name='MTLog.exe'" | Where-Object { $_.CommandLine -notmatch '--service' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
           Start-Sleep -Seconds 2
           $back = $false
           for ($i = 0; $i -lt 70 -and -not $back; $i++) {
             Start-Sleep -Seconds 1
-            $back = [bool](Get-CimInstance Win32_Process -Filter "Name='MPPWatcher.exe'" | Where-Object { $_.CommandLine -notmatch '--service' })
+            $back = [bool](Get-CimInstance Win32_Process -Filter "Name='MTLog.exe'" | Where-Object { $_.CommandLine -notmatch '--service' })
           }
-          Get-Content "$env:ProgramData\MPP Watcher\logs\*.log" -ErrorAction SilentlyContinue | Select-Object -Last 20
+          Get-Content "$env:ProgramData\MT Log\logs\*.log" -ErrorAction SilentlyContinue | Select-Object -Last 20
           Check $back 'watchdog restarted the killed watcher'
 
           (Get-Content $cfg -Raw) -replace '"idle_timeout_seconds":\s*300', '"idle_timeout_seconds": 240' | Set-Content $cfg
           powershell -ExecutionPolicy Bypass -File installer\Install-MppWatcher.ps1 -SourceFolder publish -NoStart
           Check ($LASTEXITCODE -eq 0) 'upgrade install succeeded'
           Check ((Get-Content $cfg -Raw) -match '"idle_timeout_seconds":\s*240') 'upgrade kept the existing config'
-          Check (-not (Get-Process MPPWatcher -ErrorAction SilentlyContinue)) 'running watcher was stopped for the upgrade'
+          Check (-not (Get-Process MTLog -ErrorAction SilentlyContinue)) 'running watcher was stopped for the upgrade'
 
           powershell -ExecutionPolicy Bypass -File installer\Uninstall-MppWatcher.ps1
           Check ($LASTEXITCODE -eq 0) 'uninstall succeeded'
-          Check (-not (Test-Path "$dir\MPPWatcher.exe")) 'program removed'
-          Check ($null -eq (Get-ScheduledTask -TaskName 'MPP Watcher' -ErrorAction SilentlyContinue)) 'task removed'
-          Check ($null -eq (Get-Service -Name 'MPPWatcherService' -ErrorAction SilentlyContinue)) 'watchdog service removed'
-          Check (-not (Get-Process MPPWatcher -ErrorAction SilentlyContinue)) 'no watcher left running'
+          Check (-not (Test-Path "$dir\MTLog.exe")) 'program removed'
+          Check ($null -eq (Get-ScheduledTask -TaskName 'MT Log' -ErrorAction SilentlyContinue)) 'task removed'
+          Check ($null -eq (Get-Service -Name 'MTLogService' -ErrorAction SilentlyContinue)) 'watchdog service removed'
+          Check (-not (Get-Process MTLog -ErrorAction SilentlyContinue)) 'no watcher left running'
           Check (Test-Path $cfg) 'config kept by default'
           powershell -ExecutionPolicy Bypass -File installer\Uninstall-MppWatcher.ps1 -RemoveConfig
           Check (-not (Test-Path $cfg)) 'config removed with -RemoveConfig'
-      - name: Build MPPWatcherSetup.exe (Inno Setup)
+      - name: Build MTLogSetup.exe (Inno Setup)
         shell: pwsh
         run: |
           $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
           if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
-          & $iscc /Q /DAppVersion=0.1.0 installer\MPPWatcherSetup.iss
+          & $iscc /Q /DAppVersion=0.1.0 installer\MTLogSetup.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Get-Item setup-output\MPPWatcherSetup.exe | Format-List Name, Length
+          Get-Item setup-output\MTLogSetup.exe | Format-List Name, Length
       - name: Setup exe test (silent install, upgrade, uninstall from Apps)
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
           function Check($ok, $what) { if ($ok) { Write-Host "[PASS] $what" } else { Write-Host "[FAIL] $what"; exit 1 } }
-          $dir = "$env:ProgramFiles\MPP Watcher"
-          $cfg = "$env:ProgramData\MPP Watcher\config.json"
+          $dir = "$env:ProgramFiles\MT Log"
+          $cfg = "$env:ProgramData\MT Log\config.json"
           $uninstallKey = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{8C1F2E7A-5B3D-4E91-9A64-3F2D7C0B1E55}_is1'
 
-          $p = Start-Process setup-output\MPPWatcherSetup.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/EMPLOYEEID=EMP-SETUP', "/LOG=$env:RUNNER_TEMP\setup.log" -Wait -PassThru
+          $p = Start-Process setup-output\MTLogSetup.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/EMPLOYEEID=EMP-SETUP', "/LOG=$env:RUNNER_TEMP\setup.log" -Wait -PassThru
           Check ($p.ExitCode -eq 0) 'setup exe finished'
-          Check (Test-Path "$dir\MPPWatcher.exe") 'exe installed'
+          Check (Test-Path "$dir\MTLog.exe") 'exe installed'
           Check ((Get-Content $cfg -Raw) -match 'EMP-SETUP') 'employee id from the command line is in the config'
-          Check ($null -ne (Get-ScheduledTask -TaskName 'MPP Watcher' -ErrorAction SilentlyContinue)) 'logon task registered'
-          Check ((Get-Service MPPWatcherService).Status -eq 'Running') 'watchdog running'
+          Check ($null -ne (Get-ScheduledTask -TaskName 'MT Log' -ErrorAction SilentlyContinue)) 'logon task registered'
+          Check ((Get-Service MTLogService).Status -eq 'Running') 'watchdog running'
           Check (Test-Path $uninstallKey) 'listed in Add or remove programs'
           Check ((Get-ItemProperty $uninstallKey).DisplayVersion -eq '0.1.0') 'version shown in Apps'
           $running = $false
-          for ($i = 0; $i -lt 60 -and -not $running; $i++) { Start-Sleep -Seconds 1; $running = [bool](Get-CimInstance Win32_Process -Filter "Name='MPPWatcher.exe'" | Where-Object { $_.CommandLine -notmatch '--service' }) }
+          for ($i = 0; $i -lt 60 -and -not $running; $i++) { Start-Sleep -Seconds 1; $running = [bool](Get-CimInstance Win32_Process -Filter "Name='MTLog.exe'" | Where-Object { $_.CommandLine -notmatch '--service' }) }
           Check $running 'watcher running after setup'
 
           (Get-Content $cfg -Raw) -replace '"idle_timeout_seconds":\s*\d+', '"idle_timeout_seconds": 180' | Set-Content $cfg
-          $p = Start-Process setup-output\MPPWatcherSetup.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
+          $p = Start-Process setup-output\MTLogSetup.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
           Check ($p.ExitCode -eq 0) 'upgrade with setup exe finished'
           Check ((Get-Content $cfg -Raw) -match '"idle_timeout_seconds":\s*180') 'upgrade kept the existing config'
 
           Start-Process "$dir\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait
-          for ($i = 0; $i -lt 60 -and (Test-Path "$dir\MPPWatcher.exe"); $i++) { Start-Sleep -Seconds 1 }
-          Check (-not (Test-Path "$dir\MPPWatcher.exe")) 'uninstalled program files'
-          Check ($null -eq (Get-ScheduledTask -TaskName 'MPP Watcher' -ErrorAction SilentlyContinue)) 'task removed'
-          Check ($null -eq (Get-Service -Name 'MPPWatcherService' -ErrorAction SilentlyContinue)) 'watchdog removed'
+          for ($i = 0; $i -lt 60 -and (Test-Path "$dir\MTLog.exe"); $i++) { Start-Sleep -Seconds 1 }
+          Check (-not (Test-Path "$dir\MTLog.exe")) 'uninstalled program files'
+          Check ($null -eq (Get-ScheduledTask -TaskName 'MT Log' -ErrorAction SilentlyContinue)) 'task removed'
+          Check ($null -eq (Get-Service -Name 'MTLogService' -ErrorAction SilentlyContinue)) 'watchdog removed'
           Check (-not (Test-Path $uninstallKey)) 'removed from Add or remove programs'
           Check (Test-Path $cfg) 'config kept after uninstall'
       - uses: actions/upload-artifact@v4
@@ -156,8 +156,8 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force package | Out-Null
-          Copy-Item publish\MPPWatcher.exe package\
-          Copy-Item setup-output\MPPWatcherSetup.exe package\
+          Copy-Item publish\MTLog.exe package\
+          Copy-Item setup-output\MTLogSetup.exe package\
           Copy-Item docs\LOCAL_API.md package\
           Copy-Item tools\mpp-watcher-client.user.js package\
           Copy-Item installer\*.ps1 package\
@@ -165,6 +165,6 @@ jobs:
           Copy-Item docs\PRIVACY.md package\
       - uses: actions/upload-artifact@v4
         with:
-          name: MPPWatcher-win-x64
+          name: MTLog-win-x64
           path: package/
           if-no-files-found: error

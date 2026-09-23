@@ -3,10 +3,10 @@ namespace MppWatcher.App;
 internal enum RunMode { Agent, Viewer, Inspect, Service, SmokeTest, Stop, ExportNow, WriteDefaultConfig, Version, Help }
 
 /// <summary>
-/// MPPWatcher.exe                       run the background watcher (normal mode, started at logon)
-/// MPPWatcher.exe --viewer              open the live test viewer
-/// MPPWatcher.exe --smoke-test 20       run the watcher for 20 seconds, write a report, exit (0 = OK)
-/// MPPWatcher.exe --write-default-config &lt;path&gt;   write a config.json with all defaults
+/// MTLog.exe                       run the background watcher (normal mode, started at logon)
+/// MTLog.exe --viewer              open the live test viewer
+/// MTLog.exe --smoke-test 20       run the watcher for 20 seconds, write a report, exit (0 = OK)
+/// MTLog.exe --write-default-config &lt;path&gt;   write a config.json with all defaults
 /// Options: --config &lt;path&gt;  use another config file; --data &lt;folder&gt;  override data folder;
 ///          --result &lt;file&gt;  smoke test report path.
 /// </summary>
@@ -44,20 +44,20 @@ internal sealed record CommandLine(RunMode Mode, string? ConfigPath, string? Dat
     }
 
     public const string HelpText = """
-        MPP Watcher
+        MT Log
 
-          MPPWatcher.exe                          Run the background watcher (normal mode).
-          MPPWatcher.exe --viewer                 Open the live test viewer.
-          MPPWatcher.exe --inspect                Diagnostic inspector: what does Windows expose here?
-          MPPWatcher.exe --smoke-test [seconds]   Run briefly, write a report, exit 0 if OK.
-          MPPWatcher.exe --stop                   Ask the watcher in this Windows session to stop cleanly.
-          MPPWatcher.exe --export-now             Ask the watcher in this Windows session to export its logs now.
-          MPPWatcher.exe --service                (Windows service) watchdog that restarts stopped watchers.
-          MPPWatcher.exe --write-default-config <path>
-          MPPWatcher.exe --version
+          MTLog.exe                          Run the background watcher (normal mode).
+          MTLog.exe --viewer                 Open the live test viewer.
+          MTLog.exe --inspect                Diagnostic inspector: what does Windows expose here?
+          MTLog.exe --smoke-test [seconds]   Run briefly, write a report, exit 0 if OK.
+          MTLog.exe --stop                   Ask the watcher in this Windows session to stop cleanly.
+          MTLog.exe --export-now             Ask the watcher in this Windows session to export its logs now.
+          MTLog.exe --service                (Windows service) watchdog that restarts stopped watchers.
+          MTLog.exe --write-default-config <path>
+          MTLog.exe --version
 
         Options:
-          --config <path>    Config file (default %ProgramData%\MPP Watcher\config.json)
+          --config <path>    Config file (default %ProgramData%\MT Log\config.json)
           --data <folder>    Data folder override (database, checkpoint)
           --result <file>    Smoke test report file
         """;

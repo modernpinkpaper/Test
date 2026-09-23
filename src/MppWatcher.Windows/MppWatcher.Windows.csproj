@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="MPPWatcher" />
+    <InternalsVisibleTo Include="MTLog" />
     <InternalsVisibleTo Include="MppWatcher.Windows.Tests" />
   </ItemGroup>
 

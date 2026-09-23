@@ -16,7 +16,7 @@ internal static class SmokeTest
 {
     public static int Run(string configPath, string? dataFolder, int seconds, string? resultPath, IDiagnosticLog log)
     {
-        dataFolder ??= Path.Combine(Path.GetTempPath(), "MPPWatcher-smoke-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+        dataFolder ??= Path.Combine(Path.GetTempPath(), "MTLog-smoke-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
         var report = new StringBuilder();
         var ok = true;
         try
@@ -31,7 +31,7 @@ internal static class SmokeTest
             using var store = new SqliteEventStore(runtime.Paths.DatabasePath, runtime.Paths.FallbackFolder, readOnly: true);
             var events = store.ReadAfter(0, 100_000).Select(r => r.Event).ToList();
 
-            report.AppendLine($"MPP Watcher smoke test — ran {seconds}s");
+            report.AppendLine($"MT Log smoke test — ran {seconds}s");
             report.AppendLine($"Database: {runtime.Paths.DatabasePath}");
             report.AppendLine($"Memory at end: {status["memory_mb"]} MB, CPU total: {status["cpu_seconds_total"]} s");
             report.AppendLine();

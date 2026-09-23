@@ -25,10 +25,10 @@ public sealed class WatcherConfig
     [JsonPropertyName("show_tray_icon")] public bool ShowTrayIcon { get; set; } = true;
     [JsonPropertyName("allow_user_exit")] public bool AllowUserExit { get; set; }
 
-    /// <summary>Where the SQLite database lives. Empty = %LOCALAPPDATA%\MPP Watcher\data.</summary>
+    /// <summary>Where the SQLite database lives. Empty = %LOCALAPPDATA%\MT Log\data.</summary>
     [JsonPropertyName("data_folder")] public string DataFolder { get; set; } = "";
 
-    /// <summary>Where diagnostic (troubleshooting) logs go. Empty = %LOCALAPPDATA%\MPP Watcher\logs.</summary>
+    /// <summary>Where diagnostic (troubleshooting) logs go. Empty = %LOCALAPPDATA%\MT Log\logs.</summary>
     [JsonPropertyName("log_folder")] public string LogFolder { get; set; } = "";
 
     [JsonPropertyName("collectors")] public CollectorsConfig Collectors { get; set; } = new();
@@ -60,7 +60,7 @@ public sealed class LocalApiConfig
 
     /// <summary>
     /// Shared secret used to sign requests (HMAC-SHA256). Empty = a random secret is created per user in
-    /// %LOCALAPPDATA%\MPP Watcher\api-secret.txt. Set it here to use one secret in all company scripts.
+    /// %LOCALAPPDATA%\MT Log\api-secret.txt. Set it here to use one secret in all company scripts.
     /// </summary>
     [JsonPropertyName("shared_secret")] public string SharedSecret { get; set; } = "";
 
@@ -207,7 +207,7 @@ public sealed class ProcessCollectorConfig
         "LockApp", "UserOOBEBroker", "SecurityHealthSystray", "SecurityHealthService", "MsMpEng", "NisSrv",
         "crashpad_handler", "msedgewebview2", "identity_helper", "GoogleCrashHandler*", "MicrosoftEdgeUpdate",
         "OneDrive.Sync.Service", "FileCoAuth", "CrossDeviceResume", "PhoneExperienceHost", "AggregatorHost",
-        "MPPWatcher",
+        "MTLog",
     };
 
     /// <summary>
@@ -278,7 +278,7 @@ public sealed class ExportConfig
 
     /// <summary>
     /// Files go to &lt;folder&gt;\&lt;employee&gt;\&lt;date&gt;\. "{GoogleDrive}" = the Google Drive for desktop drive (found automatically).
-    /// Empty = %LOCALAPPDATA%\MPP Watcher\export\MPP Activity Logs.
+    /// Empty = %LOCALAPPDATA%\MT Log\export\MPP Activity Logs.
     /// </summary>
     [JsonPropertyName("destination_folder")] public string DestinationFolder { get; set; } = DefaultDestinationFolder;
 

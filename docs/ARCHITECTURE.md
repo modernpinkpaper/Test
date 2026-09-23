@@ -3,7 +3,7 @@
 ## Big picture
 
 ```
- ┌──────────────────────── MPPWatcher.exe (runs as the signed-in employee) ───────────────────────┐
+ ┌──────────────────────── MTLog.exe (runs as the signed-in employee) ───────────────────────┐
  │                                                                                                 │
  │  Collectors (each isolated)            Pipeline (one path for every event)        Storage       │
  │  ┌──────────────────────────┐      ┌───────────────────────────────────────┐   ┌────────────┐ │
@@ -19,7 +19,7 @@
  │  └──────────────────────────┘                                            folder; Drive next)  │
  │  Tray icon · heartbeat · retention · diagnostics log                                           │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
-          ▲ started at logon by Task Scheduler              MPPWatcher.exe --viewer reads events.db
+          ▲ started at logon by Task Scheduler              MTLog.exe --viewer reads events.db
 ```
 
 ## Why a per-user program and not only a Windows service
@@ -31,7 +31,7 @@ inside the employee's own session. So:
 
 - The **collector runs as a normal program in the user's session**, started at logon by
   Task Scheduler (no BAT file, no user action). It runs un-elevated as that user.
-- A small Windows **service is the watchdog** (`MPPWatcher.exe --service`, LocalSystem): every
+- A small Windows **service is the watchdog** (`MTLog.exe --service`, LocalSystem): every
   30 s it checks each signed-in user with an active desktop and, if their watcher is not running,
   starts it in that user's session (WTSQueryUserToken + CreateProcessAsUser). The logon task also
   re-checks every 5 minutes. The service records nothing itself.
@@ -40,7 +40,7 @@ inside the employee's own session. So:
 
 - Direct access to Win32 (window hooks, `GetLastInputInfo`) and, for Phase 2,
   the managed UI Automation API — no bridges.
-- One self-contained `MPPWatcher.exe` (no .NET install needed on employee PCs).
+- One self-contained `MTLog.exe` (no .NET install needed on employee PCs).
 - `Microsoft.Data.Sqlite` for a reliable local database.
 - Most logic is plain .NET and is unit-tested on any OS.
 
@@ -50,7 +50,7 @@ inside the employee's own session. So:
 |---|---|---|
 | `src/MppWatcher.Core` | any OS | event model, config, privacy, session tracker, idle detector, process tracker, pipeline, SQLite store, export, runtime wiring |
 | `src/MppWatcher.Windows` | Windows | Win32 interop, `WindowsActivityCollector`, `WindowsProcessSource` |
-| `src/MppWatcher.App` | Windows | `MPPWatcher.exe`: tray agent, live viewer, smoke test |
+| `src/MppWatcher.App` | Windows | `MTLog.exe`: tray agent, live viewer, smoke test |
 | `tests/MppWatcher.Core.Tests` | any OS | 100+ unit tests |
 | `installer/` | Windows | install / uninstall PowerShell (Phase 1) |
 

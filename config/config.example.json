@@ -77,7 +77,7 @@
         "CrossDeviceResume",
         "PhoneExperienceHost",
         "AggregatorHost",
-        "MPPWatcher"
+        "MTLog"
       ],
       "collapse_multi_instance": true
     }

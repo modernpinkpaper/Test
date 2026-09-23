@@ -34,7 +34,7 @@ internal sealed class ViewerForm : Form
         var config = ConfigLoader.Load(configPath).Config;
         _dbPath = RuntimePaths.From(config, dataFolderOverride).DatabasePath;
 
-        Text = "MPP Watcher – Live Event Viewer";
+        Text = "MT Log – Live Event Viewer";
         Icon = AppIcon.Get();
         Width = 1200;
         Height = 760;

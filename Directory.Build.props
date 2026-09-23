@@ -4,7 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <Company>MPP</Company>
-    <Product>MPP Watcher</Product>
+    <Product>MT Log</Product>
     <Version>0.1.0</Version>
     <!-- Lets the Windows-only projects compile on Linux/macOS build machines (they still only run on Windows). -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>

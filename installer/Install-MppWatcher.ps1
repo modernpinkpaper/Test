@@ -1,10 +1,10 @@
 <#
 .SYNOPSIS
-  Installs or upgrades MPP Watcher on this PC (Phase 1 installer script; MPPWatcherSetup.exe comes in Phase 5).
+  Installs or upgrades MT Log on this PC (Phase 1 installer script; MTLogSetup.exe comes in Phase 5).
 
 .DESCRIPTION
-  - Copies MPPWatcher.exe to "C:\Program Files\MPP Watcher"
-  - Creates %ProgramData%\MPP Watcher\config.json (an existing config is KEPT on upgrade)
+  - Copies MTLog.exe to "C:\Program Files\MT Log"
+  - Creates %ProgramData%\MT Log\config.json (an existing config is KEPT on upgrade)
   - Lets employees read the config but not change it
   - Registers a Scheduled Task that starts the watcher at every user logon, in that user's
     session, and restarts it if it fails
@@ -16,9 +16,9 @@
 #>
 [CmdletBinding()]
 param(
-    # Folder that contains MPPWatcher.exe (default: the folder this script is in).
+    # Folder that contains MTLog.exe (default: the folder this script is in).
     [string]$SourceFolder = $PSScriptRoot,
-    [string]$InstallDir = "$env:ProgramFiles\MPP Watcher",
+    [string]$InstallDir = "$env:ProgramFiles\MT Log",
     # Optional: set employee_id in a NEWLY created config.
     [string]$EmployeeId = "",
     # Start the watcher right away for signed-in users.
@@ -28,9 +28,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$TaskName = 'MPP Watcher'
-$ServiceName = 'MPPWatcherService'
-$ConfigDir = Join-Path $env:ProgramData 'MPP Watcher'
+$TaskName = 'MT Log'
+$ServiceName = 'MTLogService'
+$ConfigDir = Join-Path $env:ProgramData 'MT Log'
 $ConfigPath = Join-Path $ConfigDir 'config.json'
 
 function Assert-Admin {
@@ -41,10 +41,10 @@ function Assert-Admin {
 }
 
 Assert-Admin
-$exeSource = Join-Path $SourceFolder 'MPPWatcher.exe'
-if (-not (Test-Path $exeSource)) { throw "MPPWatcher.exe not found in $SourceFolder" }
+$exeSource = Join-Path $SourceFolder 'MTLog.exe'
+if (-not (Test-Path $exeSource)) { throw "MTLog.exe not found in $SourceFolder" }
 
-Write-Host '1/6 Stopping any running MPP Watcher...'
+Write-Host '1/6 Stopping any running MT Log...'
 # The watchdog first — otherwise it would restart the watcher we are about to stop.
 if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
     Stop-Service -Name $ServiceName -Force -ErrorAction SilentlyContinue
@@ -52,26 +52,26 @@ if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 }
-$installedExe = Join-Path $InstallDir 'MPPWatcher.exe'
+$installedExe = Join-Path $InstallDir 'MTLog.exe'
 if (Test-Path $installedExe) {
     # Clean stop for the admin's own session (writes watcher_stopped and closes the open session).
     Start-Process -FilePath $installedExe -ArgumentList '--stop' -Wait -WindowStyle Hidden -ErrorAction SilentlyContinue
 }
 # Other users' sessions: a forced stop is still safe, the open session is recovered from its checkpoint.
-Get-Process -Name 'MPPWatcher' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-Process -Name 'MTLog' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 
 Write-Host "2/6 Copying program files to $InstallDir ..."
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 $sameFolder = (Resolve-Path $SourceFolder).Path.TrimEnd('\') -eq (Resolve-Path $InstallDir).Path.TrimEnd('\')
-if (-not $sameFolder) {   # MPPWatcherSetup.exe has already placed the files
+if (-not $sameFolder) {   # MTLogSetup.exe has already placed the files
     Copy-Item -Path $exeSource -Destination $InstallDir -Force
     foreach ($doc in @('README.md', 'PRIVACY.md', 'LOCAL_API.md', 'mpp-watcher-client.user.js')) {
         $p = Join-Path $SourceFolder $doc
         if (Test-Path $p) { Copy-Item $p $InstallDir -Force }
     }
 }
-$exe = Join-Path $InstallDir 'MPPWatcher.exe'
+$exe = Join-Path $InstallDir 'MTLog.exe'
 
 Write-Host "3/6 Preparing configuration in $ConfigDir ..."
 New-Item -ItemType Directory -Force -Path $ConfigDir | Out-Null
@@ -103,13 +103,13 @@ $settings = New-ScheduledTaskSettingsSet `
     -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) `
     -MultipleInstances IgnoreNew -Hidden
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings `
-    -Description 'MPP Watcher company activity logging (starts at logon).' -Force | Out-Null
+    -Description 'MT Log company activity logging (starts at logon).' -Force | Out-Null
 
 Write-Host '5/6 Adding Start Menu shortcut...'
-$startMenu = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\MPP Watcher'
+$startMenu = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\MT Log'
 New-Item -ItemType Directory -Force -Path $startMenu | Out-Null
 $shell = New-Object -ComObject WScript.Shell
-$lnk = $shell.CreateShortcut((Join-Path $startMenu 'MPP Watcher Live Viewer.lnk'))
+$lnk = $shell.CreateShortcut((Join-Path $startMenu 'MT Log Live Viewer.lnk'))
 $lnk.TargetPath = $exe
 $lnk.Arguments = '--viewer'
 $lnk.WorkingDirectory = $InstallDir
@@ -121,13 +121,13 @@ if (-not $NoWatchdog) {
         & sc.exe delete $ServiceName | Out-Null
         Start-Sleep -Seconds 1
     }
-    New-Service -Name $ServiceName -BinaryPathName "`"$exe`" --service" -DisplayName 'MPP Watcher (watchdog)' `
-        -Description 'Keeps MPP Watcher running for signed-in users. Records nothing itself.' -StartupType Automatic | Out-Null
+    New-Service -Name $ServiceName -BinaryPathName "`"$exe`" --service" -DisplayName 'MT Log (watchdog)' `
+        -Description 'Keeps MT Log running for signed-in users. Records nothing itself.' -StartupType Automatic | Out-Null
     & sc.exe failure $ServiceName reset= 86400 actions= restart/60000/restart/60000/restart/60000 | Out-Null
 }
 
 if (-not $NoStart) {
-    Write-Host '6/6 Starting MPP Watcher for signed-in users...'
+    Write-Host '6/6 Starting MT Log for signed-in users...'
     if (-not $NoWatchdog) { Start-Service -Name $ServiceName }
     Start-ScheduledTask -TaskName $TaskName
 } else {
@@ -135,8 +135,8 @@ if (-not $NoStart) {
 }
 
 Write-Host ''
-Write-Host 'MPP Watcher installed.' -ForegroundColor Green
+Write-Host 'MT Log installed.' -ForegroundColor Green
 Write-Host "  Program : $exe"
 Write-Host "  Config  : $ConfigPath"
-Write-Host '  Data    : %LOCALAPPDATA%\MPP Watcher\data\events.db (per user)'
-Write-Host '  Viewer  : Start Menu > MPP Watcher > MPP Watcher Live Viewer'
+Write-Host '  Data    : %LOCALAPPDATA%\MT Log\data\events.db (per user)'
+Write-Host '  Viewer  : Start Menu > MT Log > MT Log Live Viewer'

@@ -38,13 +38,13 @@ internal sealed class AgentContext : ApplicationContext
 
         if (_config.Current.ShowTrayIcon) _tray = CreateTray();
 
-        // "MPPWatcher.exe --stop" signals this event; stop cleanly on the UI thread.
+        // "MTLog.exe --stop" signals this event; stop cleanly on the UI thread.
         _ui = SynchronizationContext.Current ?? new WindowsFormsSynchronizationContext();
         _stopSignal = new EventWaitHandle(false, EventResetMode.AutoReset, Program.StopEventName);
         _stopWait = ThreadPool.RegisterWaitForSingleObject(_stopSignal,
             (_, _) => _ui.Post(_ => Shutdown("stop_requested"), null), null, Timeout.Infinite, executeOnlyOnce: true);
 
-        // "MPPWatcher.exe --export-now": export, then tell the caller it is done.
+        // "MTLog.exe --export-now": export, then tell the caller it is done.
         _exportSignal = new EventWaitHandle(false, EventResetMode.AutoReset, Program.ExportNowEventName);
         _exportDone = new EventWaitHandle(false, EventResetMode.AutoReset, Program.ExportDoneEventName);
         _exportWait = ThreadPool.RegisterWaitForSingleObject(_exportSignal, (_, _) => ExportOnRequest(), null, Timeout.Infinite, executeOnlyOnce: false);
@@ -75,7 +75,7 @@ internal sealed class AgentContext : ApplicationContext
         menu.Items.Add("Export logs now", null, async (_, _) =>
         {
             var r = await _runtime.ExportNowAsync();
-            _tray?.ShowBalloonTip(3000, "MPP Watcher", r.Error is null ? $"Exported {r.Exported} events." : $"Export problem: {r.Error}", ToolTipIcon.Info);
+            _tray?.ShowBalloonTip(3000, "MT Log", r.Error is null ? $"Exported {r.Exported} events." : $"Export problem: {r.Error}", ToolTipIcon.Info);
         });
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Open data folder", null, (_, _) => OpenFolder(_runtime.Paths.DataFolder));
@@ -88,19 +88,19 @@ internal sealed class AgentContext : ApplicationContext
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message, "MPP Watcher");
+                MessageBox.Show(e.Message, "MT Log");
             }
         });
         if (_config.Current.AllowUserExit)
         {
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add("Exit MPP Watcher", null, (_, _) => Shutdown("user_exit"));
+            menu.Items.Add("Exit MT Log", null, (_, _) => Shutdown("user_exit"));
         }
 
         var tray = new NotifyIcon
         {
             Icon = AppIcon.Get(),
-            Text = $"MPP Watcher – activity logging is on ({_config.Current.CompanyName})",
+            Text = $"MT Log – activity logging is on ({_config.Current.CompanyName})",
             ContextMenuStrip = menu,
             Visible = true,
         };
@@ -115,7 +115,7 @@ internal sealed class AgentContext : ApplicationContext
             $"   • {c?["name"]}: {c?["state"]}"));
         MessageBox.Show(
             $"""
-            MPP Watcher {MppWatcher.Core.Collectors.WatcherVersion.Current}
+            MT Log {MppWatcher.Core.Collectors.WatcherVersion.Current}
             Employee: {Core.Pipeline.EventNormalizer.ResolveEmployeeId(_config.Current, _runtime.Identity.WindowsUsername)}
             Windows user: {_runtime.Identity.WindowsUsername}
 
@@ -130,7 +130,7 @@ internal sealed class AgentContext : ApplicationContext
             Config: {_config.Path}
             Database: {_runtime.Paths.DatabasePath}
             """,
-            "MPP Watcher status", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            "MT Log status", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private void OnSessionEnded(object? sender, SessionEndedEventArgs e) =>
@@ -163,7 +163,7 @@ internal sealed class AgentContext : ApplicationContext
         }
         catch (Exception e)
         {
-            MessageBox.Show("Could not open: " + e.Message, "MPP Watcher");
+            MessageBox.Show("Could not open: " + e.Message, "MT Log");
         }
     }
 
@@ -176,7 +176,7 @@ internal sealed class AgentContext : ApplicationContext
         }
         catch (Exception e)
         {
-            MessageBox.Show("Could not open folder: " + e.Message, "MPP Watcher");
+            MessageBox.Show("Could not open folder: " + e.Message, "MT Log");
         }
     }
 

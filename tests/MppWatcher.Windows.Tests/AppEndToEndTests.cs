@@ -7,7 +7,7 @@ using Xunit.Abstractions;
 namespace MppWatcher.Windows.Tests;
 
 /// <summary>
-/// Runs the real MPPWatcher.exe (the published single file in CI, via MPPWATCHER_EXE)
+/// Runs the real MTLog.exe (the published single file in CI, via MTLOG_EXE)
 /// the way Windows would start it, and checks the database it writes.
 /// </summary>
 public sealed partial class AppEndToEndTests : IDisposable
@@ -223,7 +223,7 @@ public sealed partial class AppEndToEndTests : IDisposable
     {
         try
         {
-            var folder = Environment.GetEnvironmentVariable("MPPWATCHER_SCREENSHOTS") ?? Path.Combine(AppContext.BaseDirectory, "screenshots");
+            var folder = Environment.GetEnvironmentVariable("MTLOG_SCREENSHOTS") ?? Path.Combine(AppContext.BaseDirectory, "screenshots");
             Directory.CreateDirectory(folder);
             var bounds = Screen.PrimaryScreen!.Bounds;
             using var bmp = new Bitmap(bounds.Width, bounds.Height);

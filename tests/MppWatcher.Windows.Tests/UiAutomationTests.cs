@@ -198,7 +198,7 @@ public sealed class UiAutomationTests : IDisposable
     {
         try
         {
-            var folder = Environment.GetEnvironmentVariable("MPPWATCHER_SCREENSHOTS") ?? Path.Combine(AppContext.BaseDirectory, "screenshots");
+            var folder = Environment.GetEnvironmentVariable("MTLOG_SCREENSHOTS") ?? Path.Combine(AppContext.BaseDirectory, "screenshots");
             Directory.CreateDirectory(folder);
             var b = Screen.PrimaryScreen!.Bounds;
             using var bmp = new Bitmap(b.Width, b.Height);

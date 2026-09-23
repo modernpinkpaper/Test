@@ -7,14 +7,14 @@ namespace MppWatcher.App;
 internal static class Program
 {
     /// <summary>One watcher per Windows user session.</summary>
-    public const string AgentMutexName = @"Local\MPPWatcher.Agent";
+    public const string AgentMutexName = @"Local\MTLog.Agent";
 
-    /// <summary>Signalled by "MPPWatcher.exe --stop" (installer, tests) to stop the agent cleanly.</summary>
-    public const string StopEventName = @"Local\MPPWatcher.Stop";
+    /// <summary>Signalled by "MTLog.exe --stop" (installer, tests) to stop the agent cleanly.</summary>
+    public const string StopEventName = @"Local\MTLog.Stop";
 
-    /// <summary>Signalled by "MPPWatcher.exe --export-now"; the agent signals <see cref="ExportDoneEventName"/> when finished.</summary>
-    public const string ExportNowEventName = @"Local\MPPWatcher.ExportNow";
-    public const string ExportDoneEventName = @"Local\MPPWatcher.ExportDone";
+    /// <summary>Signalled by "MTLog.exe --export-now"; the agent signals <see cref="ExportDoneEventName"/> when finished.</summary>
+    public const string ExportNowEventName = @"Local\MTLog.ExportNow";
+    public const string ExportDoneEventName = @"Local\MTLog.ExportDone";
 
     [STAThread]
     private static int Main(string[] args)
@@ -26,7 +26,7 @@ internal static class Program
                 WriteConsole(CommandLine.HelpText);
                 return 0;
             case RunMode.Version:
-                WriteConsole("MPP Watcher " + MppWatcher.Core.Collectors.WatcherVersion.Current);
+                WriteConsole("MT Log " + MppWatcher.Core.Collectors.WatcherVersion.Current);
                 return 0;
             case RunMode.WriteDefaultConfig:
                 return WriteDefaultConfig(cmd.OutputPath);
@@ -69,7 +69,7 @@ internal static class Program
         using var mutex = new Mutex(initiallyOwned: true, AgentMutexName, out var createdNew);
         if (!createdNew)
         {
-            log.Info("app", "Another MPP Watcher is already running in this session; exiting");
+            log.Info("app", "Another MT Log is already running in this session; exiting");
             return 0;
         }
 
@@ -91,7 +91,7 @@ internal static class Program
     {
         if (!Mutex.TryOpenExisting(AgentMutexName, out var running))
         {
-            WriteConsole("MPP Watcher is not running in this session.");
+            WriteConsole("MT Log is not running in this session.");
             return 0;
         }
         running.Dispose();
@@ -102,11 +102,11 @@ internal static class Program
         var deadline = DateTime.UtcNow.AddSeconds(20);
         while (DateTime.UtcNow < deadline)
         {
-            if (!Mutex.TryOpenExisting(AgentMutexName, out var m)) { WriteConsole("MPP Watcher stopped."); return 0; }
+            if (!Mutex.TryOpenExisting(AgentMutexName, out var m)) { WriteConsole("MT Log stopped."); return 0; }
             m.Dispose();
             Thread.Sleep(250);
         }
-        WriteConsole("MPP Watcher did not stop within 20 seconds.");
+        WriteConsole("MT Log did not stop within 20 seconds.");
         return 2;
     }
 
@@ -115,7 +115,7 @@ internal static class Program
     {
         if (!EventWaitHandle.TryOpenExisting(ExportNowEventName, out var request))
         {
-            WriteConsole("MPP Watcher is not running in this session.");
+            WriteConsole("MT Log is not running in this session.");
             return 1;
         }
         using (request)
@@ -129,7 +129,7 @@ internal static class Program
                 return 0;
             }
         }
-        WriteConsole("MPP Watcher did not finish the export within 2 minutes.");
+        WriteConsole("MT Log did not finish the export within 2 minutes.");
         return 2;
     }
 

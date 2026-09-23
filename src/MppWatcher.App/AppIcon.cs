@@ -2,10 +2,13 @@ using System.Drawing.Drawing2D;
 
 namespace MppWatcher.App;
 
-/// <summary>Draws the tray / window icon at runtime (a rounded "M" badge), so no binary icon file is needed.</summary>
+/// <summary>Draws the tray / window icon at runtime (a medium-grey arrow), so no binary icon file is needed.</summary>
 internal static class AppIcon
 {
     private static Icon? _icon;
+
+    // Medium grey, so the icon is plain and not tied to any brand colour.
+    private static readonly Color ArrowColor = Color.FromArgb(128, 128, 128);
 
     public static Icon Get()
     {
@@ -14,18 +17,13 @@ internal static class AppIcon
         using (var g = Graphics.FromImage(bmp))
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-            using var path = new GraphicsPath();
-            path.AddArc(0, 0, 12, 12, 180, 90);
-            path.AddArc(19, 0, 12, 12, 270, 90);
-            path.AddArc(19, 19, 12, 12, 0, 90);
-            path.AddArc(0, 19, 12, 12, 90, 90);
-            path.CloseFigure();
-            using var fill = new SolidBrush(Color.FromArgb(214, 51, 132));
-            g.FillPath(fill, path);
-            using var font = new Font("Segoe UI", 16, FontStyle.Bold, GraphicsUnit.Pixel);
-            var size = g.MeasureString("M", font);
-            g.DrawString("M", font, Brushes.White, (32 - size.Width) / 2, (32 - size.Height) / 2);
+            using var pen = new Pen(ArrowColor, 4f) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
+
+            // A diagonal arrow pointing up and to the right: shaft plus a two-line head at the tip.
+            var tail = new PointF(7, 25);
+            var tip = new PointF(24, 8);
+            g.DrawLine(pen, tail, tip);
+            g.DrawLines(pen, new[] { new PointF(14, 8), tip, new PointF(24, 18) });
         }
         _icon = Icon.FromHandle(bmp.GetHicon());
         return _icon;

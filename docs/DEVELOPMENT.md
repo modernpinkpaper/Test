@@ -33,7 +33,7 @@ dotnet run --project src/MppWatcher.App -- --viewer --config .\dev-config.json -
 
 ```powershell
 dotnet publish src/MppWatcher.App -c Release -o publish
-# → publish\MPPWatcher.exe (self-contained, win-x64)
+# → publish\MTLog.exe (self-contained, win-x64)
 ```
 
 ## CI
@@ -41,7 +41,7 @@ dotnet publish src/MppWatcher.App -c Release -o publish
 `.github/workflows/build.yml`:
 - Linux job: Core unit tests.
 - Windows job: build, tests, publish, **smoke test of the real exe for 15 s**, and uploads
-  the **MPPWatcher-win-x64** artifact (exe + install scripts + docs).
+  the **MTLog-win-x64** artifact (exe + install scripts + docs).
 
 ## Code layout
 

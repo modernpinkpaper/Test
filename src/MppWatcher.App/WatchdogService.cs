@@ -6,13 +6,13 @@ using MppWatcher.Windows.Service;
 namespace MppWatcher.App;
 
 /// <summary>
-/// "MPP Watcher (watchdog)" Windows service. It records nothing itself: it only makes sure every
+/// "MT Log (watchdog)" Windows service. It records nothing itself: it only makes sure every
 /// signed-in user's watcher is running, and restarts it in their session if it stopped.
-/// Logs to %ProgramData%\MPP Watcher\logs\.
+/// Logs to %ProgramData%\MT Log\logs\.
 /// </summary>
 internal sealed class WatchdogService : ServiceBase
 {
-    public const string Name = "MPPWatcherService";
+    public const string Name = "MTLogService";
 
     private readonly string _configPath;
     private ConfigProvider? _config;
