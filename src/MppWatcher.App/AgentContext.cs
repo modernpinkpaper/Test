@@ -72,11 +72,15 @@ internal sealed class AgentContext : ApplicationContext
         var menu = new ContextMenuStrip();
         menu.Items.Add("Open live viewer", null, (_, _) => StartSelf("--viewer"));
         menu.Items.Add("Status…", null, (_, _) => ShowStatus());
-        menu.Items.Add("Export logs now", null, async (_, _) =>
+        var exportItem = new ToolStripMenuItem("Export logs now");
+        exportItem.Click += async (_, _) =>
         {
+            // No pop-up bubble: the result is shown quietly in the menu item's text instead.
+            exportItem.Text = "Exporting…";
             var r = await _runtime.ExportNowAsync();
-            _tray?.ShowBalloonTip(3000, "MT Log", r.Error is null ? $"Exported {r.Exported} events." : $"Export problem: {r.Error}", ToolTipIcon.Info);
-        });
+            exportItem.Text = r.Error is null ? $"Export logs now (last: {r.Exported} sent)" : "Export logs now (last: problem)";
+        };
+        menu.Items.Add(exportItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Open data folder", null, (_, _) => OpenFolder(_runtime.Paths.DataFolder));
         menu.Items.Add("Open diagnostic logs", null, (_, _) => OpenFolder(_runtime.Paths.LogFolder));
