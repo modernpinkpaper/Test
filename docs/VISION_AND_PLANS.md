@@ -90,6 +90,19 @@ given product type and targeting strategy are treated separately — not all cam
 So today the AI can describe the *workflow/path*, but cannot state the *decision rules by campaign
 type*, because the data behind the decisions is missing. It would be guessing the numbers.
 
+### Manual "Decision Capture" toggle (Dalia's design)
+
+Always-on deep capture would be annoying and noisy. Instead, add a tray toggle:
+- Right-click tray -> "Start Decision Capture". Normal facts logging keeps running; this ALSO turns on
+  the extra detail needed to reverse-engineer a decision (ad screens, reports opened, fields changed),
+  and tags every event in that window as part of a decision-capture session.
+- Right-click tray -> "Stop Decision Capture" when done.
+- The AI later reads only the tagged stretch and turns it into an SOP.
+
+This keeps everyday logs light and only records the heavier detail when Dalia chooses. Note: even in
+this mode, on-screen table numbers (ACOS, spend, etc.) still are not read — pair with report files /
+the Ads API for the numbers (see below).
+
 ### How to close the gap (two pieces, not one)
 1. **"What you did" — from MT Log.** Add Ads-console handling that tags each action with campaign
    type (SP/SB/SD), campaign, ad group, target, and records bid old→new, pauses, keyword adds, and
