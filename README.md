@@ -93,3 +93,7 @@ More: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 - [Developer setup](docs/DEVELOPMENT.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Roadmap, test checklist and limitations](docs/ROADMAP.md)
+
+## Other tools
+
+- [InDesign Crash Doctor](tools/indesign-crash-doctor/README.md) – finds out why InDesign keeps crashing on a PC and writes an easy report
