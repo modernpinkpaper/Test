@@ -13,9 +13,9 @@ It never records password or payment fields. See [docs/PRIVACY.md](docs/PRIVACY.
 
 | Phase | What | Status |
 |---|---|---|
-| 1 | App + autostart, foreground app/window sessions, processes, idle, lock/sleep, SQLite, live viewer | **Built – needs testing on a real Windows PC** |
-| 2 | UI Automation inspection, field values, sensitive-field filtering, diagnostic inspector | Not started (privacy filter already built) |
-| 3 | Browser context via UI Automation (URL, domain, page), Amazon/Keepa/Etsy/Shopify | Not started (URL sanitizer already built) |
+| 1 | App + autostart, foreground app/window sessions, processes, idle, lock/sleep, SQLite, live viewer | **Done ✅** (tested on Windows) |
+| 2 | UI Automation: finished field values, clicks on named controls, sensitive-field refusal, diagnostic inspector | **Done ✅** (tested on Windows incl. Edge) |
+| 3 | Browser context via UI Automation (URL, domain, page), Amazon/Seller Central/Keepa/Etsy/Shopify rules | In testing |
 | 4 | Files, Photoshop/InDesign/Excel context, print jobs, downloads/uploads | Not started |
 | 5 | Local event API for scripts, Google Drive upload, `MPPWatcherSetup.exe`, watchdog service | Not started (local folder export already works) |
 
@@ -39,6 +39,19 @@ For every stretch of time a window is in front:
 (That is real output of the session logic from a simulated morning – see
 [docs/examples](docs/examples).) Also: program start/exit (including scripts such
 as `python.exe`), lock/unlock, sleep/wake, sign-out, watcher health heartbeats.
+
+## What Phase 2 adds
+
+```
+Google Chrome → keepa.com: field "Search" = "personalized stationery"
+Microsoft Edge: button clicked "Save listing" ★        (★ = key business action)
+MPP UI Test Form: checkbox toggled "Gift wrap" → On
+```
+
+Password, PIN, card, CVV, code fields are never recorded. `MPPWatcher.exe --inspect` shows
+what Windows exposes for anything under the mouse:
+
+![Inspector](docs/images/inspector-phase2.png)
 
 ## Quick start (admin)
 
