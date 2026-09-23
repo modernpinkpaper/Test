@@ -10,3 +10,4 @@ obj/
 TestResults/
 artifacts/
 publish/
+setup-output/

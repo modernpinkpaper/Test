@@ -105,6 +105,47 @@ jobs:
           Check (Test-Path $cfg) 'config kept by default'
           powershell -ExecutionPolicy Bypass -File installer\Uninstall-MppWatcher.ps1 -RemoveConfig
           Check (-not (Test-Path $cfg)) 'config removed with -RemoveConfig'
+      - name: Build MPPWatcherSetup.exe (Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          & $iscc /Q /DAppVersion=0.1.0 installer\MPPWatcherSetup.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Item setup-output\MPPWatcherSetup.exe | Format-List Name, Length
+      - name: Setup exe test (silent install, upgrade, uninstall from Apps)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Check($ok, $what) { if ($ok) { Write-Host "[PASS] $what" } else { Write-Host "[FAIL] $what"; exit 1 } }
+          $dir = "$env:ProgramFiles\MPP Watcher"
+          $cfg = "$env:ProgramData\MPP Watcher\config.json"
+          $uninstallKey = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{8C1F2E7A-5B3D-4E91-9A64-3F2D7C0B1E55}_is1'
+
+          $p = Start-Process setup-output\MPPWatcherSetup.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/EMPLOYEEID=EMP-SETUP', "/LOG=$env:RUNNER_TEMP\setup.log" -Wait -PassThru
+          Check ($p.ExitCode -eq 0) 'setup exe finished'
+          Check (Test-Path "$dir\MPPWatcher.exe") 'exe installed'
+          Check ((Get-Content $cfg -Raw) -match 'EMP-SETUP') 'employee id from the command line is in the config'
+          Check ($null -ne (Get-ScheduledTask -TaskName 'MPP Watcher' -ErrorAction SilentlyContinue)) 'logon task registered'
+          Check ((Get-Service MPPWatcherService).Status -eq 'Running') 'watchdog running'
+          Check (Test-Path $uninstallKey) 'listed in Add or remove programs'
+          Check ((Get-ItemProperty $uninstallKey).DisplayVersion -eq '0.1.0') 'version shown in Apps'
+          $running = $false
+          for ($i = 0; $i -lt 60 -and -not $running; $i++) { Start-Sleep -Seconds 1; $running = [bool](Get-CimInstance Win32_Process -Filter "Name='MPPWatcher.exe'" | Where-Object { $_.CommandLine -notmatch '--service' }) }
+          Check $running 'watcher running after setup'
+
+          (Get-Content $cfg -Raw) -replace '"idle_timeout_seconds":\s*\d+', '"idle_timeout_seconds": 180' | Set-Content $cfg
+          $p = Start-Process setup-output\MPPWatcherSetup.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
+          Check ($p.ExitCode -eq 0) 'upgrade with setup exe finished'
+          Check ((Get-Content $cfg -Raw) -match '"idle_timeout_seconds":\s*180') 'upgrade kept the existing config'
+
+          Start-Process "$dir\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait
+          for ($i = 0; $i -lt 60 -and (Test-Path "$dir\MPPWatcher.exe"); $i++) { Start-Sleep -Seconds 1 }
+          Check (-not (Test-Path "$dir\MPPWatcher.exe")) 'uninstalled program files'
+          Check ($null -eq (Get-ScheduledTask -TaskName 'MPP Watcher' -ErrorAction SilentlyContinue)) 'task removed'
+          Check ($null -eq (Get-Service -Name 'MPPWatcherService' -ErrorAction SilentlyContinue)) 'watchdog removed'
+          Check (-not (Test-Path $uninstallKey)) 'removed from Add or remove programs'
+          Check (Test-Path $cfg) 'config kept after uninstall'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -116,6 +157,9 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force package | Out-Null
           Copy-Item publish\MPPWatcher.exe package\
+          Copy-Item setup-output\MPPWatcherSetup.exe package\
+          Copy-Item docs\LOCAL_API.md package\
+          Copy-Item tools\mpp-watcher-client.user.js package\
           Copy-Item installer\*.ps1 package\
           Copy-Item README.md package\
           Copy-Item docs\PRIVACY.md package\

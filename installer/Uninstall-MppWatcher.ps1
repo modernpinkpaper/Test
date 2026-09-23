@@ -11,7 +11,9 @@ param(
     [string]$InstallDir = "$env:ProgramFiles\MPP Watcher",
     [switch]$RemoveConfig,
     # Deletes every user's %LOCALAPPDATA%\MPP Watcher folder (database, logs, un-exported events!).
-    [switch]$RemoveUserData
+    [switch]$RemoveUserData,
+    # Used by MPPWatcherSetup's uninstaller, which removes the program files itself.
+    [switch]$KeepProgramFiles
 )
 
 $ErrorActionPreference = 'Stop'
@@ -41,7 +43,7 @@ if (Test-Path $installedExe) {
 Get-Process -Name 'MPPWatcher' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 
-if (Test-Path $InstallDir) { Remove-Item -Recurse -Force $InstallDir; Write-Host "Removed $InstallDir" }
+if (-not $KeepProgramFiles -and (Test-Path $InstallDir)) { Remove-Item -Recurse -Force $InstallDir; Write-Host "Removed $InstallDir" }
 $startMenu = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\MPP Watcher'
 if (Test-Path $startMenu) { Remove-Item -Recurse -Force $startMenu }
 
