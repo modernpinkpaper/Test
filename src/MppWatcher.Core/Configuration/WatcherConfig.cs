@@ -276,8 +276,13 @@ public sealed class ExportConfig
     /// <summary>"local_folder" for now. "google_drive" is planned.</summary>
     [JsonPropertyName("uploader")] public string Uploader { get; set; } = "local_folder";
 
-    /// <summary>Root folder; files go to &lt;root&gt;\MPP Activity Logs\&lt;employee&gt;\&lt;date&gt;\. Empty = %LOCALAPPDATA%\MPP Watcher\export.</summary>
-    [JsonPropertyName("destination_folder")] public string DestinationFolder { get; set; } = "";
+    /// <summary>
+    /// Files go to &lt;folder&gt;\&lt;employee&gt;\&lt;date&gt;\. "{GoogleDrive}" = the Google Drive for desktop drive (found automatically).
+    /// Empty = %LOCALAPPDATA%\MPP Watcher\export\MPP Activity Logs.
+    /// </summary>
+    [JsonPropertyName("destination_folder")] public string DestinationFolder { get; set; } = DefaultDestinationFolder;
+
+    public const string DefaultDestinationFolder = @"{GoogleDrive}\My Drive\Personal\mpp activity";
 
     [JsonPropertyName("interval_minutes")] public int IntervalMinutes { get; set; } = 15;
     [JsonPropertyName("batch_size")] public int BatchSize { get; set; } = 2000;

@@ -12,6 +12,10 @@ internal static class Program
     /// <summary>Signalled by "MPPWatcher.exe --stop" (installer, tests) to stop the agent cleanly.</summary>
     public const string StopEventName = @"Local\MPPWatcher.Stop";
 
+    /// <summary>Signalled by "MPPWatcher.exe --export-now"; the agent signals <see cref="ExportDoneEventName"/> when finished.</summary>
+    public const string ExportNowEventName = @"Local\MPPWatcher.ExportNow";
+    public const string ExportDoneEventName = @"Local\MPPWatcher.ExportDone";
+
     [STAThread]
     private static int Main(string[] args)
     {
@@ -28,6 +32,8 @@ internal static class Program
                 return WriteDefaultConfig(cmd.OutputPath);
             case RunMode.Stop:
                 return RequestStop();
+            case RunMode.ExportNow:
+                return RequestExportNow();
         }
 
         var configPath = cmd.ConfigPath ?? WatcherPaths.DefaultConfigPath;
@@ -101,6 +107,29 @@ internal static class Program
             Thread.Sleep(250);
         }
         WriteConsole("MPP Watcher did not stop within 20 seconds.");
+        return 2;
+    }
+
+    /// <summary>Exit codes: 0 = export finished (see the diagnostic log for problems), 1 = not running, 2 = no answer within 2 minutes.</summary>
+    private static int RequestExportNow()
+    {
+        if (!EventWaitHandle.TryOpenExisting(ExportNowEventName, out var request))
+        {
+            WriteConsole("MPP Watcher is not running in this session.");
+            return 1;
+        }
+        using (request)
+        using (var done = new EventWaitHandle(false, EventResetMode.AutoReset, ExportDoneEventName))
+        {
+            done.Reset();
+            request.Set();
+            if (done.WaitOne(TimeSpan.FromMinutes(2)))
+            {
+                WriteConsole("Export finished.");
+                return 0;
+            }
+        }
+        WriteConsole("MPP Watcher did not finish the export within 2 minutes.");
         return 2;
     }
 

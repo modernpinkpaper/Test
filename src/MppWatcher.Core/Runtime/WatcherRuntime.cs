@@ -124,6 +124,9 @@ public sealed class WatcherRuntime : IAsyncDisposable
         _log.Info("runtime", "Watcher stopped");
     }
 
+    /// <summary>The export folder with {GoogleDrive} replaced. Throws when Google Drive is not available.</summary>
+    public string ResolveExportFolder() => ExportDestination.Resolve(Paths.ExportFolder);
+
     public async Task<ExportResult> ExportNowAsync()
     {
         if (_export is null) return new ExportResult(0, 0, "export disabled");
@@ -196,7 +199,7 @@ public sealed class WatcherRuntime : IAsyncDisposable
         {
             _log.Warn("export", $"Uploader '{cfg.Export.Uploader}' is not available yet; using local_folder");
         }
-        return new LocalFolderUploader(Paths.ExportFolder);
+        return new LocalFolderUploader(ResolveExportFolder);
     }
 
     private void EmitStarted(int importedFallback, IDictionary<string, object?>? extra)

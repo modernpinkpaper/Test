@@ -62,11 +62,13 @@ watched folders that live under AppData; Edge shows file dialogs from a helper p
 - `MPPWatcherSetup.exe` (Inno Setup): wizard or silent install, Add/Remove Programs, upgrade keeps
   config, clean uninstall — verified by silent install → upgrade → uninstall on the test machine.
 
-### Waiting for a decision: Google Drive
-- **A. Google Drive for Desktop** (works today): set `export.destination_folder` to a synced folder,
-  e.g. `G:\\My Drive\\MPP Activity Logs`. Google's app uploads it.
-- **B. Direct Drive API upload**: needs a Google Cloud service-account key; `ILogUploader` is ready
-  for a `GoogleDriveUploader`, but it will only be built and tested once a key is available.
+### Google Drive (done: Google Drive for desktop)
+- Default export folder: `{GoogleDrive}\My Drive\Personal\mpp activity`. The watcher finds the
+  Google Drive letter by itself at every export (the drive with a `My Drive` folder, G: first).
+  If Drive is closed or signed out, events stay pending on the PC and are exported later.
+- `MPPWatcher.exe --export-now` exports right away (also in the tray menu).
+- Verified on the test machine with a `subst` drive that looks like Google Drive.
+- Not built: direct Drive API upload (needs a Google Cloud service-account key).
 
 ### Before a wide rollout
 - **Code-sign** `MPPWatcher.exe` and `MPPWatcherSetup.exe` (needs a code-signing certificate) so

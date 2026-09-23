@@ -258,6 +258,7 @@ with the viewer text in [examples/simulated-morning.txt](examples/simulated-morn
 
 ## Export files
 
-`<export root>/MPP Activity Logs/<employee_id>/<yyyy-MM-dd>/events_HH00_HH00.jsonl`,
-using each event's local time. Files are appended to. Delivery is *at least once*:
+`<export folder>/<employee_id>/<yyyy-MM-dd>/events_HH00_HH00_<computer_id>.jsonl`,
+using each event's local time. The default export folder is `G:\My Drive\Personal\mpp activity`
+(Google Drive for desktop). Each PC writes its own files, so Drive never has two writers per file. Files are appended to. Delivery is *at least once*:
 de-duplicate by `event_id` when reading.

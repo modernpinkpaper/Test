@@ -15,7 +15,8 @@ public static class WatcherPaths
 
     public static string DataFolder(WatcherConfig c) => Expand(c.DataFolder, Path.Combine(UserBaseFolder, "data"));
     public static string LogFolder(WatcherConfig c) => Expand(c.LogFolder, Path.Combine(UserBaseFolder, "logs"));
-    public static string ExportFolder(WatcherConfig c) => Expand(c.Export.DestinationFolder, Path.Combine(UserBaseFolder, "export"));
+    /// <summary>Where exported JSONL goes. May still contain the {GoogleDrive} token (see Export.ExportDestination).</summary>
+    public static string ExportFolder(WatcherConfig c) => Expand(c.Export.DestinationFolder, Path.Combine(UserBaseFolder, "export", "MPP Activity Logs"));
     public static string DatabasePath(WatcherConfig c) => Path.Combine(DataFolder(c), "events.db");
     public static string CheckpointPath(WatcherConfig c) => Path.Combine(DataFolder(c), "open-session.json");
     public static string FallbackFolder(WatcherConfig c) => Path.Combine(DataFolder(c), "fallback");

@@ -16,7 +16,7 @@ First look at the diagnostics log: `%LOCALAPPDATA%\MPP Watcher\logs\diagnostics-
 | `activity_gap` events | The watcher was not running for > 60 s while the session was open: sleep without notice, heavy freeze, or the process was killed. |
 | `end_reason: watcher_crash_recovered` | The previous run did not stop cleanly (crash, forced kill, power loss). Check the log around that time. |
 | `collector_status: failed` | Error text is in the event and the log. The collector restarts automatically (max 5 times per hour). |
-| Events not exported | Tray → Status: "Waiting for export". Check `export.destination_folder` exists and is writable; failed batches keep `retry_count` and retry every 15 min. |
+| Events not exported | Tray → Status: "Waiting for export". With the default Google Drive folder: is Google Drive for desktop running and signed in (a drive with a `My Drive` folder)? Otherwise check `export.destination_folder` exists and is writable; failed batches keep `retry_count` and retry every 15 min. |
 | Config changes ignored | Log shows "Invalid config JSON"? The last good config stays active. Some settings need a restart (see CONFIGURATION.md). |
 | `fallback/` folder has files | The database could not be written for a while. They are imported automatically next start. |
 

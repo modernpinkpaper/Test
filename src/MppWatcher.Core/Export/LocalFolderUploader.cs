@@ -3,19 +3,23 @@ namespace MppWatcher.Core.Export;
 /// <summary>Appends JSONL files under a root folder. The root can be a network share or a synced folder.</summary>
 public sealed class LocalFolderUploader : ILogUploader
 {
-    private readonly string _root;
+    private readonly Func<string> _root;
 
-    public LocalFolderUploader(string root) => _root = root;
+    public LocalFolderUploader(string root) : this(() => root) { }
+
+    /// <summary>The root is asked for at every upload (e.g. to find the Google Drive letter again).</summary>
+    public LocalFolderUploader(Func<string> root) => _root = root;
 
     public string Name => "local_folder";
 
     public async Task UploadAsync(IReadOnlyList<ExportFile> files, CancellationToken cancellationToken)
     {
+        var root = _root();
         foreach (var f in files)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var parts = f.RelativePath.Split('/', StringSplitOptions.RemoveEmptyEntries).Select(SafeSegment);
-            var path = Path.Combine(new[] { _root }.Concat(parts).ToArray());
+            var path = Path.Combine(new[] { root }.Concat(parts).ToArray());
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             await using var stream = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read);
             await using var writer = new StreamWriter(stream);

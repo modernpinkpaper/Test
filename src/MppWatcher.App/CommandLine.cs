@@ -1,6 +1,6 @@
 namespace MppWatcher.App;
 
-internal enum RunMode { Agent, Viewer, Inspect, Service, SmokeTest, Stop, WriteDefaultConfig, Version, Help }
+internal enum RunMode { Agent, Viewer, Inspect, Service, SmokeTest, Stop, ExportNow, WriteDefaultConfig, Version, Help }
 
 /// <summary>
 /// MPPWatcher.exe                       run the background watcher (normal mode, started at logon)
@@ -32,6 +32,7 @@ internal sealed record CommandLine(RunMode Mode, string? ConfigPath, string? Dat
                     break;
                 case "--write-default-config": mode = RunMode.WriteDefaultConfig; output = Next(); break;
                 case "--stop": mode = RunMode.Stop; break;
+                case "--export-now": mode = RunMode.ExportNow; break;
                 case "--version": mode = RunMode.Version; break;
                 case "--help": case "-h": case "/?": mode = RunMode.Help; break;
                 case "--config": config = Next(); break;
@@ -50,6 +51,7 @@ internal sealed record CommandLine(RunMode Mode, string? ConfigPath, string? Dat
           MPPWatcher.exe --inspect                Diagnostic inspector: what does Windows expose here?
           MPPWatcher.exe --smoke-test [seconds]   Run briefly, write a report, exit 0 if OK.
           MPPWatcher.exe --stop                   Ask the watcher in this Windows session to stop cleanly.
+          MPPWatcher.exe --export-now             Ask the watcher in this Windows session to export its logs now.
           MPPWatcher.exe --service                (Windows service) watchdog that restarts stopped watchers.
           MPPWatcher.exe --write-default-config <path>
           MPPWatcher.exe --version

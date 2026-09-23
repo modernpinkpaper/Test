@@ -13,8 +13,6 @@ public sealed record ExportResult(int Exported, int Failed, string? Error);
 /// </summary>
 public sealed class ExportService
 {
-    public const string RootFolderName = "MPP Activity Logs";
-
     private readonly IEventStore _store;
     private readonly ILogUploader _uploader;
     private readonly IDiagnosticLog _log;
@@ -65,8 +63,9 @@ public sealed class ExportService
     }
 
     /// <summary>
-    /// Groups events into "MPP Activity Logs/{employee}/{yyyy-MM-dd}/events_HH00_HH00.jsonl"
+    /// Groups events into "{employee}/{yyyy-MM-dd}/events_HH00_HH00_{computer}.jsonl"
     /// using each event's own local time, ordered by time within each file.
+    /// The computer name keeps files from two PCs apart, so a synced folder never has two writers per file.
     /// </summary>
     public static IReadOnlyList<ExportFile> BuildFiles(IEnumerable<WatchEvent> events)
     {
@@ -82,7 +81,8 @@ public sealed class ExportService
         var local = LocalTime(e);
         var employee = LocalFolderUploader.SafeSegment(string.IsNullOrWhiteSpace(e.EmployeeId) ? "unassigned" : e.EmployeeId);
         var next = (local.Hour + 1) % 24;
-        return $"{RootFolderName}/{employee}/{local:yyyy-MM-dd}/events_{local.Hour:00}00_{next:00}00.jsonl";
+        var computer = string.IsNullOrWhiteSpace(e.ComputerId) ? "" : "_" + LocalFolderUploader.SafeSegment(e.ComputerId.Trim());
+        return $"{employee}/{local:yyyy-MM-dd}/events_{local.Hour:00}00_{next:00}00{computer}.jsonl";
     }
 
     private static DateTimeOffset LocalTime(WatchEvent e) =>

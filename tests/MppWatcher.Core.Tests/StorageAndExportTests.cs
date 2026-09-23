@@ -109,9 +109,10 @@ public class ExportTests : IDisposable
     private readonly TempDir _dir = new();
     public void Dispose() => _dir.Dispose();
 
-    private static WatchEvent At(string local, string employee = "EMP001") => new()
+    private static WatchEvent At(string local, string employee = "EMP001", string computer = "PC-01") => new()
     {
         EventId = Guid.NewGuid().ToString("N"),
+        ComputerId = computer,
         EventType = EventTypes.IdleStart,
         EmployeeId = employee,
         TimestampLocal = local,
@@ -128,11 +129,28 @@ public class ExportTests : IDisposable
             At("2026-09-22T09:10:00.000-04:00", "EMP/002"),
         });
         var paths = files.Select(f => f.RelativePath).ToList();
-        Assert.Contains("MPP Activity Logs/EMP001/2026-09-22/events_0900_1000.jsonl", paths);
-        Assert.Contains("MPP Activity Logs/EMP001/2026-09-22/events_1000_1100.jsonl", paths);
-        Assert.Contains("MPP Activity Logs/EMP001/2026-09-22/events_2300_0000.jsonl", paths);
-        Assert.Contains("MPP Activity Logs/EMP_002/2026-09-22/events_0900_1000.jsonl", paths);
-        Assert.Equal(2, files.Single(f => f.RelativePath.EndsWith("EMP001/2026-09-22/events_0900_1000.jsonl")).JsonLines.Count);
+        Assert.Contains("EMP001/2026-09-22/events_0900_1000_PC-01.jsonl", paths);
+        Assert.Contains("EMP001/2026-09-22/events_1000_1100_PC-01.jsonl", paths);
+        Assert.Contains("EMP001/2026-09-22/events_2300_0000_PC-01.jsonl", paths);
+        Assert.Contains("EMP_002/2026-09-22/events_0900_1000_PC-01.jsonl", paths);
+        Assert.Equal(2, files.Single(f => f.RelativePath == "EMP001/2026-09-22/events_0900_1000_PC-01.jsonl").JsonLines.Count);
+    }
+
+    [Fact]
+    public void Each_computer_gets_its_own_file_so_synced_folders_never_conflict()
+    {
+        var files = ExportService.BuildFiles(new[]
+        {
+            At("2026-09-22T09:15:00.000-04:00", computer: "FRONT-DESK"),
+            At("2026-09-22T09:20:00.000-04:00", computer: "WAREHOUSE:2"),
+            At("2026-09-22T09:25:00.000-04:00", computer: ""),
+        });
+        Assert.Equal(new[]
+        {
+            "EMP001/2026-09-22/events_0900_1000.jsonl",
+            "EMP001/2026-09-22/events_0900_1000_FRONT-DESK.jsonl",
+            "EMP001/2026-09-22/events_0900_1000_WAREHOUSE_2.jsonl",
+        }, files.Select(f => f.RelativePath));
     }
 
     [Fact]
@@ -145,7 +163,7 @@ public class ExportTests : IDisposable
 
         var r = await svc.ExportPendingAsync(1, CancellationToken.None); // batch size 1 → loops
         Assert.Equal(2, r.Exported);
-        var file = Path.Combine(root, "MPP Activity Logs", "EMP001", "2026-09-22", "events_0900_1000.jsonl");
+        var file = Path.Combine(root, "EMP001", "2026-09-22", "events_0900_1000_PC-01.jsonl");
         Assert.Equal(2, File.ReadAllLines(file).Length);
         Assert.Equal(0, store.GetStats().Pending);
         Assert.Contains("\"event_type\":\"idle_start\"", File.ReadAllText(file));

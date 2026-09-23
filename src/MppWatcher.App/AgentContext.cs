@@ -19,6 +19,9 @@ internal sealed class AgentContext : ApplicationContext
     private readonly NotifyIcon? _tray;
     private readonly EventWaitHandle _stopSignal;
     private readonly RegisteredWaitHandle _stopWait;
+    private readonly EventWaitHandle _exportSignal;
+    private readonly EventWaitHandle _exportDone;
+    private readonly RegisteredWaitHandle _exportWait;
     private readonly SynchronizationContext _ui;
     private int _stopping;
 
@@ -40,6 +43,28 @@ internal sealed class AgentContext : ApplicationContext
         _stopSignal = new EventWaitHandle(false, EventResetMode.AutoReset, Program.StopEventName);
         _stopWait = ThreadPool.RegisterWaitForSingleObject(_stopSignal,
             (_, _) => _ui.Post(_ => Shutdown("stop_requested"), null), null, Timeout.Infinite, executeOnlyOnce: true);
+
+        // "MPPWatcher.exe --export-now": export, then tell the caller it is done.
+        _exportSignal = new EventWaitHandle(false, EventResetMode.AutoReset, Program.ExportNowEventName);
+        _exportDone = new EventWaitHandle(false, EventResetMode.AutoReset, Program.ExportDoneEventName);
+        _exportWait = ThreadPool.RegisterWaitForSingleObject(_exportSignal, (_, _) => ExportOnRequest(), null, Timeout.Infinite, executeOnlyOnce: false);
+    }
+
+    private void ExportOnRequest()
+    {
+        try
+        {
+            var r = _runtime.ExportNowAsync().GetAwaiter().GetResult();
+            _log.Info("export", r.Error is null ? $"Export requested: {r.Exported} events exported" : $"Export requested: problem: {r.Error}");
+        }
+        catch (Exception e)
+        {
+            _log.Error("export", "Requested export failed", e);
+        }
+        finally
+        {
+            try { _exportDone.Set(); } catch (ObjectDisposedException) { }
+        }
     }
 
     private NotifyIcon CreateTray()
@@ -55,7 +80,17 @@ internal sealed class AgentContext : ApplicationContext
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Open data folder", null, (_, _) => OpenFolder(_runtime.Paths.DataFolder));
         menu.Items.Add("Open diagnostic logs", null, (_, _) => OpenFolder(_runtime.Paths.LogFolder));
-        menu.Items.Add("Open export folder", null, (_, _) => OpenFolder(_runtime.Paths.ExportFolder));
+        menu.Items.Add("Open export folder", null, (_, _) =>
+        {
+            try
+            {
+                OpenFolder(_runtime.ResolveExportFolder());
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message, "MPP Watcher");
+            }
+        });
         if (_config.Current.AllowUserExit)
         {
             menu.Items.Add(new ToolStripSeparator());
@@ -152,6 +187,9 @@ internal sealed class AgentContext : ApplicationContext
             SystemEvents.SessionEnded -= OnSessionEnded;
             _stopWait.Unregister(null);
             _stopSignal.Dispose();
+            _exportWait.Unregister(null);
+            _exportSignal.Dispose();
+            _exportDone.Dispose();
             StopRuntime("watcher_stopped");
             if (_tray is not null)
             {

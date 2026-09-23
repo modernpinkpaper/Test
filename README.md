@@ -80,7 +80,7 @@ More: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 | Program | `C:\Program Files\MPP Watcher\MPPWatcher.exe` |
 | Settings (admin) | `%ProgramData%\MPP Watcher\config.json` – see [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
 | Event database (per user) | `%LOCALAPPDATA%\MPP Watcher\data\events.db` |
-| Exported JSONL files | `%LOCALAPPDATA%\MPP Watcher\export\MPP Activity Logs\<employee>\<date>\events_0900_1000.jsonl` (folder is configurable) |
+| Exported JSONL files | `G:\My Drive\Personal\mpp activity\<employee>\<date>\events_0900_1000_<PC>.jsonl` (Google Drive for desktop; the Drive letter is found automatically; folder is configurable). `MPPWatcher.exe --export-now` exports right away. |
 | Troubleshooting logs | `%LOCALAPPDATA%\MPP Watcher\logs\diagnostics-YYYY-MM-DD.log` |
 
 ## Documentation

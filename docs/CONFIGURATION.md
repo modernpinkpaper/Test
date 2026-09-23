@@ -114,7 +114,7 @@ See [PRIVACY.md](PRIVACY.md).
 |---|---|---|
 | `enabled` | `true` | |
 | `uploader` | `"local_folder"` | `google_drive` planned. |
-| `destination_folder` | `""` | Empty = `%LOCALAPPDATA%\MPP Watcher\export`. Can be a network share (`\\server\logs`) or a Google Drive for Desktop folder (`G:\My Drive\...`). |
+| `destination_folder` | `"{GoogleDrive}\\My Drive\\Personal\\mpp activity"` | `{GoogleDrive}` = the Google Drive for desktop drive, found automatically at every export (G: first). Files go to `<folder>\<employee>\<date>\events_0900_1000_<PC>.jsonl`. Can also be a plain folder or network share (`\\server\logs`). Empty = `%LOCALAPPDATA%\MPP Watcher\export\MPP Activity Logs`. If the folder is not reachable, events wait on the PC and retry. |
 | `interval_minutes` | `15` | |
 | `batch_size` | `2000` | |
 

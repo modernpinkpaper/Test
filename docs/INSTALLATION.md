@@ -31,6 +31,22 @@ What setup does:
    user and restarts their watcher if it stopped (max 5 times per hour). It records nothing itself.
 6. Adds Start Menu → **MPP Watcher → MPP Watcher Live Viewer** and starts the watcher.
 
+## Google Drive (where the logs go)
+
+By default the logs go to **`G:\My Drive\Personal\mpp activity`** through Google Drive for desktop.
+
+1. Install **Google Drive for desktop** on the PC and sign in to the Google account that should
+   receive the logs. Keep the default "stream files" mode (it shows up as drive `G:`).
+2. That's all. The watcher finds the Drive letter itself. The `mpp activity` folder is created
+   on the first export (every 15 minutes, or run `MPPWatcher.exe --export-now`).
+3. If Drive is closed or signed out, logs wait safely on the PC and are sent later.
+
+Tip: a Google account used only for these logs is safer than a personal account, because every
+person at that PC can open the whole Drive.
+
+An upgrade keeps the old config.json. If it still has `"destination_folder": ""`, change it to
+`"{GoogleDrive}\\My Drive\\Personal\\mpp activity"` to use Google Drive.
+
 ## Uninstall
 
 **Settings → Apps → MPP Watcher → Uninstall**, or silently:
