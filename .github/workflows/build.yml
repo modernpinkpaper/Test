@@ -120,7 +120,7 @@ jobs:
           function Check($ok, $what) { if ($ok) { Write-Host "[PASS] $what" } else { Write-Host "[FAIL] $what"; exit 1 } }
           $dir = "$env:ProgramFiles\MT Log"
           $cfg = "$env:ProgramData\MT Log\config.json"
-          $uninstallKey = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{8C1F2E7A-5B3D-4E91-9A64-3F2D7C0B1E55}_is1'
+          $uninstallKey = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{2F9A6D14-7C08-4B52-A1E3-9D5C4B2A8F60}_is1'
 
           $p = Start-Process setup-output\MTLogSetup.exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/EMPLOYEEID=EMP-SETUP', "/LOG=$env:RUNNER_TEMP\setup.log" -Wait -PassThru
           Check ($p.ExitCode -eq 0) 'setup exe finished'
