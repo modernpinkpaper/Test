@@ -21,14 +21,14 @@ A phase is only called done when all of this is green.
 Foreground sessions, idle, lock/sleep, processes, SQLite, export, viewer, installer, crash
 recovery. Verified on Windows (see above).
 
-## Phase 2 — UI Automation
+## Phase 2 — UI Automation ✅
 Field values (finished values only), clicks on named controls, sensitive-field refusal,
 diagnostic inspector (`MPPWatcher.exe --inspect`). Windows-verified cases:
 WinForms fields/buttons/check box, password and card fields never recorded, settled value
 while typing stops, Microsoft Edge web page fields + button, inspector report incl. hidden
 password.
 
-## Phase 3 — browser context
+## Phase 3 — browser context ✅
 Address bar through UI Automation (not while typing), URL sanitizing, page title from the
 page itself, site rules (Amazon, Seller Central incl. Search Query Performance, Keepa, Etsy,
 Shopify, Google Docs/Sheets/Drive, Gmail, ChatGPT), headings on business sites, and page
@@ -45,6 +45,35 @@ Keepa search box, Seller Central SKU/search fields, Etsy listing editor, Shopify
 editor, Photoshop/InDesign/Excel. Open `MPPWatcher.exe --inspect`, point at the field, and
 press **Save report…** if something looks wrong.
 
+## Phase 4 — files and business apps ✅
+Files created/saved/renamed/moved/deleted/downloaded in watched folders (one event per action,
+Office "safe save" and browser downloads recognised, bulk summaries), downloads linked to the page
+they came from, document names + SKUs from app title bars, files opened (Windows Recent Items),
+print jobs (printer, document, pages), files picked for upload in a browser with the page.
+Windows-verified including a real test printer and an upload in Edge on a look-alike Etsy page.
+
+Found and fixed thanks to the real runs: the default "*\AppData\*" ignore rule also swallowed
+watched folders that live under AppData; Edge shows file dialogs from a helper process.
+
+## Phase 5 — integration and deployment ✅ (except Google Drive)
+- Local event API for scripts (signed, localhost only) — see [LOCAL_API.md](LOCAL_API.md).
+- Watchdog Windows service (restarts a stopped watcher within ~30 s) — verified by killing the
+  watcher on the test machine.
+- `MPPWatcherSetup.exe` (Inno Setup): wizard or silent install, Add/Remove Programs, upgrade keeps
+  config, clean uninstall — verified by silent install → upgrade → uninstall on the test machine.
+
+### Waiting for a decision: Google Drive
+- **A. Google Drive for Desktop** (works today): set `export.destination_folder` to a synced folder,
+  e.g. `G:\\My Drive\\MPP Activity Logs`. Google's app uploads it.
+- **B. Direct Drive API upload**: needs a Google Cloud service-account key; `ILogUploader` is ready
+  for a `GoogleDriveUploader`, but it will only be built and tested once a key is available.
+
+### Before a wide rollout
+- **Code-sign** `MPPWatcher.exe` and `MPPWatcherSetup.exe` (needs a code-signing certificate) so
+  SmartScreen and antivirus trust them.
+- Try the inspector on your real logged-in pages (Keepa, Seller Central, Etsy editor, Shopify) and
+  in Photoshop/InDesign/Excel.
+
 ## Known limitations
 
 - **Browser URLs are not captured yet.** In Phase 1 only the window title
@@ -59,15 +88,14 @@ press **Save report…** if something looks wrong.
 - **Idle starts are back-dated to the last input.** If the foreground window changed on its
   own during that time (a pop-up), the previous session's idle share can be slightly
   under-counted.
-- **Crash restart relies on the scheduled task's 5-minute re-check** until the Phase 5
-  watchdog service. A crash can therefore lose up to 5 minutes of tracking (the open
-  session itself is recovered from the checkpoint, ≤ 30 s approximate end time).
+- **After a crash** the watchdog restarts the watcher within ~30 s; the open session is recovered
+  from its checkpoint (≤ 30 s approximate end time).
 - **Remote Desktop / Fast User Switching**: each signed-in user gets their own watcher.
   Disconnect is treated like lock. Not yet tested.
 - **Export is at-least-once**; a crash exactly between writing a file and marking events
   uploaded can duplicate lines. De-duplicate by `event_id`.
-- **An employee with local admin rights could stop or remove the watcher.** Tamper
-  resistance (service watchdog, protected folders) is a Phase 5 topic.
+- **An employee with local admin rights could stop or remove the watcher.** Standard users cannot
+  stop the watchdog service or change the config.
 - **UI Automation depends on the app.** Chrome/Edge, WinForms, WPF, Office expose a lot;
   some apps (games, older custom-drawn apps, parts of Adobe apps) expose little or nothing.
   Use the inspector to see. Chromium builds its accessibility tree only once a UI Automation
@@ -78,25 +106,7 @@ press **Save report…** if something looks wrong.
   dialog), the control may not be identified and nothing is recorded.
 - **Not code-signed yet.** SmartScreen/antivirus may warn about an unsigned exe that uses
   window hooks. Plan a code-signing certificate before wide rollout.
-
-## Next phases
-
-**Phase 3 – remaining ideas** (not needed to call Phase 3 done)
-- Seller Central report settings that live only in the page (date pickers, ASIN scope) rather
-  than the URL: read the selected values of those controls when the report page is shown.
-- Keepa mode tabs and "products being compared" from the page, not only the `#!` route.
-- Firefox is supported by design (address bar `urlbar-input`) but only Edge is tested in CI.
-- Check with real logged-in pages using `MPPWatcher.exe --inspect` (see above).
-
-**Phase 4 – Files and business apps**
-- File system watcher on configured work folders (created/saved/renamed/moved/deleted),
-  associated app when known, `blocked_folders`.
-- Photoshop / InDesign / Excel document context; print jobs (Windows print spooler events);
-  downloads (browser download folder + Seller Central export context).
-
-**Phase 5 – Integration and deployment**
-- Local authenticated event API for Tampermonkey/scripts (`automation_run` etc.), e.g.
-  `http://127.0.0.1:<port>` with a per-install secret and HMAC.
-- `GoogleDriveUploader` behind `ILogUploader`.
-- `MPPWatcherSetup.exe` (Inno Setup or WiX): install/upgrade/uninstall, Add/Remove Programs,
-  config preserved, watchdog Windows service, code signing.
+- **Files picked in Open dialogs** also show up as `file_opened` (Windows adds them to Recent Items).
+- **Print jobs** are seen through the print queue; a job that enters and leaves the queue within
+  about a second (very fast virtual printers) can be missed.
+- **Memory**: about 140 MB with all collectors on the test machine (target < 200 MB).

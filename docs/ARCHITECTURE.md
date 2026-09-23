@@ -31,9 +31,10 @@ inside the employee's own session. So:
 
 - The **collector runs as a normal program in the user's session**, started at logon by
   Task Scheduler (no BAT file, no user action). It runs un-elevated as that user.
-- **Phase 5** adds a small Windows **service as a watchdog**: it will relaunch the
-  collector into the user's session if it stops, and handle upgrades. Until then,
-  the scheduled task re-checks every 5 minutes and restarts a crashed watcher.
+- A small Windows **service is the watchdog** (`MPPWatcher.exe --service`, LocalSystem): every
+  30 s it checks each signed-in user with an active desktop and, if their watcher is not running,
+  starts it in that user's session (WTSQueryUserToken + CreateProcessAsUser). The logon task also
+  re-checks every 5 minutes. The service records nothing itself.
 
 ## Why C#/.NET 8
 

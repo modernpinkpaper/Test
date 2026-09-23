@@ -16,8 +16,8 @@ It never records password or payment fields. See [docs/PRIVACY.md](docs/PRIVACY.
 | 1 | App + autostart, foreground app/window sessions, processes, idle, lock/sleep, SQLite, live viewer | **Done ✅** (tested on Windows) |
 | 2 | UI Automation: finished field values, clicks on named controls, sensitive-field refusal, diagnostic inspector | **Done ✅** (tested on Windows incl. Edge) |
 | 3 | Browser context via UI Automation (URL, domain, page), Amazon/Seller Central/Keepa/Etsy/Shopify rules | **Done ✅** (passed two Windows runs in a row, Edge) |
-| 4 | Files, document names from app titles, files opened, print jobs, downloads/uploads | In testing (17/18 Windows tests pass) |
-| 5 | Local event API for scripts, Google Drive upload, `MPPWatcherSetup.exe`, watchdog service | In progress (local event API built — see [docs/LOCAL_API.md](docs/LOCAL_API.md)) |
+| 4 | Files, document names from app titles, files opened, print jobs, downloads/uploads | **Done ✅** (passed two Windows runs in a row) |
+| 5 | Local event API for scripts, `MPPWatcherSetup.exe`, watchdog service | **Done ✅** except Google Drive upload (waiting for your choice, see ROADMAP) |
 
 Details, test checklist and known limits: [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -62,14 +62,14 @@ and click is tied to it:
 
 ## Quick start (admin)
 
-1. Get `MPPWatcher.exe`: download the **MPPWatcher-win-x64** artifact from the
-   GitHub Actions build, or build it yourself (see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)).
-2. In an **Administrator PowerShell**, in the folder with the files:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\Install-MppWatcher.ps1 -EmployeeId EMP001
-   ```
+1. Download the **MPPWatcher-win-x64** artifact from the latest GitHub Actions **build**
+   run and unzip it. It contains **`MPPWatcherSetup.exe`**.
+2. Double-click `MPPWatcherSetup.exe` (or, for many PCs, run it silently:
+   `MPPWatcherSetup.exe /VERYSILENT /SUPPRESSMSGBOXES /EMPLOYEEID=EMP001`).
 3. Open **Start Menu → MPP Watcher → MPP Watcher Live Viewer** and use the PC.
    Events appear within a second or two.
+
+Uninstall from **Settings → Apps → MPP Watcher** (settings and collected data are kept).
 
 More: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
