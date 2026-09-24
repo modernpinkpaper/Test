@@ -933,7 +933,12 @@ function Get-Changes([datetime]$From) {
 function Get-Prop($Object, [string]$Name) {
     if ($null -eq $Object) { return '' }
     $p = $Object.PSObject.Properties[$Name]
-    if ($p -and $null -ne $p.Value) { return [string]$p.Value }
+    if ($p -and $null -ne $p.Value) {
+        $v = $p.Value
+        # Some MT Log fields are objects, e.g. document = { name, unsaved, extension }
+        if ($v -is [System.Management.Automation.PSCustomObject] -and $v.PSObject.Properties['name']) { return [string]$v.name }
+        return [string]$v
+    }
     return ''
 }
 
@@ -1036,6 +1041,13 @@ function Get-CrashCaptureOn {
 # ---------------------------------------------------------------------------------------
 # The verdict
 # ---------------------------------------------------------------------------------------
+function Test-IsRoutineChange($Change) {
+    $w = [string]$Change.What
+    if ($w -match '(?i)Security Intelligence Update|Malicious Software Removal Tool|antimalware platform') { return $true }
+    if ($w -match '^9[A-Z0-9]{11}-') { return $true }     # Microsoft Store app updates
+    return $false
+}
+
 function Get-Verdict($Crashes, $Changes, $Installs, $Extensions, $Scripts, $TextLogs, [bool]$CaptureOn, [int]$DaysBack) {
     $findings = New-Object System.Collections.Generic.List[object]
     $steps = New-Object System.Collections.Generic.List[string]
@@ -1133,7 +1145,8 @@ function Get-Verdict($Crashes, $Changes, $Installs, $Extensions, $Scripts, $Text
     # Things that changed just before the first crash
     if ($realCrashes.Count -gt 0) {
         $first = ($realCrashes | Sort-Object Time | Select-Object -First 1).Time
-        $near = @($Changes | Where-Object { $_.Time -le $first -and $_.Time -ge $first.AddDays(-7) } | Sort-Object Time -Descending)
+        # Leave out routine updates that arrive every day and cannot break InDesign (virus lists, Store apps).
+        $near = @($Changes | Where-Object { $_.Time -le $first -and $_.Time -ge $first.AddDays(-7) -and -not (Test-IsRoutineChange $_) } | Sort-Object Time -Descending)
         $susp = @($near | Where-Object { $_.Kind -match 'Graphics|Font|Adobe Font' -or $_.What -match '(?i)indesign|adobe|creative cloud|font|extensis|suitcase|fontbase|nexusfont|plug-?in|nvidia|amd|radeon|intel.*graphics|onedrive|dropbox|google drive|antivirus|defender|norton|mcafee|avast|avg|bitdefender|kaspersky|eset|malwarebytes' })
         if ($near.Count -gt 0) {
             $list = ($susp + ($near | Where-Object { $susp -notcontains $_ }) | Select-Object -First 8 | ForEach-Object { '{0:yyyy-MM-dd}: {1} - {2}' -f $_.Time, $_.Kind, $_.What }) -join '; '

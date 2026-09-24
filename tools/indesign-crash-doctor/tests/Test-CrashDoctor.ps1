@@ -163,6 +163,12 @@ Assert ($titles -match 'same document') 'finding notices the same document'
 Assert ($titles -match 'changed in the week before') 'finding lists what changed before the first crash'
 Assert (($v.Steps -join ' ') -match 'IDML') 'steps include rebuilding the document'
 Assert (($v.Steps -join ' ') -match 'FancyScript') 'steps suggest undoing the new font'
+$routine = @([pscustomobject]@{ Time = $d.Time.AddDays(-1); Kind = 'Windows update'; What = 'Security Intelligence Update for Microsoft Defender Antivirus - KB2267602 (Version 1.453.371.0)' },
+             [pscustomobject]@{ Time = $d.Time.AddDays(-1); Kind = 'Windows update'; What = '9WZDNCRFJBMP-MICROSOFT.WINDOWSSTORE' })
+$vr = Get-Verdict $crashes $routine @() @() @() @() $false 90
+Assert ((($vr.Findings | ForEach-Object { $_.Title }) -join ' ') -notmatch 'changed in the week before') 'daily virus-list and Store updates are not reported as causes'
+$mdObj = '{"document":{"name":"HNP004 weekly planner.indd","unsaved":false}}' | ConvertFrom-Json
+Assert ((Get-Prop $mdObj 'document') -eq 'HNP004 weekly planner.indd') 'MT Log document objects show their name'
 $empty = Get-Verdict @() @() @() @() @() @() $false 90
 Assert ((($empty.Findings | ForEach-Object { $_.Title }) -join ' ') -match 'No crash records') 'no crashes gives a clear message'
 
