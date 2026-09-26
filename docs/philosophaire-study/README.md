@@ -11,3 +11,5 @@ make videos in the same style on any topic.
   example, and how to edit the video.
 - [`03-full-formula-and-mothers-daughters.md`](03-full-formula-and-mothers-daughters.md) —
   the full 10-step formula and a finished script on mothers and daughters.
+- [`04-script-words-from-family.md`](04-script-words-from-family.md) —
+  script: what a family member said that you will never forget.
