@@ -9,7 +9,9 @@ Setup (once):
     models/pose_landmarker_full.task from
     https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task
 Run:
-    python demo_videos/dance_capture.py my_dance.mp4 [--heavy]
+    python demo_videos/dance_capture.py my_dance.mp4 [--heavy] [--person right] [--end 16]
+    --person left|right|biggest  which person to follow when there are several (default: biggest)
+    --end SECONDS                stop early (for example before an app logo screen)
 """
 import argparse
 import json
@@ -41,14 +43,34 @@ def angle(a, b, w, h):
     return math.degrees(math.atan2(dx, dy))
 
 
+def cx(p):
+    return (p[J["l_hip"]].x + p[J["r_hip"]].x) / 2
+
+
+def pick(poses, how, last=None):
+    """Choose one person: the biggest (most of the frame), or the left-most / right-most.
+    After the first frame, stay with the person nearest to where she was (or none if she's gone)."""
+    if last is not None:
+        near = min(poses, key=lambda p: abs(cx(p) - last))
+        return near if abs(cx(near) - last) < 0.12 else None
+    def size(p):
+        ys = [p[J[k]].y for k in ("nose", "l_ankle", "r_ankle")]
+        return max(ys) - min(ys)
+    if how == "left":
+        return min(poses, key=cx)
+    if how == "right":
+        return max(poses, key=cx)
+    return max(poses, key=size)
+
+
 def smooth(frames, k=5):
     """Moving average over time so the puppet doesn't jitter."""
     if not frames:
         return frames
-    keys = [key for key in frames[0]["joints"]]
-    for key in keys:
-        xs = np.array([f["joints"][key][0] if f["joints"] else np.nan for f in frames])
-        ys = np.array([f["joints"][key][1] if f["joints"] else np.nan for f in frames])
+    had = [bool(f["joints"]) for f in frames]
+    for key in J:
+        xs = np.array([f["joints"][key][0] if h else np.nan for f, h in zip(frames, had)])
+        ys = np.array([f["joints"][key][1] if h else np.nan for f, h in zip(frames, had)])
         for arr in (xs, ys):
             ok = ~np.isnan(arr)
             if ok.sum() > 1:
@@ -65,6 +87,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("video")
     ap.add_argument("--heavy", action="store_true", help="slower but more accurate model")
+    ap.add_argument("--person", default="biggest", choices=["biggest", "left", "right"])
+    ap.add_argument("--end", type=float, default=None)
     args = ap.parse_args()
     model = os.path.join(HERE, "models", f"pose_landmarker_{'heavy' if args.heavy else 'full'}.task")
     base = os.path.splitext(args.video)[0]
@@ -74,20 +98,21 @@ def main():
     w, h = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     opts = mp.tasks.vision.PoseLandmarkerOptions(
         base_options=mp.tasks.BaseOptions(model_asset_path=model),
-        running_mode=mp.tasks.vision.RunningMode.VIDEO, num_poses=1)
+        running_mode=mp.tasks.vision.RunningMode.VIDEO, num_poses=3)
     out = cv2.VideoWriter(base + "_skeleton.mp4", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
-    frames, i, found = [], 0, 0
+    frames, i, found, last = [], 0, 0, None
     with mp.tasks.vision.PoseLandmarker.create_from_options(opts) as lm:
         while True:
             ok, img = cap.read()
-            if not ok:
+            if not ok or (args.end and i / fps >= args.end):
                 break
             rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             res = lm.detect_for_video(mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb), int(i * 1000 / fps))
             joints = {}
-            if res.pose_landmarks:
+            p = pick(res.pose_landmarks, args.person, last) if res.pose_landmarks else None
+            if p is not None:
                 found += 1
-                p = res.pose_landmarks[0]
+                last = cx(p)
                 joints = {k: [p[v].x, p[v].y] for k, v in J.items()}
             frames.append({"t": round(i / fps, 3), "joints": joints})
             i += 1
