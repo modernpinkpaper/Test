@@ -30,21 +30,21 @@ EMOTION, VOICE_SPEED = 0.6, 1.12
 GAP = 0.18
 CACHE = os.path.join(HERE, "_voice_cache")
 
-# text: *word* = highlighted in the captions.  pose: 1-6 (see girl_sprites/)
+# text: *word* = highlighted in the captions.  pose: 1-6 or b1-b8 (girl_sprites/), or "talk" (lip-sync)
 # fx: shake, dark, zoom, walk, hearts, anger
 SCRIPT = [
     dict(text="Your *metabolism* isn't broken.", pose=6, fx={"zoom"}, big="YOUR METABOLISM\nISN'T BROKEN"),
-    dict(text="Your *excuses* are.", pose=3, fx={"shake", "dark", "anger"}, big="YOUR EXCUSES ARE."),
-    dict(text="That one little bite of your kid's *fries?* It *counts.*", pose=1, prop="fries"),
-    dict(text="That latte with whipped cream? That's *dessert,* babe. Not coffee.", pose=3, prop="latte", fx={"hearts"}),
-    dict(text="You're not hungry at 9 PM. You're *bored.*", pose=5, prop="clock"),
-    dict(text="And *I'll start Monday* has been the plan since 2019.", pose=2, prop="calendar"),
+    dict(text="Your *excuses* are.", pose="b1", fx={"shake", "dark", "anger"}, big="YOUR EXCUSES ARE."),
+    dict(text="That one little bite of your kid's *fries?* It *counts.*", pose="b6", prop="fries"),
+    dict(text="That latte with whipped cream? That's *dessert,* babe. Not coffee.", pose="b2", prop="latte"),
+    dict(text="You're not hungry at 9 PM. You're *bored.*", pose="b4", prop="clock"),
+    dict(text="And *I'll start Monday* has been the plan since 2019.", pose="b5", prop="calendar"),
     dict(text="Skinny girls aren't *lucky.*", pose=4, fx={"walk"}),
-    dict(text="They just say *no* to what you keep saying *yes* to.", pose=6, fx={"zoom"}),
-    dict(text="Nobody is coming to *save* you.", pose=1, fx={"dark", "shake"}),
-    dict(text="Close the *kitchen.* Drink the *water.* Go to *bed.*", pose=2, prop="checklist"),
-    dict(text="Mad? *Good.* Now prove me *wrong.*", pose=5, fx={"hearts", "zoom"}),
-    dict(text="Follow for more truth you didn't ask for.", pose=2, fx={"hearts"}),
+    dict(text="They just say *no* to what you keep saying *yes* to.", pose="talk", fx={"zoom"}),
+    dict(text="Nobody is coming to *save* you.", pose="talk", fx={"dark", "shake"}),
+    dict(text="Close the *kitchen.* Drink the *water.* Go to *bed.*", pose="b7", prop="checklist"),
+    dict(text="Mad? *Good.* Now prove me *wrong.*", pose="b3", fx={"zoom", "anger"}),
+    dict(text="Follow for more truth you didn't ask for.", pose="talk", fx={"hearts"}),
 ]
 
 PINK = ("#ffe3ef", "#ffb6d3")
@@ -171,14 +171,63 @@ def gradient(c1, c2):
     return Image.fromarray(img.astype(np.uint8)).convert("RGBA")
 
 
-def load_poses(height=980):
+SKIN, LASH = (254, 204, 171), (70, 35, 28)
+EYES = [(68, 193, 162, 278), (195, 193, 287, 278)]  # eye boxes on mouth1.png (for blinking)
+MOUTH_BOX = (138, 272, 218, 334)                    # mouth area that changes between mouth1-4
+
+
+def talker_frames():
+    """Standing pose with 4 mouths x (eyes open, eyes closed), all from mouth1-4.png.
+    Only the mouth area is swapped, so hair and body never flicker."""
+    sp = os.path.join(HERE, "girl_sprites")
+    base = Image.open(os.path.join(sp, "mouth1.png")).convert("RGBA")
+    mask = Image.new("L", base.size, 0)
+    ImageDraw.Draw(mask).ellipse(MOUTH_BOX, fill=255)
+    mask = mask.filter(ImageFilter.GaussianBlur(4))
+    out = {}
+    for k in range(1, 5):
+        m = Image.open(os.path.join(sp, f"mouth{k}.png")).convert("RGBA").crop((0, 0) + base.size)
+        face = base.copy()
+        face.paste(m, (0, 0), mask)
+        out[(k, False)] = face
+        shut = face.copy()
+        d = ImageDraw.Draw(shut)
+        for x0, y0, x1, y1 in EYES:
+            d.ellipse([x0, y0, x1, y1], fill=SKIN)
+            d.arc([x0 + 4, y0 + 14, x1 - 4, y1 - 4], start=20, end=160, fill=LASH, width=6)
+            ox = x0 + 6 if x0 < 150 else x1 - 6
+            d.line([(ox, y0 + 48), (ox + (-12 if x0 < 150 else 12), y0 + 40)], fill=LASH, width=5)
+        out[(k, True)] = shut
+    return out
+
+
+def fit(im, height):
+    im = im.crop(im.getbbox())
+    s = height / im.height
+    return im.resize((int(im.width * s), int(im.height * s)), Image.LANCZOS)
+
+
+def load_poses(height=930):
+    """Keys: 1-6 (first sheet), "b1"-"b8" (second sheet), ("talk", mouth, eyes_closed)."""
+    sp = os.path.join(HERE, "girl_sprites")
     poses = {}
     for i in range(1, 7):
-        im = Image.open(os.path.join(HERE, "girl_sprites", f"pose{i}.png")).convert("RGBA")
-        im = im.crop(im.getbbox())
-        s = height / im.height if i not in (5, 6) else height * 0.82 / im.height
-        poses[i] = im.resize((int(im.width * s), int(im.height * s)), Image.LANCZOS)
+        im = Image.open(os.path.join(sp, f"pose{i}.png")).convert("RGBA")
+        poses[i] = fit(im, height if i not in (5, 6) else height * 0.82)
+    for i in range(1, 9):
+        poses[f"b{i}"] = fit(Image.open(os.path.join(sp, f"pose_b{i}.png")).convert("RGBA"), height)
+    for (k, shut), im in talker_frames().items():
+        poses[("talk", k, shut)] = fit(im, height)
     return poses
+
+
+def mouth_for(level, fr):
+    """Pick a mouth shape from voice loudness (0-1)."""
+    if level < 0.12:
+        return 1
+    if level < 0.35:
+        return 2
+    return 4 if (fr // 3) % 4 == 0 else 3
 
 
 def heart(d, x, y, s, color):
@@ -331,6 +380,7 @@ def main():
     silent = os.path.join(HERE, "_tb_silent.mp4")
     wr = imageio.get_writer(silent, fps=FPS, codec="libx264", quality=8, macro_block_size=1)
     particles = []
+    mouth = 1
     for fr in range(n_frames):
         sec = fr / FPS
         cur = max([l for l in lines if l["start"] - 0.05 <= sec] or [lines[0]], key=lambda l: l["start"])
@@ -366,14 +416,20 @@ def main():
         elif cur.get("prop"):
             prop = draw_prop(cur["prop"], lt, prog)
             if cur["prop"] == "checklist":
-                prop = prop.resize((int(prop.width * 1.4), int(prop.height * 1.4)), Image.LANCZOS)
+                prop = prop.resize((int(prop.width * 1.2), int(prop.height * 1.2)), Image.LANCZOS)
             s = pop_scale(lt - 0.1) if lt > 0.1 else 0.01
             prop = prop.rotate(4 * math.sin(sec * 3), resample=Image.BICUBIC)
             prop = prop.resize((max(1, int(prop.width * s)), max(1, int(prop.height * s))))
-            img.alpha_composite(prop, (int(W / 2 - prop.width / 2), int(360 - prop.height / 2 + 20 * math.sin(sec * 2))))
+            img.alpha_composite(prop, (int(W / 2 - prop.width / 2), int(320 - prop.height / 2 + 14 * math.sin(sec * 2))))
 
         # the girl
-        girl = poses[cur["pose"]]
+        if cur["pose"] == "talk":
+            if fr % 2 == 0 or fr == 0:
+                mouth = mouth_for(env[fr] if fr < len(env) else 0, fr)
+            blink = (fr % 96) in (0, 1, 2)
+            girl = poses[("talk", mouth, blink)]
+        else:
+            girl = poses[cur["pose"]]
         talk = env[fr] if fr < len(env) else 0
         sx = 1 - 0.02 * talk
         sy = 1 + 0.035 * talk
