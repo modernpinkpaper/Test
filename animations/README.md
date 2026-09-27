@@ -33,3 +33,7 @@ A round cat that bounces, blinks and has floating hearts.
 python kawaii_cat.py save kawaii_cat.json
 python kawaii_cat.py gif kawaii_cat.json kawaii_cat.gif
 ```
+
+## Kawaii girl
+
+See [kawaii_girl/](kawaii_girl/README.md): made from a real drawing, with idle, wave and pose-switching animations.
