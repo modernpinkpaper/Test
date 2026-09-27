@@ -1,12 +1,14 @@
 """"Sammy invests $100 at 18" - a short money story video.
 
 Characters and props are vector animations built with python-lottie.
-Voiceover: Kokoro TTS (free, runs on CPU). Text and captions: Pillow.
+Voiceover: Chatterbox (free, open source) copies the voice in voices/narrator-ref.wav
+(falls back to Kokoro if that file is missing). Text and captions: Pillow.
 No GPU and no AI image/video models. Each scene is also saved as a
 Lottie .json file you can open in any Lottie player.
 
 Setup (once):
-    pip install lottie cairosvg pillow numpy imageio imageio-ffmpeg kokoro soundfile
+    pip install lottie cairosvg pillow numpy imageio imageio-ffmpeg soundfile num2words chatterbox-tts "setuptools<81"
+    (optional fallback voice: pip install kokoro)
 Run:
     python demo_videos/sammy_story.py
 """
@@ -15,6 +17,7 @@ import json
 import math
 import os
 import random
+import re
 import subprocess
 
 import imageio
@@ -30,7 +33,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(HERE, "sammy_lottie")
 W, H, FPS = 1080, 1920, 30
 SR = 24000
-SPEED = 1.4  # voice + animation speed (1.0 = calm, 1.4 = energetic)
+SPEED = 1.4  # animation speed (1.0 = calm, 1.4 = energetic)
+VOICE_REF = os.path.join(HERE, "voices", "narrator-ref.wav")  # 10-20 s of the voice to copy (used with permission)
+EMOTION = 0.6  # Chatterbox exaggeration: 0.5 = normal, higher = more expressive
+VOICE_SPEED = 1.15  # speeds the voice up without changing its pitch
 GAP = 0.12  # pause between sentences (seconds)
 TAIL = 0.3  # pause at the end of each scene
 
@@ -494,9 +500,55 @@ def overlay(scene, d, sec, dur):
             d.text((540, 1830 + i * 40), txt, font=F_SMALL, anchor="mm", fill=(170, 170, 190))
 
 
-def speak(pipe, text):
-    audio = [a for _, _, a in pipe(text, voice="am_michael", speed=SPEED)]
-    return np.concatenate([np.asarray(a) for a in audio]).astype(np.float32)
+def say_numbers(text):
+    """TTS reads "270,000" better as words."""
+    from num2words import num2words
+    return re.sub(r"\d[\d,]*", lambda m: num2words(int(m.group().replace(",", ""))), text)
+
+
+def trim(a, thr=0.01, keep=0.04):
+    loud = np.where(np.abs(a) > thr)[0]
+    if not len(loud):
+        return a
+    k = int(keep * SR)
+    return a[max(loud[0] - k, 0):loud[-1] + k]
+
+
+def stretch(a, speed):
+    """Faster voice, same pitch (ffmpeg atempo)."""
+    if abs(speed - 1) < 0.01:
+        return a
+    ff = imageio_ffmpeg.get_ffmpeg_exe()
+    i, o = os.path.join(HERE, "_i.wav"), os.path.join(HERE, "_o.wav")
+    sf.write(i, a, SR)
+    subprocess.run([ff, "-loglevel", "error", "-y", "-i", i, "-filter:a", f"atempo={speed:.3f}", o], check=True)
+    b, _ = sf.read(o, dtype="float32")
+    os.remove(i)
+    os.remove(o)
+    return b
+
+
+def make_speaker():
+    """Returns speak(text) -> float32 audio at SR."""
+    if os.path.exists(VOICE_REF):
+        import torch
+        import torchaudio
+        from chatterbox.tts import ChatterboxTTS
+        tts = ChatterboxTTS.from_pretrained(device="cuda" if torch.cuda.is_available() else "cpu")
+
+        def speak(text):
+            w = tts.generate(say_numbers(text), audio_prompt_path=VOICE_REF, exaggeration=EMOTION, cfg_weight=0.5)
+            if tts.sr != SR:
+                w = torchaudio.functional.resample(w, tts.sr, SR)
+            return stretch(trim(w.squeeze(0).cpu().numpy().astype(np.float32)), VOICE_SPEED)
+        return speak
+    from kokoro import KPipeline
+    pipe = KPipeline(lang_code="a")
+
+    def speak(text):
+        audio = [a for _, _, a in pipe(text, voice="am_michael", speed=SPEED)]
+        return np.concatenate([np.asarray(a) for a in audio]).astype(np.float32)
+    return speak
 
 
 def music(seconds):
@@ -526,8 +578,7 @@ def music(seconds):
 
 
 def main():
-    from kokoro import KPipeline
-    pipe = KPipeline(lang_code="a")
+    speak = make_speaker()
     os.makedirs(OUT_DIR, exist_ok=True)
     silent = os.path.join(HERE, "_story_silent.mp4")
     wav = os.path.join(HERE, "_story.wav")
@@ -539,7 +590,8 @@ def main():
         # 1) voice, sentence by sentence (gives exact caption timing)
         caps, t0 = [], 0.0
         for text in scene["lines"]:
-            a = speak(pipe, text)
+            a = speak(text)
+            print(f"  voice: {text}")
             caps.append((t0, t0 + len(a) / SR, text))
             voice += [a, np.zeros(int(GAP * SR), np.float32)]
             t0 += len(a) / SR + GAP
