@@ -30,8 +30,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(HERE, "sammy_lottie")
 W, H, FPS = 1080, 1920, 30
 SR = 24000
-GAP = 0.35  # pause between sentences (seconds)
-TAIL = 0.7  # pause at the end of each scene
+SPEED = 1.4  # voice + animation speed (1.0 = calm, 1.4 = energetic)
+GAP = 0.12  # pause between sentences (seconds)
+TAIL = 0.3  # pause at the end of each scene
 
 # ---------------------------------------------------------------- the money
 RATE, MONTHLY, START, CRASH_AGE, CRASH = 0.08, 50, 100, 25, 0.30
@@ -280,24 +281,24 @@ def drop_coins(parent, x, y_top, y_bottom, starts, fall=16):
 # ----------------------------------------------------------------- scenes
 SCENES = [
     dict(key="meet", title="AGE 18", bg=("#1b9aaa", "#0b3c49"),
-         lines=["Meet Sammy.", "He just turned eighteen, and he has one hundred dollars."]),
+         lines=["Meet Sammy!", "He just turned eighteen... and he's got one hundred bucks!"]),
     dict(key="friends", title="WHERE $100 USUALLY GOES", bg=("#7b2ff7", "#2b0b5c"),
-         lines=["His friends spent their money on sneakers and pizza."]),
+         lines=["His friends? They blew it on sneakers and pizza!"]),
     dict(key="plan", title="SAMMY'S PLAN", bg=("#1d4ed8", "#0b1a4a"),
-         lines=["But Sammy put his hundred dollars into a simple index fund.",
-                "And every month, he added fifty dollars more."]),
+         lines=["But Sammy? He threw his hundred into an index fund!",
+                "And every single month, he added fifty more!"]),
     dict(key="crash", title="AGE 25: THE CRASH", bg=("#8b0000", "#1a0000"),
-         lines=["At twenty five, the stock market crashed.", "His account dropped thirty percent."]),
+         lines=["Then at twenty five... BOOM! The market crashed!", "His account dropped thirty percent!"]),
     dict(key="sell", title="EVERYONE PANICKED", bg=("#334155", "#0f172a"),
-         lines=["Everyone told him to sell.", "Sammy didn't.",
-                "He just kept adding fifty dollars, every single month."]),
+         lines=["Everyone screamed: sell! Sell! SELL!", "Sammy? He didn't flinch.",
+                "He kept adding fifty bucks. Every. Single. Month."]),
     dict(key="grow", title="YEARS PASS...", bg=("#15803d", "#052e16"),
-         lines=["Years passed.", "And his little seed quietly kept growing."]),
+         lines=["Years flew by...", "And that tiny seed? It kept on growing!"]),
     dict(key="retire", title="AGE 65", bg=("#d4a017", "#4a2c00"),
-         lines=[f"At sixty five, Sammy retired with about {FINAL_ROUND:,} dollars.",
-                f"He only ever put in about {PUT_IN_ROUND:,}."]),
+         lines=[f"At sixty five, Sammy retired with about {FINAL_ROUND:,} dollars!",
+                f"And he only put in about {PUT_IN_ROUND:,}!"]),
     dict(key="end", title="THE LESSON", bg=("#111827", "#000000"),
-         lines=["Start early.", "Stay patient.", "Let time do the heavy lifting."]),
+         lines=["Start early!", "Stay patient!", "And let time do the heavy lifting!"]),
 ]
 
 
@@ -350,7 +351,7 @@ def build(scene, n, t):
         keys(ln.stroke.color, [(t(1.2), C("#2ecc71")), (t(1.4), C("#ff3b3b"))], ease=False)
         person(L, 540, floor + 250, n, mood="shocked", shake=(t(1.4), t(3.0)), scale=80)
     elif k == "sell":
-        s = person(L, 540, floor, n, mood="calm")
+        s = person(L, 540, floor, n)
         spots = [(250, 520), (820, 600), (230, 900), (850, 980)]
         for i, (x, y) in enumerate(spots):
             g = group(L, (x, y), (x, y))
@@ -457,7 +458,7 @@ def overlay(scene, d, sec, dur):
         d.text((540, 420), "$100 GONE", font=F_BIG, anchor="mm", fill=(255, 90, 110),
                stroke_width=6, stroke_fill=(0, 0, 0))
     if k == "plan" and sec > 3.2:
-        d.text((770, 1590), "+$50 / month", font=F_MED, anchor="mm", fill=(255, 255, 255))
+        d.text((770, 980), "+$50 / month", font=F_MED, anchor="mm", fill=(255, 255, 255))
     if k == "crash":
         v = BY_AGE[25] / (1 - CRASH) if sec < 1.3 else BY_AGE[25]
         d.text((540, 690), f"${v:,.0f}", font=F_MED, anchor="mm",
@@ -494,7 +495,7 @@ def overlay(scene, d, sec, dur):
 
 
 def speak(pipe, text):
-    audio = [a for _, _, a in pipe(text, voice="am_michael", speed=1.0)]
+    audio = [a for _, _, a in pipe(text, voice="am_michael", speed=SPEED)]
     return np.concatenate([np.asarray(a) for a in audio]).astype(np.float32)
 
 
@@ -546,7 +547,7 @@ def main():
         dur = t0 + TAIL
         n = int(round(dur * FPS))
         # 2) lottie animation for the scene
-        an = build(scene, n, lambda s: int(s * FPS))
+        an = build(scene, n, lambda s: int(s * FPS / SPEED))
         with open(os.path.join(OUT_DIR, f"{scene['key']}.json"), "w") as fh:
             json.dump(an.to_dict(), fh)
         bg = gradient(*scene["bg"])
@@ -560,8 +561,8 @@ def main():
             img = bg.copy()
             img.alpha_composite(art)
             d = ImageDraw.Draw(img)
-            draw_title(d, scene["title"], min(1, sec / 0.3))
-            overlay(scene, d, sec, dur)
+            draw_title(d, scene["title"], min(1, sec / 0.2))
+            overlay(scene, d, sec * SPEED, dur * SPEED)
             cur = [c for c in caps if c[0] <= sec < c[1] + GAP]
             if cur:
                 draw_caption(d, cur[0][2])
