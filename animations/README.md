@@ -22,3 +22,14 @@ for frame in anim["frames"]:
     lines, head = pose_lines(frame, anim["width"], anim["height"])
     # draw the lines and head with any library (Pillow, pygame, tkinter, ...)
 ```
+
+## Kawaii cat
+
+![kawaii cat](kawaii_cat.gif)
+
+A round cat that bounces, blinks and has floating hearts.
+
+```bash
+python kawaii_cat.py save kawaii_cat.json
+python kawaii_cat.py gif kawaii_cat.json kawaii_cat.gif
+```
