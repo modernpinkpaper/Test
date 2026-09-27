@@ -12,6 +12,7 @@ Run:
     python demo_videos/dance_capture.py my_dance.mp4 [--heavy] [--person right] [--end 16]
     --person left|right|biggest  which person to follow when there are several (default: biggest)
     --end SECONDS                stop early (for example before an app logo screen)
+    --area 0,0.5                 only follow a person whose hips are in this part of the width (0 = left edge)
 """
 import argparse
 import json
@@ -89,6 +90,7 @@ def main():
     ap.add_argument("--heavy", action="store_true", help="slower but more accurate model")
     ap.add_argument("--person", default="biggest", choices=["biggest", "left", "right"])
     ap.add_argument("--end", type=float, default=None)
+    ap.add_argument("--area", default="0,1")
     args = ap.parse_args()
     model = os.path.join(HERE, "models", f"pose_landmarker_{'heavy' if args.heavy else 'full'}.task")
     base = os.path.splitext(args.video)[0]
@@ -109,7 +111,9 @@ def main():
             rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             res = lm.detect_for_video(mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb), int(i * 1000 / fps))
             joints = {}
-            p = pick(res.pose_landmarks, args.person, last) if res.pose_landmarks else None
+            ax0, ax1 = map(float, args.area.split(","))
+            cands = [q for q in (res.pose_landmarks or []) if ax0 <= cx(q) <= ax1]
+            p = pick(cands, args.person, last) if cands else None
             if p is not None:
                 found += 1
                 last = cx(p)
