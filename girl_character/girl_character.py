@@ -29,11 +29,12 @@ COLORS = {
     "skin_shadow": "#dc8c5e",
     "skin_light": "#fcc9a0",
     "blush": "#f08a7a",
-    "lip": "#d46b60",
-    "lip_light": "#e98a78",
-    "lip_line": "#9c3f3a",
+    "lip": "#cf6a5f",
+    "lip_light": "#e08577",
+    "lip_line": "#7c3430",
+    "feature_line": "#7a3e25",
     "eye_white": "#fdfbf9",
-    "eye_shade": "#e7dcd6",
+    "eye_shade": "#eee5e1",
     "iris": "#6b3a1d",
     "iris_dark": "#3a1c0c",
     "iris_light": "#9a5b2c",
@@ -373,8 +374,8 @@ def draw_hair_front():
                      [44, 56, 58, 56, 52, 44, 30, 3], "lock_middle", amp=8, phase=1.6),
         flowing_lock([(400, 200), (372, 262), (358, 332), (346, 402), (350, 466), (374, 534)],
                      [30, 40, 42, 40, 32, 3], "lock_wave", amp=6, phase=2.4),
-        flowing_lock([(414, 118), (390, 180), (386, 240), (402, 300), (420, 362), (418, 432), (408, 500), (422, 574)],
-                     [34, 40, 44, 46, 46, 42, 32, 3], "lock_face_frame", amp=5, phase=0.8),
+        flowing_lock([(410, 118), (384, 180), (384, 240), (402, 300), (420, 362), (418, 432), (408, 500), (422, 574)],
+                     [30, 26, 36, 46, 46, 42, 32, 3], "lock_face_frame", amp=5, phase=0.8),
     ]
     shine = group("hair_front_highlights",
                   strand([(512, 22), (470, 30), (430, 48), (400, 80)], 9, L, .85),
@@ -394,93 +395,114 @@ def draw_hair_front():
 # ----------------------------------------------------------------------------------------------
 # Head
 # ----------------------------------------------------------------------------------------------
+CLIP_PATHS = []   # clip paths are collected here and written once into the top-level <defs>
+
+
 def draw_ear(side):
     if side == "right":          # her right ear = viewer's left
-        pts = [(422, 158), (410, 150), (401, 162), (403, 186), (413, 203), (425, 206)]
-        inner = [(417, 166), (409, 172), (411, 188), (418, 196)]
+        pts = [(427, 160), (414, 151), (406, 161), (407, 183), (414, 198), (428, 204)]
+        inner = [(420, 164), (412, 170), (413, 186), (420, 194)]
     else:
-        pts = [(555, 150), (566, 138), (574, 148), (572, 172), (563, 190), (551, 196)]
-        inner = [(560, 156), (567, 160), (565, 176), (558, 184)]
+        pts = [(555, 150), (566, 138), (577, 146), (576, 168), (568, 186), (554, 192)]
+        inner = [(561, 154), (569, 158), (568, 174), (561, 182)]
     return group(f"{side}_ear", outlined(pts, COLORS["skin"], range(0, 5)),
                  curve(inner, COLORS["skin_shadow"], STROKE["detail"]))
 
 
+FACE_OUTLINE = [(427, 86), (421, 128), (422, 168), (430, 200), (447, 226), (468, 245), (486, 255), (497, 255),
+                (515, 248), (533, 232), (548, 211), (556, 186), (559, 150), (558, 110), (548, 84), (495, 72),
+                (447, 75)]
+
+
 def draw_face():
-    outline = [(424, 92), (418, 140), (420, 182), (431, 214), (451, 237), (475, 252), (497, 258),
-               (519, 250), (538, 229), (551, 197), (558, 160), (559, 116), (548, 84), (495, 68), (440, 76)]
-    skin = shape(outline, COLORS["skin"], gid="face_shape")
-    side_shade = shape([(424, 110), (420, 160), (426, 204), (446, 234), (470, 250), (452, 226), (438, 196),
-                        (432, 150), (436, 112)], COLORS["skin_shadow"], stroke=False, opacity=".35")
-    hair_shadow = shape([(430, 80), (500, 66), (548, 82), (556, 104), (520, 92), (470, 94), (440, 110)],
-                        COLORS["skin_shadow"], stroke=False, opacity=".45")
-    blush = [ellipse((446, 195), 22, 12, "url(#blush)"), ellipse((536, 188), 20, 11, "url(#blush)")]
-    return group("face", skin, side_shade, hair_shadow, *blush)
+    segs = smooth_segments(FACE_OUTLINE, True)
+    CLIP_PATHS.append(Node("clipPath", {"id": "clip_face"}, [path(segs)]))
+    skin = path(segs, COLORS["skin"], COLORS["outline"], STROKE["major"], gid="face_shape")
+    # soft shading only: gradients clipped to the face, no hard-edged shadow shapes
+    shade = group("face_shading",
+                  ellipse((490, 160), 84, 108, "url(#faceShade)"),
+                  ellipse((470, 142), 16, 11, "url(#softShadow)"),       # eye sockets beside the nose
+                  ellipse((506, 138), 16, 11, "url(#softShadow)"),
+                  ellipse((490, 86), 60, 16, "url(#softShadow)"),        # under the hairline
+                  ellipse((448, 196), 20, 10, "url(#blush)"), ellipse((534, 190), 18, 9, "url(#blush)"),
+                  clip_path="url(#clip_face)")
+    return group("face", skin, shade)
 
 
-CLIP_PATHS = []   # clip paths are collected here and written once into the top-level <defs>
+def lash(f, base, tip, w=3.0):
+    """One small curved lash: a thin triangle from the lid out to a point."""
+    b, t = np.array(base, float), np.array(tip, float)
+    d = t - b
+    nrm = np.array([-d[1], d[0]]) / (np.linalg.norm(d) + 1e-9) * w / 2
+    mid = b + d * .55 + nrm * .6
+    return shape(mapped(f, [tuple(b + nrm), tuple(mid), tuple(t), tuple(b - nrm)]), COLORS["liner"],
+                 stroke=False, corners=(0, 2, 3))
 
 
 def draw_eye(side):
-    """side = 'right' (her right, viewer left) or 'left'. Built in local units around the eye centre."""
-    c = (450, eye_y + 3) if side == "right" else (523, eye_y - 3)
-    f = xform(c, -4 if side == "right" else 3, flip=(side == "right"), scale=1.1)
+    """side = 'right' (her right, viewer left) or 'left'. Built in local units around the iris centre;
+    +x points to the outer corner."""
+    c = (450, 157) if side == "right" else (522, 153)
+    f = xform(c, -3 if side == "right" else 3, flip=(side == "right"), scale=1.08)
     gid = f"{side}_eye"
-    white_pts = [(-21, 4), (-11, -12), (8, -14), (22, -1), (11, 12), (-8, 14)]
-    white_segs = smooth_segments(mapped(f, white_pts), True, corners=(0, 3))
+    white_segs = smooth_segments(mapped(f, [(-22, 5), (-12, -10), (4, -14), (16, -10), (24, -3), (15, 9), (0, 14),
+                                            (-13, 11)]), True, corners=(0, 4))
     clip_id = f"clip_{gid}"
-    clip = Node("clipPath", {"id": clip_id}, [path(white_segs)])
-    iris_c = f((0, 1))
-    iris = group(f"{gid}_iris",
-                 circle(iris_c, 14.5, "url(#iris)", stroke=COLORS["iris_dark"], width=1.4),
-                 circle(f((0, 1.5)), 6.2, COLORS["pupil"]),
-                 circle(f((4, -3.5)), 3.4, "#ffffff"),
-                 circle(f((-4, 5)), 1.6, "#ffffff", opacity=".85"),
-                 clip_path=f"url(#{clip_id})")
-    lid_shade = path(smooth_segments(mapped(f, [(-21, 4), (-11, -12), (8, -14), (22, -1), (8, -6), (-10, -4)]),
-                                     True, corners=(0, 3)), COLORS["eye_shade"], clip_path=f"url(#{clip_id})")
+    CLIP_PATHS.append(Node("clipPath", {"id": clip_id}, [path(white_segs)]))
     white = path(white_segs, COLORS["eye_white"])
-    liner = shape(mapped(f, [(-24, 6), (-14, -17), (8, -20), (25, -5), (36, -14), (29, 1), (22, 1),
-                             (8, -13), (-11, -11), (-21, 4)]), COLORS["liner"], stroke=False, corners=(0, 4, 9))
-    lower = curve(mapped(f, [(-17, 10), (-4, 15), (10, 13), (21, 2)]), COLORS["iris_dark"], STROKE["fine"] + .4)
-    lashes = [strand(mapped(f, [(x0, y0), (x0 + dx * .5, y0 + dy * .6), (x0 + dx, y0 + dy)]), 3.2, COLORS["liner"])
-              for x0, y0, dx, dy in [(4, -17, 3, -8), (12, -14, 5, -7), (19, -10, 7, -5), (-4, -16, 0, -6)]]
-    lower_lashes = [curve(mapped(f, [(x, y), (x + 3, y + 5)]), COLORS["liner"], 1.2)
-                    for x, y in [(14, 10), (19, 6)]]
-    crease = curve(mapped(f, [(-16, -19), (-2, -25), (14, -23), (24, -15)]), COLORS["skin_shadow"], STROKE["fine"] + .3)
-    CLIP_PATHS.append(clip)
-    return group(gid, white, lid_shade, iris, liner, lower, *lashes, *lower_lashes, crease)
+    iris = group(f"{gid}_iris",
+                 circle(f((0, 2)), 12.2, "url(#iris)", stroke=COLORS["iris_dark"], width=1.2),
+                 circle(f((0, 2.5)), 5.8, COLORS["pupil"]),
+                 circle(f((4.2, -2.5)), 3.3, "#ffffff"),
+                 circle(f((-4, 6)), 1.7, "#ffffff", opacity=".8"),
+                 clip_path=f"url(#{clip_id})")
+    lid_shadow = path(smooth_segments(mapped(f, [(-22, 5), (-12, -10), (4, -14), (16, -10), (24, -3), (6, -7),
+                                                 (-8, -5)]), True, corners=(0, 4)), COLORS["eye_shade"],
+                      opacity=".9", clip_path=f"url(#{clip_id})")
+    lid_skin = shape(mapped(f, [(-18, -9), (-6, -23), (10, -24), (24, -15), (10, -19), (-6, -18)]),
+                     COLORS["skin_shadow"], stroke=False, opacity=".3")
+    liner = shape(mapped(f, [(-23, 5), (-14, -13), (4, -18.5), (19, -14.5), (28, -8), (37, -14), (30, -1), (24, -2),
+                             (16, -9.5), (4, -13.5), (-12, -9.5), (-21, 4)]), COLORS["liner"], stroke=False,
+                  corners=(0, 5, 11))
+    lashes = [lash(f, b, t, 3.2) for b, t in [((8, -17.5), (11, -21.5)), ((14, -16), (18, -20)),
+                                               ((19, -13.5), (24, -17)), ((24, -10.5), (30, -13.5))]]
+    lower = curve(mapped(f, [(-17, 10), (-2, 15), (12, 12.5), (22, 4)]), COLORS["feature_line"], STROKE["fine"] + .3)
+    lower_lashes = [lash(f, b, t, 1.6) for b, t in [((14, 10), (15.5, 13)), ((18, 7), (20.5, 10))]]
+    return group(gid, lid_skin, white, lid_shadow, iris, lower, *lower_lashes, liner, *lashes)
 
 
 def draw_eyebrow(side):
     if side == "right":
-        pts = [(473, 118), (456, 108), (437, 107), (423, 112), (413, 124), (430, 122), (446, 121), (460, 125), (472, 131)]
+        pts = [(477, 124), (462, 118), (447, 116), (434, 120), (424, 130), (437, 128), (451, 128), (464, 132),
+               (476, 138)]
     else:
-        pts = [(501, 116), (518, 105), (537, 102), (552, 107), (563, 121), (547, 117), (531, 116), (515, 121), (502, 129)]
-    return group(f"{side}_eyebrow", shape(pts, COLORS["brow"], stroke=False, corners=(0, 4, 8)))
+        pts = [(498, 123), (513, 114), (528, 111), (543, 115), (554, 129), (541, 124), (528, 123), (513, 128),
+               (499, 136)]
+    return group(f"{side}_eyebrow", shape(pts, "url(#brow)", stroke=False, corners=(0, 4, 8)))
 
 
 def draw_nose():
+    line = COLORS["feature_line"]
     return group("nose",
-                 shape([(484, 132), (478, 160), (474, 186), (476, 194), (481, 176), (486, 150)], COLORS["skin_shadow"],
-                       stroke=False, opacity=".55"),
-                 shape([(474, 196), (480, 203), (490, 205), (500, 202), (492, 207), (480, 207)],
-                       COLORS["skin_shadow"], stroke=False, opacity=".5"),
-                 curve([(474, 194), (478, 202), (486, 204), (492, 203)], COLORS["outline"], STROKE["detail"]),
-                 curve([(497, 199), (502, 196)], COLORS["outline"], STROKE["fine"] + .3),
-                 ellipse((490, 193), 4, 2.4, COLORS["skin_light"], opacity=".8"))
+                 shape([(483, 130), (478, 158), (475, 184), (479, 195), (483, 178), (486, 152)],
+                       COLORS["skin_shadow"], stroke=False, opacity=".25"),
+                 shape([(476, 199), (488, 205), (501, 200), (492, 208), (482, 207)], COLORS["skin_shadow"],
+                       stroke=False, opacity=".45"),
+                 ellipse((489, 194), 6, 3.5, COLORS["skin_light"], opacity=".75"),
+                 curve([(473, 189), (473, 197), (480, 203), (489, 204)], line, STROKE["detail"] + .1),
+                 curve([(489, 204), (498, 202), (503, 195)], line, STROKE["fine"] + .2, opacity=".7"))
 
 
 def draw_mouth():
-    upper = shape([(462, 216), (474, 210), (486, 209), (491, 212), (497, 209), (508, 210), (518, 214),
-                   (505, 217), (490, 218), (475, 217)], COLORS["lip"], stroke=False, corners=(0, 6))
-    lower = shape([(465, 218), (490, 219), (515, 216), (508, 226), (490, 231), (472, 227)],
+    upper = shape([(468, 212), (477, 209), (485, 208), (490, 210), (495, 208), (504, 208), (512, 210),
+                   (504, 214), (490, 216), (477, 214)], COLORS["lip"], stroke=False, corners=(0, 6))
+    lower = shape([(472, 216), (490, 218), (508, 215), (503, 223), (490, 226), (478, 223)],
                   COLORS["lip_light"], stroke=False, corners=(0, 2))
-    shine = ellipse((493, 224), 8, 2.4, "#ffffff", opacity=".35")
-    line = curve([(460, 215), (474, 218), (490, 219), (506, 218), (520, 212)], COLORS["lip_line"], STROKE["detail"])
-    corners = [curve([(457, 212), (461, 216)], COLORS["lip_line"], STROKE["fine"]),
-               curve([(523, 209), (520, 213)], COLORS["lip_line"], STROKE["fine"])]
-    under = curve([(482, 237), (492, 239), (500, 237)], COLORS["skin_shadow"], STROKE["fine"] + .3)
-    return group("mouth", upper, lower, shine, line, *corners, under)
+    shine = ellipse((490, 221), 6, 1.6, "#ffffff", opacity=".18")
+    line = curve([(464, 209), (470, 213.5), (479, 216), (490, 217), (502, 215.5), (511, 212), (516, 208)],
+                 COLORS["lip_line"], STROKE["detail"] + .2)
+    under = ellipse((490, 232), 12, 3.5, "url(#softShadow)")
+    return group("mouth", under, upper, lower, shine, line)
 
 
 def draw_head():
@@ -703,7 +725,11 @@ def defs():
         lin("jeansHips", [(0, C["jeans_shadow"], None), (.3, C["jeans"], None), (.7, C["jeans"], None),
                           (1, C["jeans_shadow"], None)], x2="1", y2="0"),
         lin("shoe", [(0, C["shoe"], None), (.6, C["shoe"], None), (1, C["shoe_shadow"], None)]),
-        rad("blush", [(0, C["blush"], .45), (1, C["blush"], 0)]),
+        rad("blush", [(0, C["blush"], .22), (1, C["blush"], 0)]),
+        rad("softShadow", [(0, C["skin_shadow"], .45), (1, C["skin_shadow"], 0)]),
+        '<radialGradient id="faceShade" cx=".5" cy=".45" r=".5"><stop offset=".6" stop-color="{0}" stop-opacity="0"/>'
+        '<stop offset="1" stop-color="{0}" stop-opacity=".5"/></radialGradient>'.format(C["skin_shadow"]),
+        lin("brow", [(0, "#4a2d1e", None), (1, C["brow"], None)]),
         rad("shirtShine", [(0, C["shirt_highlight"], .9), (1, C["shirt_highlight"], 0)]),
         '<radialGradient id="iris" cx=".5" cy=".62" r=".6"><stop offset="0" stop-color="{}"/>'
         '<stop offset=".6" stop-color="{}"/><stop offset="1" stop-color="{}"/></radialGradient>'.format(
@@ -742,11 +768,11 @@ def geometry(root):
              "right_ear", "nose", "eyes", "left_eye", "right_eye", "eyebrows", "left_eyebrow",
              "right_eyebrow", "mouth", "hair_front"]
     face = {
-        "right_eye_center": (450, eye_y + 3), "left_eye_center": (523, eye_y - 3),
-        "right_eyebrow_center": (443, 117), "left_eyebrow_center": (531, 113),
+        "right_eye_center": (450, 157), "left_eye_center": (522, 153),
+        "right_eyebrow_center": (450, 123), "left_eyebrow_center": (525, 118),
         "nose_tip": (488, nose_y), "mouth_center": (490, mouth_y),
-        "mouth_right_corner": (460, 215), "mouth_left_corner": (520, 212),
-        "chin": (497, chin_y), "right_ear": (412, 180), "left_ear": (564, 166),
+        "mouth_right_corner": (464, 209), "mouth_left_corner": (516, 208),
+        "chin": (492, 255), "right_ear": (414, 180), "left_ear": (568, 164),
         "hair_part": (540, 22), "head_top": (488, head_top),
     }
     return {
