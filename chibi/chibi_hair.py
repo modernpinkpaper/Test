@@ -178,6 +178,7 @@ DEFS = CF.DEFS + f"""
     <stop offset="0" stop-color="#5a3325"/><stop offset=".3" stop-color="{C['hair']}"/><stop offset="1" stop-color="#5a3222"/></linearGradient>
   <linearGradient id="earWedge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8ac82"/>
     <stop offset="1" stop-color="#f39668"/></linearGradient>
+  <radialGradient id="earGlow"><stop offset=".3" stop-color="#f79e74"/><stop offset="1" stop-color="#f79e74" stop-opacity="0"/></radialGradient>
   <radialGradient id="sheen"><stop offset="0" stop-color="#8a5038" stop-opacity=".75"/>
     <stop offset="1" stop-color="#8a5038" stop-opacity="0"/></radialGradient>"""
 
@@ -275,11 +276,19 @@ def taper(points, wmax, colour):
         d = P[min(i + 1, n - 1)] - P[max(i - 1, 0)]
         d /= np.linalg.norm(d) + 1e-9
         nrm = np.array([-d[1], d[0]])
-        w = wmax * (0.35 + 0.65 * np.sin(np.pi * i / (n - 1))) / 2
+        w = wmax * max(0.04, np.sin(np.pi * i / (n - 1)) ** 0.6) / 2      # full width in the middle, points at the ends
         left.append(tuple(P[i] + nrm * w))
         right.append(tuple(P[i] - nrm * w))
     pts = left + right[::-1]
     return f'<path d="{smooth(pts, True, corners=(n - 1, n))}" fill="{colour}"/>'
+
+
+def sample_curve(pts, n):
+    """Evenly spaced points along a smooth curve through pts (so a tapered line follows the same curve)."""
+    P = np.array(pts, float)
+    seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
+    t = np.linspace(0, seg[-1], n)
+    return list(zip(np.interp(t, seg, P[:, 0]), np.interp(t, seg, P[:, 1])))
 
 
 def crown_clean():
@@ -304,14 +313,14 @@ def hairline_arch():
         pts = [tuple(p) for p in seg] + [tuple(p) for p in inner[::-1]]
         temples += f'<path d="{smooth(pts, True, corners=(0, len(seg) - 1, len(seg), len(pts) - 1))}" fill="#f4a47c"/>'
     return (f'<path d="{skin}" fill="{CF.C["skin"]}"/>{temples}'
-            f'<path d="{arch}" fill="none" stroke="{col["outline"]}" stroke-width="3.4" stroke-linecap="round"/>')
+            + taper(sample_curve(HAIRLINE, 24), 4.2, col["outline"]))
 
 
 def ears_cel():
     """Ears traced from the new reference: skin shape with a dark outline and the orange inner fold.
     Drawn on top of the hair (in the reference the ears sit between the locks)."""
     col, out = H2["ear_colours"], []
-    out.append(ear_left_gap() + ear_left_clean() + ear_left_gap(lock_only=True))
+    out.append(ear_left_param())
     out.append(ear_right_clean())
     for side, e in ():
         g = [path(p, fill=col["skin"], stroke=col["outline"], stroke_width=2.2, stroke_linejoin="round") for p in e["skin"]]
@@ -398,6 +407,60 @@ def ear_traced(side):
             f'<path d="{inner}" fill="#f7a67c"/>'
             f'<g clip-path="url(#clip_ear_in_{side})"><path d="{inner}" fill="{col["skin"]}" transform="translate({rdx} {rdy})"/>'
             + "".join(f'<path d="{smooth(p, True)}" fill="#ec8b62"/>' for p in e["orange_smooth"]) + '</g>')
+
+
+EAR_P = dict(   # her left ear (viewer's right): every number fitted to the reference by the overlap score
+    cx=315.8, cy=433.0, rx=16.0, ry=26.5, tilt=26.0, rim=3.5, open0=80.0, open1=205.0, rdx=0, rdy=0, fa0=-150.0,
+    fa1=-40.0, fr=11.0, fw=3.0, ccx=-5.0, ccy=4.0, crx=5.0, cry=9.0, gx=-9.0, gy=12.0, grx=7.0, gry=14.0,
+    lx0=314.75, ly0=381.5, lx1=296.75, ly1=446.0, lw=10.0, gapk=1.45, gapx=-6.0,
+)
+
+
+def ear_left_param(P=None):
+    """Her left ear from clean shapes (oval with a dark rim that opens into the cheek, orange inner rim, fold arc and
+    curl, soft glow, the hair lock beside it). All numbers in EAR_P are fitted to the reference."""
+    import math
+    p = dict(EAR_P, **(P or {}))
+    rx, ry = p["rx"], p["ry"]
+    t = f'translate({f(p["cx"])} {f(p["cy"])}) rotate({f(p["tilt"])})'
+    wedge = [(0, 0)] + [(80 * math.cos(math.radians(a)), 80 * math.sin(math.radians(a)))
+                        for a in np.linspace(p["open0"], p["open1"], 8)]
+    wedge_d = "M" + " L".join(f"{f(x)},{f(y)}" for x, y in wedge) + " Z"
+    fold = []
+    for a in np.linspace(p["fa0"], p["fa1"], 7):
+        fold.append((p["fr"] * math.cos(math.radians(a)), p["fr"] * 1.4 * math.sin(math.radians(a))))
+    ear = f'<ellipse rx="{f(rx)}" ry="{f(ry)}"/>'
+    lock = taper([(p["lx0"], p["ly0"]), ((p["lx0"] + p["lx1"]) / 2 + 1, (p["ly0"] + p["ly1"]) / 2), (p["lx1"], p["ly1"])],
+                 p["lw"], "#452a1f")
+    return (f'<g id="left_ear"><g transform="{t}">'
+            f'<clipPath id="ce_ear">{ear}</clipPath>'
+            f'<clipPath id="ce_rim"><path d="M-99,-99 H99 V99 H-99 Z {wedge_d}" clip-rule="evenodd"/></clipPath>'
+            f'<clipPath id="ce_gap"><path d="{wedge_d}"/></clipPath>'
+            f'<g clip-path="url(#ce_rim)"><ellipse rx="{f(rx + p["rim"])}" ry="{f(ry + p["rim"])}" fill="{H2["colours"]["outline"]}"/></g>'
+            f'<g clip-path="url(#ce_gap)"><ellipse cx="{f(p.get("gapx", 0))}" rx="{f(rx + p["rim"] * p.get("gapk", 1))}" '
+            f'ry="{f(ry + p["rim"] * p.get("gapk", 1))}" fill="{CF.C["skin"]}"/></g>'
+            f'<g clip-path="url(#ce_ear)"><ellipse rx="{f(rx)}" ry="{f(ry)}" fill="#f7a67c"/>'
+            f'<ellipse cx="{f(p["rdx"])}" cy="{f(p["rdy"])}" rx="{f(rx)}" ry="{f(ry)}" fill="{CF.C["skin"]}"/>'
+            f'</g></g>'
+            # orange shading traced from the reference (soft glow, then the deeper fold), clipped to the ear
+            f'<g>'
+            + "".join(f'<path d="{smooth(q, True)}" fill="#f9ae86"/>' for q in H2["ear_left_orange"]["glow"])
+            + "".join(f'<path d="{smooth(q, True)}" fill="#ee8c60"/>' for q in H2["ear_left_orange"]["fold"])
+            + f'</g>{lock}</g>')
+
+
+def ear_left_cel():
+    """Her left ear (viewer's right) traced colour by colour from the reference, the same way as the hair:
+    dark outline, the hair lock beside it, skin, and all its orange shading (inner rim, fold, lower crease)."""
+    e = H2["ear_left_cel"]
+    col = e["colours"]
+    region = smooth(e["region"], True)
+    g = [f'<clipPath id="clip_ear_l_region"><path d="{region}"/></clipPath>',
+         f'<g id="left_ear" clip-path="url(#clip_ear_l_region)">',
+         f'<path d="{region}" fill="{col["outline"]}"/>']
+    for name in ("hair", "skin", "orange", "fold"):
+        g += [f'<path d="{smooth(p, True)}" fill="{col[name]}"/>' for p in e["layers"][name]]
+    return "".join(g) + "</g>"
 
 
 def ear_left_clean():
