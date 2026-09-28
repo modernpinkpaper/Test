@@ -176,6 +176,8 @@ def hair_front():
 DEFS = CF.DEFS + f"""
   <linearGradient id="hairGrad" gradientUnits="userSpaceOnUse" x1="0" y1="180" x2="0" y2="720">
     <stop offset="0" stop-color="#5a3325"/><stop offset=".3" stop-color="{C['hair']}"/><stop offset="1" stop-color="#5a3222"/></linearGradient>
+  <linearGradient id="earWedge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8ac82"/>
+    <stop offset="1" stop-color="#f39668"/></linearGradient>
   <radialGradient id="sheen"><stop offset="0" stop-color="#8a5038" stop-opacity=".75"/>
     <stop offset="1" stop-color="#8a5038" stop-opacity="0"/></radialGradient>"""
 
@@ -233,16 +235,50 @@ def ears_cel():
     """Ears traced from the new reference: skin shape with a dark outline and the orange inner fold.
     Drawn on top of the hair (in the reference the ears sit between the locks)."""
     col, out = H2["ear_colours"], []
-    out.append(ear_left_clean())
-    for side, e in H2["ears"].items():
-        if side == "left":
-            continue
+    out.append(ear_left_clean() + ear_left_gap())
+    out.append(ear_right_clean())
+    for side, e in ():
         g = [path(p, fill=col["skin"], stroke=col["outline"], stroke_width=2.2, stroke_linejoin="round") for p in e["skin"]]
         # an ear with no traced skin (only its orange inside peeks out between the locks) gets an outline too
         edge = {} if e["skin"] else dict(stroke=col["outline"], stroke_width=2.2, stroke_linejoin="round")
         g += [path(p, fill=col["fold"], **edge) for p in e["fold"]]
         out.append(f'<g id="{side}_ear">' + "".join(g) + "</g>")
     return "".join(out)
+
+
+_T = json.load(open(os.path.join(HERE, "ref", "new_to_old.json")))
+
+
+def from_new(pts):
+    """Points measured in pixels of the new reference -> drawing coordinates."""
+    s, (nx, ny), (ox, oy) = _T["scale"], _T["new_mid"], _T["old_mid"]
+    return [((x - nx) / s + ox, (y - ny) / s + oy) for x, y in pts]
+
+
+def ear_right_clean():
+    """Her right ear (viewer's left): only a small orange wedge peeks out between two locks. Measured on the
+    new reference: pointed top, rounded outer side, straight inner edge; dark hair outline all round."""
+    col = H2["ear_colours"]
+    pts = from_new([(241, 613), (234, 624), (226, 636), (222, 645), (226, 656), (235, 667), (246, 675), (256, 679),
+                    (252, 668), (250, 655), (250, 642), (247, 628)])
+    return (f'<g id="right_ear"><path d="{smooth(pts, True, corners=(0, 7))}" fill="url(#earWedge)" '
+            f'stroke="{H2["colours"]["outline"]}" stroke-width="2.6" stroke-linejoin="round"/></g>')
+
+
+def ear_left_gap():
+    """What sits between her left ear and her face in the reference: a medium-brown lock running down from the
+    top to a point (so the ear never touches the face there), and below it the orange crease where the ear's
+    lower edge meets the cheek."""
+    lock = from_new([(697, 540), (714, 540), (713, 566), (706, 592), (699, 616), (693, 641), (690, 646), (691, 624),
+                     (693, 596), (695, 568)])
+    crease = from_new([(700, 624), (707, 632), (702, 650), (695, 664), (689, 674), (684, 675), (686, 662), (692, 644)])
+    # below the lock's tip the ear's lower edge joins the cheek: skin there, no outline
+    join = from_new([(683, 636), (692, 640), (700, 627), (706, 634), (699, 658), (690, 674), (681, 683), (674, 684),
+                     (677, 662)])
+    return (f'<path d="{smooth(join, True)}" fill="{H2["ear_colours"]["skin"]}"/>'
+            f'<path d="{smooth(crease, True, corners=(4, 5))}" fill="#f5996d"/>'
+            f'<path d="{smooth(lock, True, corners=(6,))}" fill="#452a1f"/>'
+            f'<path d="{smooth(lock[:7], False)}" fill="none" stroke="{H2["colours"]["outline"]}" stroke-width="1.6"/>')
 
 
 # her left ear (viewer's right), fitted to the traced ear: centre, half-axes, tilt (degrees)
@@ -262,7 +298,7 @@ def ear_left_clean():
     # the dark rim runs round the top, the outer side and the bottom; at the lower inner side the ear meets the
     # cheek with no line, just a soft orange crease
     import math
-    wedge_pts = [(0, 0)] + [(60 * math.cos(math.radians(a)), 60 * math.sin(math.radians(a))) for a in range(96, 170, 8)]
+    wedge_pts = [(0, 0)] + [(60 * math.cos(math.radians(a)), 60 * math.sin(math.radians(a))) for a in range(136, 186, 8)]
     wedge = "M" + " L".join(f"{f(x)},{f(y)}" for x, y in wedge_pts) + " Z"
     rim_keep = "M-80,-80 L80,-80 L80,80 L-80,80 Z " + wedge
     crease = smooth([(-rx + 1.5, 4), (-rx + 3.5, 14), (-rx + 7.5, 23), (-rx + 6, 13), (-rx + 3.8, 3)], True)
@@ -271,7 +307,7 @@ def ear_left_clean():
             f'<clipPath id="clip_ear_rim"><path d="{rim_keep}" clip-rule="evenodd"/></clipPath>'
             f'<clipPath id="clip_ear_gap"><path d="{wedge}"/></clipPath>'
             f'<g clip-path="url(#clip_ear_rim)">{band}</g>'
-            f'<g clip-path="url(#clip_ear_gap)"><ellipse cx="-3" rx="{rx + 5}" ry="{ry + 5}" fill="{col["skin"]}"/></g>'
+            f'<g clip-path="url(#clip_ear_gap)"><ellipse cx="-2" rx="{rx + 3}" ry="{ry + 3}" fill="{col["skin"]}"/></g>'
             f'<g clip-path="url(#clip_ear_l)"><ellipse rx="{rx}" ry="{ry}" fill="#f7a67c"/>'
             f'<ellipse cx="-2.4" cy="2" rx="{rx}" ry="{ry}" fill="{col["skin"]}"/>'
             f'<path d="{crease}" fill="#f39a70"/>'
@@ -279,8 +315,12 @@ def ear_left_clean():
 
 
 def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
-    face_fill = f'<path d="{smooth(H2["face_fill"], True)}" fill="{CF.C["skin"]}"/>'
-    return (CF.head() + face_fill + hair_cel() + (temp_body() if body else "") + CF.blush() + CF.nose()
+    backing = "".join(f'<ellipse cx="{f(x)}" cy="{f(y)}" rx="9" ry="9" fill="{H2["colours"]["outline"]}"/>'
+                      for x, y in from_new([(686, 684), (262, 684)]))   # dark behind the ear bottoms (no white specks)
+    face_fill = backing + (f'<path d="{smooth(H2["face_fill"], True)}" fill="{CF.C["skin"]}" stroke="{H2["colours"]["outline"]}" '
+                 f'stroke-width="14" stroke-linejoin="round"/>'
+                 f'<path d="{smooth(H2["face_fill"], True)}" fill="{CF.C["skin"]}"/>')
+    return (face_fill + hair_cel() + (temp_body() if body else "") + CF.blush() + CF.nose()
             + CF.mouth(mouth_shape) + E.eye("right", eyes, look) + E.eye("left", eyes, look) + E.brow("right")
             + E.brow("left") + ears_cel())
 
