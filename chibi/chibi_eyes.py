@@ -17,7 +17,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 M = json.load(open(os.path.join(HERE, "ref", "measured_eyes.json")))
 FACE_MID_X = (M["right_eye"]["circle"][0] + M["left_eye"]["circle"][0]) / 2
 MAX_LOOK = (7.0, 3.0)
-IRIS_INWARD = 2.5          # iris shift toward the nose (old-reference px)      # how far the irises can move inside the eye (x, y) when she glances around
+IRIS_INWARD = 7.5          # iris shift toward the nose (old-reference px)      # how far the irises can move inside the eye (x, y) when she glances around
 
 
 def master_eye(side):
@@ -27,7 +27,7 @@ def master_eye(side):
     ix, iy, irx, iry = e["iris"]
     # as in the reference: a big iris that nearly fills the eye, sitting a little toward the nose,
     # so the white shows as a crescent on the outer side
-    irx, iry = irx * 1.03, iry * 1.0
+    irx, iry, iy = 24.5, 29.5, cy + 5.5
     ix = ix - IRIS_INWARD
     liner = e["liner"]
     if side == "right":
