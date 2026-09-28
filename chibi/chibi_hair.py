@@ -311,7 +311,7 @@ def ears_cel():
     """Ears traced from the new reference: skin shape with a dark outline and the orange inner fold.
     Drawn on top of the hair (in the reference the ears sit between the locks)."""
     col, out = H2["ear_colours"], []
-    out.append(ear_left_clean() + ear_left_gap())
+    out.append(ear_left_gap() + ear_left_clean() + ear_left_gap(lock_only=True))
     out.append(ear_right_clean())
     for side, e in ():
         g = [path(p, fill=col["skin"], stroke=col["outline"], stroke_width=2.2, stroke_linejoin="round") for p in e["skin"]]
@@ -343,21 +343,32 @@ def from_new_shift(dx, dy, pts):
     return [(x + dx, y + dy) for x, y in from_new(pts)]
 
 
-def ear_left_gap():
+def ear_left_gap(lock_only=False):
     """What sits between her left ear and her face in the reference: a medium-brown lock running down from the
     top to a point (so the ear never touches the face there), and below it the orange crease where the ear's
     lower edge meets the cheek."""
     gdx, gdy = GAP_SHIFT
-    lock = from_new_shift(gdx, gdy, [(697, 540), (714, 540), (713, 566), (706, 592), (699, 616), (693, 641), (690, 646), (691, 624),
-                     (693, 596), (695, 568)])
-    crease = from_new_shift(gdx, gdy, [(700, 624), (707, 632), (702, 650), (695, 664), (689, 674), (684, 675), (686, 662), (692, 644)])
-    # below the lock's tip the ear's lower edge joins the cheek: skin there, no outline
-    join = from_new_shift(gdx, gdy, [(683, 636), (692, 640), (700, 627), (706, 634), (699, 658), (690, 674), (681, 683), (674, 684),
-                     (677, 662)])
+    # the lock stops at the ear's middle (in the reference it ends well above the ear's bottom)
+    lock = from_new_shift(gdx, gdy, [(697, 540), (714, 540), (713, 566), (708, 588), (702, 606), (699, 612), (698, 596),
+                                     (696, 568)])
+    crease = from_new_shift(gdx, gdy, [(702, 618), (708, 628), (704, 648), (697, 663), (690, 672), (686, 672), (689, 660),
+                                       (695, 642)])
+    # below the lock the ear's lower part joins the cheek: one skin area from the face edge to the ear, no line
+    join = from_new_shift(gdx, gdy, [(680, 610), (702, 606), (716, 620), (722, 650), (716, 674), (700, 684), (682, 686),
+                                     (672, 668), (674, 640)])
+    lock_svg = (f'<path d="{smooth(lock, True, corners=(5,))}" fill="#452a1f"/>'
+                f'<path d="{smooth(lock[:6], False)}" fill="none" stroke="{H2["colours"]["outline"]}" stroke-width="1.6"/>')
+    if lock_only:
+        # thin orange crease where the ear's inner edge meets the cheek (follows the traced ear edge)
+        P = [p for p in H2["ears_fit"]["left"]["inner"] if p[0] < 311 and 432 < p[1] < 454]
+        P = sorted(P, key=lambda p: p[1])
+        crease_line = (f'<path d="{smooth(P, False)}" fill="none" stroke="#f0976b" stroke-width="1.5" opacity=".85" '
+                       f'stroke-linecap="round"/>') if len(P) >= 2 else ""
+        return lock_svg + crease_line
     return (f'<path d="{smooth(join, True)}" fill="{H2["ear_colours"]["skin"]}"/>'
             f'<path d="{smooth(crease, True, corners=(4, 5))}" fill="#f5996d"/>'
-            f'<path d="{smooth(lock, True, corners=(6,))}" fill="#452a1f"/>'
-            f'<path d="{smooth(lock[:7], False)}" fill="none" stroke="{H2["colours"]["outline"]}" stroke-width="1.6"/>')
+            f'<path d="{smooth(lock, True, corners=(5,))}" fill="#452a1f"/>'
+            f'<path d="{smooth(lock[:6], False)}" fill="none" stroke="{H2["colours"]["outline"]}" stroke-width="1.6"/>')
 
 
 # her left ear (viewer's right), fitted to the traced ear: centre, half-axes, tilt (degrees)
@@ -402,7 +413,7 @@ def ear_left_clean():
     # the dark rim runs round the top, the outer side and the bottom; at the lower inner side the ear meets the
     # cheek with no line, just a soft orange crease
     import math
-    wedge_pts = [(0, 0)] + [(60 * math.cos(math.radians(a)), 60 * math.sin(math.radians(a))) for a in range(136, 186, 8)]
+    wedge_pts = [(0, 0)] + [(60 * math.cos(math.radians(a)), 60 * math.sin(math.radians(a))) for a in range(80, 196, 8)]
     wedge = "M" + " L".join(f"{f(x)},{f(y)}" for x, y in wedge_pts) + " Z"
     rim_keep = "M-80,-80 L80,-80 L80,80 L-80,80 Z " + wedge
     crease = smooth([(-rx + 1.5, 4), (-rx + 3.5, 14), (-rx + 7.5, 23), (-rx + 6, 13), (-rx + 3.8, 3)], True)
