@@ -20,6 +20,7 @@ from measure_face import traced
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TONES = ["outline", "shadow", "base", "light", "highlight"]     # darkest to lightest
+TONE_MEDIAN, TRACE_SIGMA, TRACE_EPS, MIN_AREA = 1, 0.8, 0.5, 15     # tuned by the hair overlap score
 
 
 def main(path):
@@ -58,7 +59,7 @@ def main(path):
     colours = {t: "#%02x%02x%02x" % tuple(int(v) for v in c) for t, c in zip(TONES, cent_rgb)}
 
     # tidy each tone: median filter on the label image removes speckle, then trace each blob
-    tone_img = cv2.medianBlur((tone_img + 1).astype(np.uint8), 5).astype(int) - 1
+    tone_img = cv2.medianBlur((tone_img + 1).astype(np.uint8), TONE_MEDIAN).astype(int) - 1
     fill = (tone_img >= 1).astype(np.uint8)
     fill = cv2.morphologyEx(fill, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
     out = {"colours": colours, "tones": {}}
@@ -69,14 +70,23 @@ def main(path):
     sil = cv2.morphologyEx(sil, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))) & ~face.astype(bool)
     out["silhouette"] = [to_old(p) for p in blobs(sil, 2.0, 1.0, 2000)]
     # base = all fill; then each lighter / darker tone as its own shapes on top
-    out["tones"]["base"] = [to_old(p) for p in blobs(fill, 1.6, 0.9, 150)]
-    for t, idx, min_area in (("shadow", 1, 120), ("light", 3, 60), ("highlight", 4, 40)):
+    out["tones"]["base"] = [to_old(p) for p in blobs(fill, TRACE_SIGMA, TRACE_EPS, 150)]
+    # the dark lines between the locks: outline-tone pixels inside the hair (not the outer border)
+    inside = cv2.erode(fill, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))).astype(bool) | (
+        cv2.erode(sil.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (13, 13))).astype(bool))
+    lines = ((tone_img == 0) & inside).astype(np.uint8)
+    out["tones"]["lines"] = [to_old(p) for p in blobs(lines, TRACE_SIGMA, TRACE_EPS, MIN_AREA)]
+    for t, idx in (("shadow", 1), ("light", 3), ("highlight", 4)):
         mt = (tone_img == idx).astype(np.uint8)
-        mt = cv2.morphologyEx(mt, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-        out["tones"][t] = [to_old(p) for p in blobs(mt, 1.4, 0.8, min_area)]
+        out["tones"][t] = [to_old(p) for p in blobs(mt, TRACE_SIGMA, TRACE_EPS, MIN_AREA)]
     # face-shaped skin area (so the face under the hair is always covered with skin)
     out["face_fill"] = to_old(traced(face.astype(bool), (0, 0), 2.0, 1.0))
-    with open(os.path.join(HERE, "ref", "measured_hair2.json"), "w") as fh:
+    path_json = os.path.join(HERE, "ref", "measured_hair2.json")
+    if os.path.exists(path_json):                       # keep other measurements stored in the same file
+        prev = json.load(open(path_json))
+        for k, v in prev.items():
+            out.setdefault(k, v)
+    with open(path_json, "w") as fh:
         json.dump(out, fh)
     print(colours, {k: len(v) for k, v in out["tones"].items()}, "silhouette", len(out["silhouette"]))
 
