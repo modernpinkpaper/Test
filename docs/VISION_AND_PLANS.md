@@ -154,3 +154,72 @@ generation, and ads-decision capture.
 2. Central brain: read a day of logs → produce a plain facts summary (no AI) → then AI SOP draft.
 3. Project 1: tracker link (answer questions 2, 3, 5 first).
 4. Project 2: Ads-console tagging + pair with report files / Ads API → SP/SB SOP → ads app spec.
+
+## Project 4 — Daily productivity & process report, per person (Dalia's answers, 2026-09-28)
+
+Primary purpose: DOCUMENT and IMPROVE process (many processes are figured out as we go, so capturing
+what a task actually involved and how long it took helps us refine it later). Secondary: time /
+productivity, eventually feeding a raise calculator. For Dalia's eyes only; she may have AI produce a
+cleaned-up version to share with the team. Trust the employees — this is not for policing.
+
+Decisions:
+- Nothing is left out of the logs on purpose (keys/secrets included — do NOT add a skip rule).
+- Idle is logged in chunks (already is: idle_start/idle_end with seconds) so Dalia can, if needed,
+  check in with someone, or spot that they are being interrupted/distracted (more likely than slacking)
+  and fix the cause (e.g. tell teammates to message on chat instead of interrupting), or leave a note
+  the person can see later.
+- Capture ALL identifiers: platform + URL, order numbers, SKUs, ASINs, Etsy listing IDs, file names,
+  and what was being done, with details.
+- Pattern-spotting across SKUs: when the same change is made to many SKUs, report it ONCE and give the
+  SKU RANGE (e.g. "MS050-MS058, MS060-MS067" — split the range where there is a gap), then say what the
+  change was and on which platform.
+- "Completed" is left to Dalia. The report says "worked on X for Y min", never declares done.
+- Separate what Dalia/employee did themselves vs what Claude/automation did for them (see near-term flag).
+
+Presentation:
+- Daily summary PER PERSON.
+- Detailed but collapsible: a summary row you can click to expand the detail underneath. => Google Sheets
+  is the right home (spreadsheet-ready rows + collapsible grouping). Columns roughly:
+  Start | End | Min | Person | Category | Grade | Platform | IDs | What was done | Flags.
+- Cadence: daily for now (may change).
+- Output: Google Sheet (leaning), so it can later plug into a raise/productivity calculator.
+
+Flags to surface (first list; refine later):
+- Lots of switching (e.g. one order reopened 6+ times, or many app-switches/hour)
+- Long idle chunk (gap over a threshold)
+- Interruption-driven (chat/Teams repeatedly pulled them off task)
+- Tool-assisted vs manual
+- Stuck / help-seeking (repeated ChatGPT/Google "how do I" on one task)
+- High-complexity work (good for raises)
+- Took longer than usual for this task type
+- Unclear / needs Dalia's input (could not match to a project)
+- Personal time (shown separately, never hidden)
+
+### Auto-categorize the TYPE of work, with difficulty GRADES
+Why: later Dalia can see if employee A worked mostly on low-level tasks while employee B did high-level
+work — for raises and for setting fair expected durations.
+
+Each activity gets a category AND a difficulty grade within that category. Example for "edit/update a
+listing":
+- Grade 1 (easy): changed ONE field AND used a tool/script to help.
+- Grade 2 (medium): changed one field but had to MANUALLY copy-paste it in.
+- Grade 3 (hard): changed SEVERAL different fields in the listing.
+MT Log can estimate this from how many distinct fields were touched, whether a tool/script was involved,
+and time taken. The grade is a good estimate Dalia confirms/adjusts; the rubric grows over time.
+
+Buckets/categories: TBD with Dalia (she'll get back on how to group the day). Candidates seen in real
+logs: order fulfillment, listing edits, script/automation building, project-tracker upkeep, FBA
+shipping, team coordination, research/help, personal.
+
+## Near-term feature — flag who filled a field: human vs AI/automation (approved)
+
+Today MT Log records a field's finished value but not WHO caused it, so it cannot prove Claude/cowork
+filled a form vs the person typing it (seen 2026-09-28: Claude filled the TikTok developer app details
+after Dalia asked it to; only the surrounding prompts imply this). Plan: mark a field change that happens
+with NO human keystroke/mouse click just before it as "likely automated / AI-filled", so reports and SOPs
+can separate "Dalia did X" from "Claude did X for her". Also useful for honest time accounting.
+
+## Requests / prompts log (approved use)
+Keep recording what is typed into chat/AI/prompt boxes (ChatGPT, Claude, BeeBEEP, Teams) so a report can
+show a simple timeline of when Dalia asked for something. Limit: values are captured when focus leaves
+the box, so a prompt may be captured partially, not always the final full wording.
