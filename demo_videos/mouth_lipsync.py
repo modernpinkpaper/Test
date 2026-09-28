@@ -5,8 +5,9 @@
 2. voice: Whisper finds when each word is said; misaki turns words into sounds; sounds -> mouth shapes.
 3. paste: for every frame of the base clip, fit the chosen mouth to her face and blend it in.
 
-No GPU needed.
-    python demo_videos/mouth_lipsync.py base_clip.mp4 voice.wav out.mp4 --library clips/*.mp4 [--start 0.3]
+No GPU needed. For better timing use Rhubarb Lip Sync (free) instead of Whisper for step 2:
+    python demo_videos/mouth_lipsync.py base_clip.mp4 voice.wav out.mp4 --library "clips/*.mp4" [--start 0.3]
+        [--rhubarb path/to/rhubarb --text "what she says"]
 """
 import argparse
 import glob
@@ -29,7 +30,7 @@ CHEEK_L, CHEEK_R, NOSE_TIP = 234, 454, 1
 CANON = np.float32([[130, 120], [270, 120], [200, 215]])
 PATCH = (125, 165, 270, 295)     # mouth area in that square: x0, y0, x1, y1
 MOUTH_OVAL = ((197, 226), (60, 46))  # blend area around the lips: center, half-width/height
-SHAPES = ["closed", "slight", "ah", "oh", "oo", "ee"]
+SHAPES = ["closed", "slight", "eh", "ah", "oh", "oo", "ee"]
 LIPS_OUTER = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185]
 
 
@@ -88,7 +89,7 @@ def build_library(paths, out_dir):
     wd = np.array([r[2]["width"] for r in rows]) / np.median([r[2]["width"] for r in rows])
     q = lambda a, x: np.percentile(a, x)
     targets = {   # (open, relative width) each shape aims for
-        "closed": (q(op, 3), 1.0), "slight": (0.1, 1.0), "ah": (q(op, 97), 1.02),
+        "closed": (q(op, 3), 1.0), "slight": (0.1, 1.0), "eh": (q(op, 80), 1.05), "ah": (q(op, 97), 1.02),
         "oh": (q(op, 80), 0.82), "oo": (q(op, 45), 0.72), "ee": (q(op, 60), 1.18),
     }
     os.makedirs(out_dir, exist_ok=True)
@@ -123,6 +124,29 @@ def sound_to_shape(ch):
     if ch in "əɜɚ":
         return "slight"
     return "slight"
+
+
+# Rhubarb Lip Sync's cartoon mouth set -> her mouth shapes
+RHUBARB = {"A": "closed", "B": "ee", "C": "eh", "D": "ah", "E": "oh", "F": "oo", "G": "closed", "H": "slight",
+           "X": "closed"}
+
+
+def shapes_from_rhubarb(rhubarb, wav, text, n_frames, fps, start):
+    """Mouth shape for every frame from Rhubarb Lip Sync (github.com/DanielSWolf/rhubarb-lip-sync)."""
+    import tempfile
+    tmp = tempfile.mkdtemp()
+    w16, cues, txt = (os.path.join(tmp, n) for n in ("v.wav", "cues.json", "t.txt"))
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", wav, "-ac", "1", "-ar", "16000", w16], check=True)
+    cmd = [rhubarb, "-q", "-f", "json", "--extendedShapes", "GHX", w16, "-o", cues]
+    if text:
+        open(txt, "w").write(text)
+        cmd[1:1] = ["-d", txt]
+    subprocess.run(cmd, check=True)
+    seq = ["closed"] * n_frames
+    for c in json.load(open(cues))["mouthCues"]:
+        for f in range(max(0, int((c["start"] + start) * fps)), min(n_frames, int((c["end"] + start) * fps) + 1)):
+            seq[f] = RHUBARB[c["value"]]
+    return seq
 
 
 def shapes_for_voice(wav, n_frames, fps, start):
@@ -193,6 +217,8 @@ def main():
     ap.add_argument("--lib-dir", default=None)
     ap.add_argument("--start", type=float, default=0.3)
     ap.add_argument("--size", type=int, default=1080, help="output width")
+    ap.add_argument("--rhubarb", default=None, help="path to the rhubarb program (better timing)")
+    ap.add_argument("--text", default=None, help="what the voice says (helps Rhubarb)")
     args = ap.parse_args()
     lib_dir = args.lib_dir or os.path.join(os.path.dirname(os.path.abspath(args.out)), "mouth_library")
     paths = sorted(p for pat in args.library for p in glob.glob(pat))
@@ -203,8 +229,11 @@ def main():
 
     frames, lms = track(args.base)
     fps = imageio.get_reader(args.base).get_meta_data()["fps"]
-    seq, words = shapes_for_voice(args.voice, len(frames), fps, args.start)
-    print("words:", [(round(a, 2), w) for a, _, w in words])
+    if args.rhubarb:
+        seq = shapes_from_rhubarb(args.rhubarb, args.voice, args.text, len(frames), fps, args.start)
+    else:
+        seq, words = shapes_for_voice(args.voice, len(frames), fps, args.start)
+        print("words:", [(round(a, 2), w) for a, _, w in words])
     tmp = args.out.replace(".mp4", "_silent.mp4")
     wr = imageio.get_writer(tmp, fps=fps, codec="libx264", quality=8, macro_block_size=1)
     last = None
