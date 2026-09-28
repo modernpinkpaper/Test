@@ -38,3 +38,28 @@ Open the picture, press **Animate > Manual**, paste the motion prompt, and choos
 - If a clip looks wrong (extra fingers, a face change), press **Animate** again. It's usually right within 1-3 tries.
 - Use **Extend** only if you need a longer version of a move.
 - Start with 1, 2, 3 and 10 to test before making all 12.
+
+## Mouth library (for the lip-sync tool)
+"Half-body shot" = head down to the knees. "Close-up" = head and shoulders. Close-ups make the mouth big and sharp.
+
+**C. Close-up picture** (Omni Reference with her picture):
+```
+close-up portrait of a young woman with long wavy brown hair and a fitted black t-shirt, head and shoulders, facing the camera, looking straight into the lens, mouth closed, relaxed friendly expression, soft even front lighting, plain solid light pink background, stylized 3D cartoon illustration, no text --ar 9:16 --oref <her picture> --ow 400 --v 7
+```
+
+Animate picture C with **Manual, Low motion, Loop off**. End every prompt with: *camera static, she keeps facing the camera, plain pink background*. Midjourney gives 4 videos per prompt; keep all of them. Name them like `mouth_04_ah_1.mp4`.
+
+| # | For | Motion prompt |
+|---|---|---|
+| 1 | normal talking | she talks naturally to the camera, saying different words, mouth clearly visible |
+| 2 | excited talking | she talks excitedly and fast to the camera, very expressive mouth |
+| 3 | calm talking | she talks slowly and calmly to the camera, gentle expression |
+| 4 | "ah" | she says "aah" opening her mouth wide, then closes it, then says it again |
+| 5 | "ee" | she smiles wide showing her teeth, saying "cheese", then relaxes, then smiles again |
+| 6 | "oh" | she says "oh!" with round open lips, surprised, then says it again |
+| 7 | "oo" | she pushes her lips forward into a small round "oo" shape, then relaxes, then again |
+| 8 | M / B / P | she presses her lips together saying "mmm", then opens them, repeating a few times |
+| 9 | F / V | she gently rests her top teeth on her lower lip like saying "fff", then relaxes, then again |
+| 10 | laughing | she laughs happily with her mouth open, then smiles |
+
+Download in HD. For the body clips above, start the talking-type moves (wave, shrug, point, heart, hip, arms crossed, laugh, water) from the half-body picture A; walking and turning stay on the full-body picture B.
