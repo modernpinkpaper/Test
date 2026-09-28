@@ -9,15 +9,15 @@ import math
 import numpy as np
 
 C = {
-    "liner": "#2b1510",
-    "iris_top": "#3b1d12",
-    "iris_mid": "#5b2e1d",
-    "iris_low": "#8a4a31",
-    "pupil": "#2a130b",
+    "liner": "#33110a",
+    "iris_top": "#2e110a",
+    "iris_mid": "#4a2217",
+    "iris_low": "#6e3e2e",
+    "pupil": "#2a0f08",
     "white": "#ffffff",
-    "lid_shadow": "#e9d6d0",
+    "lid_shadow": "#e5d1d6",
     "lower_line": "#8a5a48",
-    "brow": "#3a2016",
+    "brow": "#3e251c",
 }
 
 # Measured from the reference (centre, radius of the eye circle; iris centre and radii)
@@ -93,15 +93,19 @@ def eye(side, state="open"):
     tip = (cx + o * (r + 7), cy - 3)
     liner = f'<path d="{smooth(outer_edge + [tip] + inner_edge, True, corners=(11,))}" fill="{C["liner"]}"/>'
     # outer lashes: little curved spikes flicking outward
+    # outer lashes, measured: tips sit ~33 px from the eye centre, at 36 and 28 degrees above the
+    # outer side; bases sit on the lash line a little further round toward the top
     lashes = ""
-    for ang, length, bend in ((-138, 6.5, .75), (-158, 7.5, .7)) if o < 0 else ((-42, 6.5, .75), (-22, 7.5, .7)):
-        a = math.radians(ang)
-        rr = r + 3.5
-        bx, by = cx + rr * math.cos(a), cy + rr * math.sin(a)
-        ta = a + o * bend                      # tip swept upward, away from the eye
-        tx, ty = bx + length * math.cos(ta), by + length * math.sin(ta)
-        nx, ny = -math.sin(a) * 2.4, math.cos(a) * 2.4
-        mx, my = (bx + tx) / 2 + math.cos(a) * 1.2, (by + ty) / 2 + math.sin(a) * 1.2
+    for base_ang, tip_ang, tip_r in ((27, 39, 32), (15, 28, 31.5)):
+        ba = math.radians(180 + base_ang if o < 0 else -base_ang)
+        ta = math.radians(180 + tip_ang if o < 0 else -tip_ang)
+        rb = r + 4.0
+        bx, by = cx + rb * math.cos(ba), cy + rb * math.sin(ba)
+        tx, ty = cx + tip_r * math.cos(ta), cy + tip_r * math.sin(ta)
+        dx, dy = tx - bx, ty - by
+        L = math.hypot(dx, dy)
+        nx, ny = -dy / L * 1.7, dx / L * 1.7
+        mx, my = bx + dx * .55 - ny * .5 * o, by + dy * .55 + nx * .5 * o     # slight upward curl
         lashes += (f'<path d="{smooth([(bx + nx, by + ny), (mx, my), (tx, ty), (bx - nx, by - ny)], True, (0, 2, 3))}" '
                    f'fill="{C["liner"]}"/>')
     lower = arc_pts((cx, cy), r - .3, 140 if o < 0 else 40, 40 if o < 0 else 140, 9)
