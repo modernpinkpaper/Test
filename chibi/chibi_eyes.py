@@ -100,9 +100,25 @@ def star(c, rx, ry=None):
             f'stroke-linejoin="round"/>')
 
 
+# measured on the reference (white and iris edges, row by row): eye-white circle and iris per eye.
+# Both irises sit toward the viewer's right (she glances slightly that way), so the white shows on the left.
+LINER_FIT = {"right": (-1.0, -3.0, 1.0), "left": (1.0, -1.5, 1.04)}   # lash line shift x, y and scale (fitted)
+EYE_MEASURED = {
+    "right": dict(globe=(126.0, 414.0, 32.2), iris=(131.4, 413.0, 24.7, 33.5), tilt=4.0),
+    "left": dict(globe=(250.2, 414.5, 32.6), iris=(251.4, 413.0, 25.1, 35.5), tilt=4.0),
+}
+
+
 def eye(side, state="open", look=(0.0, 0.0)):
     """state: open | closed.  look: (-1..1, -1..1) moves both irises together (left/right, up/down)."""
-    (cx, cy, r), (ix, iy, irx, iry), liner_pts = master_eye(side)
+    (ocx, ocy, orr), _, liner_pts = master_eye(side)
+    m = EYE_MEASURED[side]
+    (cx, cy, r), (ix, iy, irx, iry) = m["globe"], m["iris"]
+    tilt = m.get("tilt", 0.0)
+    # lash line: traced around the old eye circle -> moved and scaled onto the measured one
+    k = r / orr
+    ldx, ldy, lk = LINER_FIT[side]
+    liner_pts = [(cx + (x - ocx) * k * lk + ldx, cy + (y - ocy) * k * lk + ldy) for x, y in liner_pts]
     ix, iy = ix + look[0] * MAX_LOOK[0], iy + look[1] * MAX_LOOK[1]
     gid = f"{side}_eye"
     if state == "closed":
@@ -117,14 +133,14 @@ def eye(side, state="open", look=(0.0, 0.0)):
     white = f'<circle cx="{f(cx)}" cy="{f(cy)}" r="{f(r)}" fill="{C["white"]}"/>'
     star_c = (ix + STAR_OFFSET[0], iy + STAR_OFFSET[1])
     dot = (ix + DOT_OFFSET[0], iy + DOT_OFFSET[1])
-    iris_clip = f'<clipPath id="iclip_{gid}"><ellipse cx="{f(ix)}" cy="{f(iy)}" rx="{f(irx)}" ry="{f(iry)}"/></clipPath>'
+    iris_clip = f'<clipPath id="iclip_{gid}"><ellipse cx="{f(ix)}" cy="{f(iy)}" rx="{f(irx)}" ry="{f(iry)}" transform="rotate({f(tilt)} {f(ix)} {f(iy)})"/></clipPath>'
     iris = (f'<g clip-path="url(#clip_{gid})">'
-            f'<ellipse cx="{f(ix)}" cy="{f(iy)}" rx="{f(irx)}" ry="{f(iry)}" fill="url(#iris)"/>'
+            f'<ellipse cx="{f(ix)}" cy="{f(iy)}" rx="{f(irx)}" ry="{f(iry)}" transform="rotate({f(tilt)} {f(ix)} {f(iy)})" fill="url(#iris)"/>'
             # soft lighter-brown band along the bottom of the iris, a darker pupil, then the rim
             f'<g clip-path="url(#iclip_{gid})">'
             f'<ellipse cx="{f(ix + 1)}" cy="{f(iy + iry * .78)}" rx="{f(irx * 1.05)}" ry="{f(iry * .5)}" fill="url(#irisBand)"/>'
             f'<circle cx="{f(ix + PUPIL_OFFSET[0])}" cy="{f(iy + PUPIL_OFFSET[1])}" r="{f(PUPIL_R * 1.35)}" fill="url(#pupil)"/></g>'
-            f'<ellipse cx="{f(ix)}" cy="{f(iy)}" rx="{f(irx)}" ry="{f(iry)}" fill="none" stroke="{C["iris_rim"]}" stroke-width="3.6"/>'
+            f'<ellipse cx="{f(ix)}" cy="{f(iy)}" rx="{f(irx)}" ry="{f(iry)}" transform="rotate({f(tilt)} {f(ix)} {f(iy)})" fill="none" stroke="{C["iris_rim"]}" stroke-width="2.8"/>'
             + star(star_c, STAR_RX, STAR_RY) +
             f'<circle cx="{f(dot[0])}" cy="{f(dot[1])}" r="6" fill="{C["shine_ring"]}" opacity=".55"/>'
             f'<circle cx="{f(dot[0])}" cy="{f(dot[1])}" r="3.2" fill="{C["white"]}"/>'
@@ -135,7 +151,12 @@ def eye(side, state="open", look=(0.0, 0.0)):
     # the lash line sits on the top half of the eye only (the trace also caught a bit of the lower outline)
     top_clip = (f'<clipPath id="tclip_{gid}"><rect x="{f(cx - r * 2)}" y="{f(cy - r * 3)}" width="{f(r * 4)}" '
                 f'height="{f(r * 3.1)}"/></clipPath>')
-    return f'<g id="{gid}">{clip}{iris_clip}{top_clip}{white}{iris}<g clip-path="url(#tclip_{gid})">{liner}</g></g>'
+    # the top of the white circle hides under the lash line (no white sliver above it)
+    a0, a1 = math.radians(200), math.radians(335)
+    top_arc = (f'<path d="M{f(cx + r * math.cos(a0))},{f(cy + r * math.sin(a0))} A{f(r)},{f(r)} 0 0,1 '
+               f'{f(cx + r * math.cos(a1))},{f(cy + r * math.sin(a1))}" fill="none" stroke="{C["liner"]}" stroke-width="3"/>')
+    return (f'<g id="{gid}">{clip}{iris_clip}{top_clip}{white}{iris}'
+            f'<g clip-path="url(#tclip_{gid})">{top_arc}{liner}</g></g>')
 
 
 def brow(side, lift=0.0):
