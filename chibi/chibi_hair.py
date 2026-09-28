@@ -349,24 +349,27 @@ def from_new(pts):
 
 
 def ear_right_clean():
-    """Her right ear (viewer's left): only a small orange wedge peeks out between two locks. Measured on the
-    new reference: pointed top, rounded outer side, straight inner edge; dark hair outline all round."""
-    col = H2["ear_colours"]
-    pts = from_new([(241, 613), (234, 624), (226, 636), (222, 645), (226, 656), (235, 667), (246, 675), (256, 679),
-                    (252, 668), (250, 655), (250, 642), (247, 628)])
-    return (f'<g id="right_ear"><path d="{smooth(pts, True, corners=(0, 7))}" fill="url(#earWedge)" '
-            f'stroke="{H2["colours"]["outline"]}" stroke-width="2.6" stroke-linejoin="round"/></g>')
+    """Her right ear (viewer's left): only a small orange wedge peeks out between two locks (traced)."""
+    return f'<g id="right_ear">{ear_traced("right")}</g>'
+
+
+GAP_SHIFT = (0.0, -2.0)      # fitted shift (drawing units) of the lock / crease between the big ear and the cheek
+
+
+def from_new_shift(dx, dy, pts):
+    return [(x + dx, y + dy) for x, y in from_new(pts)]
 
 
 def ear_left_gap():
     """What sits between her left ear and her face in the reference: a medium-brown lock running down from the
     top to a point (so the ear never touches the face there), and below it the orange crease where the ear's
     lower edge meets the cheek."""
-    lock = from_new([(697, 540), (714, 540), (713, 566), (706, 592), (699, 616), (693, 641), (690, 646), (691, 624),
+    gdx, gdy = GAP_SHIFT
+    lock = from_new_shift(gdx, gdy, [(697, 540), (714, 540), (713, 566), (706, 592), (699, 616), (693, 641), (690, 646), (691, 624),
                      (693, 596), (695, 568)])
-    crease = from_new([(700, 624), (707, 632), (702, 650), (695, 664), (689, 674), (684, 675), (686, 662), (692, 644)])
+    crease = from_new_shift(gdx, gdy, [(700, 624), (707, 632), (702, 650), (695, 664), (689, 674), (684, 675), (686, 662), (692, 644)])
     # below the lock's tip the ear's lower edge joins the cheek: skin there, no outline
-    join = from_new([(683, 636), (692, 640), (700, 627), (706, 634), (699, 658), (690, 674), (681, 683), (674, 684),
+    join = from_new_shift(gdx, gdy, [(683, 636), (692, 640), (700, 627), (706, 634), (699, 658), (690, 674), (681, 683), (674, 684),
                      (677, 662)])
     return (f'<path d="{smooth(join, True)}" fill="{H2["ear_colours"]["skin"]}"/>'
             f'<path d="{smooth(crease, True, corners=(4, 5))}" fill="#f5996d"/>'
@@ -376,6 +379,31 @@ def ear_left_gap():
 
 # her left ear (viewer's right), fitted to the traced ear: centre, half-axes, tilt (degrees)
 EAR_L = dict(cx=316.8, cy=433.0, rx=16.0, ry=27.0, tilt=26)
+
+
+FOLD_FIT = (4.0, -2.0, 1.35, -15.0)     # fitted: shift x, shift y, scale, extra turn (degrees) of the inner fold
+RIM_FIT = (-2.0, 5.0)                # fitted: offset of the skin inside the ear (leaves the orange inner rim)
+
+
+def ear_traced(side):
+    """Ear inside: the traced outline of the reference's ear skin; orange inner rim along the top/outer edge
+    and the curled fold drawn as clean shapes, positioned and sized by fitting to the reference."""
+    e = H2["ears_fit"][side]
+    col = H2["ear_colours"]
+    inner = smooth(e["inner"], True)
+    if side == "right":          # only the orange wedge shows between the locks
+        return (f'<path d="{inner}" fill="none" stroke="{H2["colours"]["outline"]}" stroke-width="5" stroke-linejoin="round"/>'
+                f'<path d="{inner}" fill="{col["fold"]}"/>')
+    L = EAR_L
+    t = f'translate({L["cx"]} {L["cy"]}) rotate({L["tilt"]})'
+    fdx, fdy, fk, frot = FOLD_FIT
+    fold = smooth([(10, -16), (1, -16.5), (-6.5, -12), (-10.5, -3), (-10.5, 8), (-6, 12), (-3.5, 5), (-3.5, -3),
+                   (0, -9.5), (5, -12.5), (10.5, -13)], True)
+    rdx, rdy = RIM_FIT
+    return (f'<clipPath id="clip_ear_in_{side}"><path d="{inner}"/></clipPath>'
+            f'<path d="{inner}" fill="#f7a67c"/>'
+            f'<g clip-path="url(#clip_ear_in_{side})"><path d="{inner}" fill="{col["skin"]}" transform="translate({rdx} {rdy})"/>'
+            + "".join(f'<path d="{smooth(p, True)}" fill="#ec8b62"/>' for p in e["orange_smooth"]) + '</g>')
 
 
 def ear_left_clean():
@@ -401,10 +429,7 @@ def ear_left_clean():
             f'<clipPath id="clip_ear_gap"><path d="{wedge}"/></clipPath>'
             f'<g clip-path="url(#clip_ear_rim)">{band}</g>'
             f'<g clip-path="url(#clip_ear_gap)"><ellipse cx="-2" rx="{rx + 3}" ry="{ry + 3}" fill="{col["skin"]}"/></g>'
-            f'<g clip-path="url(#clip_ear_l)"><ellipse rx="{rx}" ry="{ry}" fill="#f7a67c"/>'
-            f'<ellipse cx="-2.4" cy="2" rx="{rx}" ry="{ry}" fill="{col["skin"]}"/>'
-            f'<path d="{crease}" fill="#f39a70"/>'
-            f'<path d="{fold}" fill="{col["fold"]}"/></g></g>')
+            f'</g>' + ear_traced("left"))
 
 
 def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
