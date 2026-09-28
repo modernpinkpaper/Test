@@ -79,5 +79,74 @@ def main(path):
     print(json.dumps({k: (v if "brow" in k else {a: b for a, b in v.items() if a != "liner"}) for k, v in out.items()}))
 
 
+
+
+def girl_offsets(im):
+    """x/y offset of each of the 4 girls relative to the first, by matching the eye area."""
+    g = cv2.cvtColor(im.astype(np.uint8), cv2.COLOR_RGB2GRAY)
+    tpl = g[360:450, 80:300]
+    offs = []
+    for x0 in (0, 360, 720, 1080):
+        area = g[330:480, max(x0 + 40, 0):x0 + 340]
+        _, _, _, loc = cv2.minMaxLoc(cv2.matchTemplate(area, tpl, cv2.TM_CCOEFF_NORMED))
+        offs.append((loc[0] + max(x0 + 40, 0) - 80, loc[1] + 330 - 360))
+    return offs
+
+
+def measure_face(path):
+    im = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB).astype(int)
+    R, G, B = im[..., 0], im[..., 1], im[..., 2]
+    out = {"girl_offsets": girl_offsets(im)}
+    # face skin: connected skin-coloured area around the nose (girl 1)
+    skin = (R > 225) & (G > 160) & (G < 225) & (B > 120) & (B < 200) & ((R - G) < 75)
+    sub = skin[250:540, 60:330].astype(np.uint8)
+    sub = cv2.morphologyEx(sub, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    n, lab, stats, _ = cv2.connectedComponentsWithStats(sub)
+    k = lab[440 - 250, 186 - 60]
+    out["face_skin"] = traced(lab == k, (60, 250), 2.0, 0.8)
+    # ears: the separate skin patches either side of the face
+    ears = {}
+    for side, (ex, ey) in (("right", (72, 455)), ("left", (318, 428))):
+        box = (ex - 30, ey - 45, ex + 30, ey + 45)
+        m = skin[box[1]:box[3], box[0]:box[2]] | (((R - G) > 40) & (R > 220))[box[1]:box[3], box[0]:box[2]]
+        m = cv2.morphologyEx(m.astype(np.uint8), cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+        n2, lab2, _, _ = cv2.connectedComponentsWithStats(m)
+        kk = lab2[ey - box[1], ex - box[0]]
+        if kk:
+            ears[side] = traced(lab2 == kk, (box[0], box[1]), 1.2, 0.6)
+    out["ears"] = ears
+    c = lambda x, y: "#%02x%02x%02x" % tuple(im[y, x])
+    out["colours"] = {"skin": c(186, 400), "jaw_line": c(186, 503), "nose": c(184, 442), "blush": c(106, 457),
+                      "rim": c(186 - 30 + 356, 458), "tongue": c(186 + 356, 466), "smile": c(186, 470)}
+    # mouths (one per girl): reddish = R - G > 75; tongue = the lighter pink inside
+    mouths = {}
+    for name, (dx, dy) in zip(("smile", "open", "wide", "oh"), out["girl_offsets"]):
+        x0, y0 = 150 + dx, 445 + dy
+        r, g_, b = R[y0:y0 + 55, x0:x0 + 80], G[y0:y0 + 55, x0:x0 + 80], B[y0:y0 + 55, x0:x0 + 80]
+        red = (r - g_) > 75
+        m = {"outline": traced(red, (x0 - dx, y0 - dy), 0.8, 0.5)}
+        tongue = (red & (r > 232) & (g_ > 118) & (b > 128)).astype(np.uint8)
+        tongue = cv2.morphologyEx(tongue, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+        if name != "smile" and tongue.sum() > 30:
+            ys, xs = np.where(tongue > 0)
+            (ex, ey), (ea, eb), ang = cv2.fitEllipse(np.c_[xs, ys].astype(np.float32))
+            m["tongue"] = [round(ex + x0 - dx, 1), round(ey + y0 - dy, 1), round(ea / 2, 1), round(eb / 2, 1), round(ang, 1)]
+        mouths[name] = m
+    out["mouths"] = mouths
+    # nose dot and blush (girl 1)
+    ys, xs = np.where(((R - G) > 58)[430:455, 170:200] & (G[430:455, 170:200] < 190))
+    out["nose"] = [round(float(xs.mean()) + 170, 1), round(float(ys.mean()) + 430, 1), round(float(np.sqrt(len(xs) / np.pi)), 1)]
+    blush = []
+    for bx0, bx1 in ((85, 135), (240, 295)):
+        ys, xs = np.where(((R - G) > 62)[430:485, bx0:bx1] & (R[430:485, bx0:bx1] > 230))
+        blush.append([round(float(xs.mean()) + bx0, 1), round(float(ys.mean()) + 430, 1),
+                      round(float(xs.std()) * 2.2, 1), round(float(ys.std()) * 2.2, 1)])
+    out["blush"] = blush
+    with open(os.path.join(HERE, "ref", "measured_face.json"), "w") as fh:
+        json.dump(out, fh, indent=1)
+    print({k: v for k, v in out.items() if k not in ("face_skin", "mouths")}, "face pts", len(out["face_skin"]))
+
+
 if __name__ == "__main__":
     main(sys.argv[1])
+    measure_face(sys.argv[1])
