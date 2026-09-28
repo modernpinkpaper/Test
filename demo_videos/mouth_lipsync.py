@@ -89,8 +89,8 @@ def build_library(paths, out_dir):
     wd = np.array([r[2]["width"] for r in rows]) / np.median([r[2]["width"] for r in rows])
     q = lambda a, x: np.percentile(a, x)
     targets = {   # (open, relative width) each shape aims for
-        "closed": (q(op, 3), 1.0), "slight": (0.1, 1.0), "eh": (q(op, 80), 1.05), "ah": (q(op, 97), 1.02),
-        "oh": (q(op, 80), 0.82), "oo": (q(op, 45), 0.72), "ee": (q(op, 60), 1.18),
+        "closed": (q(op, 3), 1.0), "slight": (0.1, 1.0), "eh": (q(op, 65), 1.02), "ah": (q(op, 85), 1.0),
+        "oh": (q(op, 70), 0.85), "oo": (q(op, 40), 0.78), "ee": (q(op, 45), 1.1),
     }
     os.makedirs(out_dir, exist_ok=True)
     info = {}
@@ -178,7 +178,7 @@ def shapes_for_voice(wav, n_frames, fps, start):
 
 
 # ------------------------------------------------------------------ paste
-def paste_mouth(frame, pts, patch, lib_lips):
+def paste_mouth(frame, pts, patch, lib_lips):  # patch/lib_lips may be a blend of shapes
     """Warp a canonical mouth patch onto this frame's face and blend it in.
     Only the area around the lips (new mouth + old mouth, a little wider) is replaced, and the
     patch's skin is tinted to match this frame so there is no visible square."""
@@ -236,11 +236,20 @@ def main():
         print("words:", [(round(a, 2), w) for a, _, w in words])
     tmp = args.out.replace(".mp4", "_silent.mp4")
     wr = imageio.get_writer(tmp, fps=fps, codec="libx264", quality=8, macro_block_size=1)
+    # animator's in-between: a big jump (closed <-> wide) gets one "slight" frame first
+    small, big = {"closed", "oo"}, {"ah", "eh", "oh"}
+    seq = list(seq)
+    for i in range(1, len(seq)):
+        if (seq[i - 1] in small and seq[i] in big) or (seq[i - 1] in big and seq[i] in small):
+            seq[i] = "slight"
     last = None
     for f, pts, shape in zip(frames, lms, seq):
+        if pts is not None and last is not None:
+            pts = last * 0.5 + pts * 0.5          # steady the face position a little
         pts = pts if pts is not None else last
         last = pts
-        img = paste_mouth(f, pts, patches[shape], lips[shape]) if pts is not None else f
+        mix, hull = patches[shape], lips[shape]
+        img = paste_mouth(f, pts, mix, hull) if pts is not None else f
         h, w = img.shape[:2]
         img = cv2.resize(img, (args.size, int(h * args.size / w) // 2 * 2), interpolation=cv2.INTER_CUBIC)
         wr.append_data(img)
