@@ -183,7 +183,7 @@ DEFS = CF.DEFS + f"""
 def temp_body():
     """Placeholder body traced flat from the reference, only for previews until the real body is built."""
     return ('<g id="temp_body">'
-            + "".join(path(p, fill=CF.C["skin"], stroke=C["outline"], stroke_width=2.2) for p in H["temp_body"]["skin"])
+            + "".join(path(p, fill=CF.C["skin"], stroke="#34110b", stroke_width=2.2) for p in H["temp_body"]["skin"])
             + "".join(path(p, fill="#2e2624", stroke="#1d1414", stroke_width=2) for p in H["temp_body"]["clothes"]) + "</g>")
 
 
@@ -195,7 +195,7 @@ def head_svg(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
             + CF.ear("left"))
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and len(__import__("sys").argv) > 3:      # v1 preview: out old_ref v1
     import sys
     import cairosvg
     from PIL import Image
@@ -212,3 +212,50 @@ if __name__ == "__main__":
     both.paste(a, (0, 0))
     both.paste(b, (a.width + 12, 0))
     both.save(out)
+
+
+# ---------------------------------------------------------------- v2: cel-shaded hair traced from the new reference
+H2_PATH = os.path.join(HERE, "ref", "measured_hair2.json")
+H2 = json.load(open(H2_PATH)) if os.path.exists(H2_PATH) else None
+
+
+def hair_cel():
+    """Hair built from its flat tones: dark outline silhouette, then base, shadow, light and highlight shapes.
+    The gaps between the fill shapes show the outline colour as the lines between the locks."""
+    col = H2["colours"]
+    parts = [path(p, fill=col["outline"]) for p in H2["silhouette"]]
+    for tone in ("base", "shadow", "light", "highlight"):
+        parts += [path(p, fill=col[tone]) for p in H2["tones"][tone]]
+    return '<g id="hair">' + "".join(parts) + "</g>"
+
+
+def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
+    face_fill = f'<path d="{smooth(H2["face_fill"], True)}" fill="{CF.C["skin"]}"/>'
+    return (CF.head() + face_fill + hair_cel() + (temp_body() if body else "") + CF.blush() + CF.nose()
+            + CF.mouth(mouth_shape) + E.eye("right", eyes, look) + E.eye("left", eyes, look) + E.brow("right")
+            + E.brow("left") + CF.ear("left"))
+
+
+def compare_v2(out, new_ref):
+    import cairosvg
+    from PIL import Image
+    T = json.load(open(os.path.join(HERE, "ref", "new_to_old.json")))
+    box = (0, 170, 370, 740)
+    sc = 2
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{(box[2] - box[0]) * sc}" height="{(box[3] - box[1]) * sc}" '
+           f'viewBox="{box[0]} {box[1]} {box[2] - box[0]} {box[3] - box[1]}"><defs>{DEFS}</defs>'
+           f'<rect x="0" y="0" width="2000" height="2000" fill="#ffffff"/>{head_svg_v2()}</svg>')
+    cairosvg.svg2png(bytestring=svg.encode(), write_to=out + ".mine.png")
+    s, (nx, ny), (ox, oy) = T["scale"], T["new_mid"], T["old_mid"]
+    nb = [(box[0] - ox) * s + nx, (box[1] - oy) * s + ny, (box[2] - ox) * s + nx, (box[3] - oy) * s + ny]
+    a = Image.open(new_ref).convert("RGB").crop(tuple(int(v) for v in nb)).resize(((box[2] - box[0]) * sc, (box[3] - box[1]) * sc), Image.LANCZOS)
+    b = Image.open(out + ".mine.png").convert("RGB")
+    both = Image.new("RGB", (a.width * 2 + 12, a.height), "white")
+    both.paste(a, (0, 0))
+    both.paste(b, (a.width + 12, 0))
+    both.save(out)
+
+
+if __name__ == "__main__" and len(__import__("sys").argv) == 3:       # v2 preview: out new_ref
+    import sys
+    compare_v2(sys.argv[1], sys.argv[2])

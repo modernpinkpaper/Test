@@ -117,7 +117,8 @@ def measure_face(path):
     out["ears"] = ears
     c = lambda x, y: "#%02x%02x%02x" % tuple(im[y, x])
     out["colours"] = {"skin": c(186, 400), "jaw_line": c(186, 503), "nose": c(184, 442), "blush": c(106, 457),
-                      "rim": c(186 - 30 + 356, 458), "tongue": c(186 + 356, 466), "smile": c(186, 470)}
+                      "rim": c(186 - 30 + out["girl_offsets"][1][0], 458), "tongue": c(186 + out["girl_offsets"][1][0], 466),
+                      "smile": c(186, 470)}
     # mouths (one per girl): reddish = R - G > 75; tongue = the lighter pink inside
     mouths = {}
     for name, (dx, dy) in zip(("smile", "open", "wide", "oh"), out["girl_offsets"]):
