@@ -15,6 +15,20 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 M = json.load(open(os.path.join(HERE, "ref", "measured_eyes.json")))
+FACE_MID_X = (M["right_eye"]["circle"][0] + M["left_eye"]["circle"][0]) / 2
+MAX_LOOK = (7.0, 3.0)      # how far the irises can move inside the eye (x, y) when she glances around
+
+
+def master_eye(side):
+    """Both eyes come from the cleanly traced one (her left eye = viewer's right); her right eye is its mirror."""
+    e = M["left_eye"]
+    cx, cy, r = e["circle"]
+    ix, iy, irx, iry = e["iris"]
+    liner = e["liner"]
+    if side == "right":
+        cx, ix = 2 * FACE_MID_X - cx, 2 * FACE_MID_X - ix
+        liner = [(2 * FACE_MID_X - x, y) for x, y in liner[::-1]]
+    return (cx, cy, r), (ix, iy, irx, iry), liner
 
 C = {   # sampled from the reference
     "liner": "#3d180d",
@@ -81,14 +95,11 @@ def star(c, rx, ry=None):
             f'stroke-linejoin="round"/>')
 
 
-def eye(side, state="open"):
-    e = M[f"{side}_eye"]
-    cx, cy, r = e["circle"]
-    ix, iy, irx, iry = e["iris"]
-    if side == "right":
-        ix += 2.0          # the fitted centre sits ~2 px left of the drawn one (white crescent is wider in the reference)
+def eye(side, state="open", look=(0.0, 0.0)):
+    """state: open | closed.  look: (-1..1, -1..1) moves both irises together (left/right, up/down)."""
+    (cx, cy, r), (ix, iy, irx, iry), liner_pts = master_eye(side)
+    ix, iy = ix + look[0] * MAX_LOOK[0], iy + look[1] * MAX_LOOK[1]
     gid = f"{side}_eye"
-    liner_pts = e["liner"]
     if state == "closed":
         o = -1 if side == "right" else 1
         pts = [(cx - r * 1.05, cy + 2), (cx - r * .5, cy + r * .28), (cx, cy + r * .36), (cx + r * .5, cy + r * .28),
@@ -119,9 +130,6 @@ def eye(side, state="open"):
     return f'<g id="{gid}">{clip}{iris_clip}{white}{iris}{liner}</g>'
 
 
-FACE_MID_X = (M["right_eye"]["circle"][0] + M["left_eye"]["circle"][0]) / 2
-
-
 def brow(side, lift=0.0):
     """Both brows use the traced shape of her left brow (viewer's right); the other side is its mirror."""
     src = M["left_brow"]
@@ -136,6 +144,23 @@ DEFS = f"""<linearGradient id="iris" x1="0" y1="0" x2="0" y2="1"><stop offset="0
     <stop offset="1" stop-color="{C['iris_band']}" stop-opacity="0"/></radialGradient>
   <radialGradient id="pupil"><stop offset=".45" stop-color="{C['pupil']}" stop-opacity=".9"/>
     <stop offset="1" stop-color="{C['pupil']}" stop-opacity="0"/></radialGradient>"""
+
+
+def demo_strip(path):
+    """Four small frames: straight ahead, glance left, glance right, blink."""
+    import cairosvg
+    box = (70, 330, 320, 460)
+    frames = [dict(), dict(look=(-1, 0)), dict(look=(1, 0)), dict(state="closed")]
+    w, h = box[2] - box[0], box[3] - box[1]
+    gap = 12
+    body = "".join(f'<g transform="translate({i * (w + gap)} 0)"><rect x="{box[0]}" y="{box[1]}" width="{w}" height="{h}" fill="#fecdab"/>'
+                   + eye("right", **fr) + eye("left", **fr) + brow("right") + brow("left") + "</g>"
+                   for i, fr in enumerate(frames))
+    W = w * 4 + gap * 3
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W * 2}" height="{h * 2}" '
+           f'viewBox="{box[0]} {box[1]} {W} {h}"><defs>{DEFS}</defs><rect x="{box[0]}" y="{box[1]}" width="{W}" '
+           f'height="{h}" fill="#ffffff"/>{body}</svg>')
+    cairosvg.svg2png(bytestring=svg.encode(), write_to=path)
 
 
 if __name__ == "__main__":
@@ -156,3 +181,4 @@ if __name__ == "__main__":
     both.paste(ref, (0, 0))
     both.paste(mine, (0, ref.height + 10))
     both.save(out)
+    demo_strip(out.replace(".png", "_looks.png"))
