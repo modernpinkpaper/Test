@@ -228,7 +228,100 @@ def hair_cel():
     parts = [path(p, fill=col["outline"]) for p in H2["silhouette"]]
     for tone in ("base", "shadow", "light", "highlight"):
         parts += [path(p, fill=col[tone]) for p in H2["tones"][tone]]
-    return '<g id="hair">' + "".join(parts) + "</g>"
+    face_d = smooth(H2["face_fill"], True)
+    # the hair never covers the face (the trace also caught one eye's browns as "hair")
+    return (f'<clipPath id="clip_hair_not_face"><path d="M-500,-500 H1000 V1500 H-500 Z {face_d}" clip-rule="evenodd"/>'
+            f'</clipPath>' + not_eyes_clip() +
+            f'<g id="hair" clip-path="url(#clip_hair_not_face)"><g clip-path="url(#clip_hair_not_eyes)">'
+            + "".join(parts) + "</g></g>")
+
+
+def not_eyes_clip():
+    """Everything except the two eyes (+ their lashes): the hair trace caught one eye's browns as hair."""
+    holes = ""
+    for side in ("right", "left"):
+        (cx, cy, r), _, _ = E.master_eye(side)
+        R = r + 12
+        holes += f" M{f(cx - R)},{f(cy)} a{f(R)},{f(R)} 0 1,0 {f(2 * R)},0 a{f(R)},{f(R)} 0 1,0 {f(-2 * R)},0 Z"
+    return (f'<clipPath id="clip_hair_not_eyes"><path d="M-500,-500 H1000 V1500 H-500 Z{holes}" clip-rule="evenodd"/>'
+            f'</clipPath>')
+
+
+# crown and hairline, redrawn cleanly (old-reference px, measured on the new reference's crown)
+CROWN_REGION = [(104, 330), (112, 268), (140, 244), (180, 236), (226, 236), (270, 240), (300, 256), (312, 330)]
+PART_SPIKE = [(221, 283), (232.5, 267.5), (228.5, 283.5)]
+CROWN_STRANDS = [   # dark lines between the locks around the side part: (points from the hairline end, max width)
+    ([(221, 282), (219, 268), (208, 257), (188, 252), (165, 254), (146, 264), (133, 282)], 3.6),
+    ([(199, 281), (196, 270), (184, 263), (168, 264), (157, 273)], 2.6),
+    ([(234, 282), (238, 266), (252, 255), (274, 252), (295, 258), (305, 270)], 3.6),
+    ([(240, 281), (252, 272), (272, 271), (290, 280)], 2.6),
+    ([(214, 247), (190, 238), (158, 240), (130, 254)], 2.2),
+]
+HAIRLINE_SPIKES = [   # small skin-coloured points reaching up into the hair from the hairline: (base-l, tip, base-r)
+    [(149, 287), (151.5, 280.5), (156, 286)], [(181, 282.5), (182.5, 276.5), (187.5, 282.5)],
+    [(194, 282.5), (196, 277), (200, 282.5)], [(255, 290), (264, 284.5), (262, 292)],
+]
+HAIRLINE = [(110, 326), (114, 312), (122, 301), (133, 292), (147, 286), (165, 282), (190, 280), (220, 281),
+            (242, 284), (259, 290), (272, 299), (281, 310), (286, 326)]     # measured on the new reference, one smooth arch
+TEMPLE_SHADOW = [(121, 294), (128.5, 291.5), (123.5, 310), (115, 331), (112, 318)]
+
+
+def taper(points, wmax, colour):
+    """A line that is widest in the middle and tapers to fine points (like an inked hair line)."""
+    P = np.array(points, float)
+    n = len(P)
+    left, right = [], []
+    for i in range(n):
+        d = P[min(i + 1, n - 1)] - P[max(i - 1, 0)]
+        d /= np.linalg.norm(d) + 1e-9
+        nrm = np.array([-d[1], d[0]])
+        w = wmax * (0.35 + 0.65 * np.sin(np.pi * i / (n - 1))) / 2
+        left.append(tuple(P[i] + nrm * w))
+        right.append(tuple(P[i] - nrm * w))
+    pts = left + right[::-1]
+    return f'<path d="{smooth(pts, True, corners=(n - 1, n))}" fill="{colour}"/>'
+
+
+def crown_clean():
+    """Clean crown over the traced hair: flat base colour around the hairline (no blotchy tone patches),
+    strand lines sweeping away from the side part, the skin-coloured part spike, small hair points on the
+    forehead and a thin orange shadow under the hair at the temple."""
+    col = H2["colours"]
+    face_d = smooth(H2["face_fill"], True)
+    region_d = smooth(CROWN_REGION, True)
+    strands = "".join(taper(p, w, col["outline"]) for p, w in CROWN_STRANDS)
+    # lighter brown on the rounded tops of the locks (their volume), under the strand lines
+    sheen = "".join(f'<path d="{smooth(p, False)}" fill="none" stroke="{col["light"]}" stroke-width="7" '
+                    f'stroke-linecap="round" opacity=".55"/>' for p in (
+                        [(210, 266), (190, 259), (168, 260), (150, 270)], [(242, 268), (258, 260), (282, 259), (298, 266)]))
+    tufts = "".join(f'<path d="{smooth(t, True, corners=(0, 1, 2))}" fill="{CF.C["skin"]}"/>' for t in HAIRLINE_SPIKES)
+    return (f'<g id="hair_crown"><clipPath id="clip_crown"><path d="{region_d}"/></clipPath>'
+            f'<clipPath id="clip_not_face"><path d="M-500,-500 H1000 V1500 H-500 Z {face_d}" clip-rule="evenodd"/></clipPath>'
+            f'<clipPath id="clip_face2"><path d="{face_d}"/></clipPath>'
+            f'<g clip-path="url(#clip_crown)"><g clip-path="url(#clip_not_face)">'
+            f'<path d="{region_d}" fill="{col["base"]}"/>{sheen}{strands}</g>'
+            f'<path d="{face_d}" fill="none" stroke="{col["outline"]}" stroke-width="3.4"/></g>'
+
+            + hairline_arch() +
+            f'<path d="{smooth(PART_SPIKE, True, corners=(0, 1, 2))}" fill="{CF.C["skin"]}"/>{tufts}</g>')
+
+
+def hairline_arch():
+    """Forehead top as one smooth arch (the traced edge was bumpy): skin below it, dark hair edge on it, and a
+    thin orange shadow under the hair at both temples."""
+    col = H2["colours"]
+    arch = smooth(HAIRLINE, False)
+    skin = smooth(HAIRLINE + [(287, 338), (109, 338)], True, corners=(len(HAIRLINE) - 1, len(HAIRLINE), len(HAIRLINE) + 1, 0))
+    # thin orange shadow just under the hair edge at both temples, following the arch
+    P = np.array(HAIRLINE, float)
+    temples = ""
+    for idx in (range(0, 5), range(len(P) - 5, len(P))):
+        seg = P[list(idx)]
+        inner = seg + [0, 5.5] + np.where(seg[:, :1] < 200, [[4.5, 0]], [[-4.5, 0]])
+        pts = [tuple(p) for p in seg] + [tuple(p) for p in inner[::-1]]
+        temples += f'<path d="{smooth(pts, True, corners=(0, len(seg) - 1, len(seg), len(pts) - 1))}" fill="#f4a47c"/>'
+    return (f'<path d="{skin}" fill="{CF.C["skin"]}"/>{temples}'
+            f'<path d="{arch}" fill="none" stroke="{col["outline"]}" stroke-width="3.4" stroke-linecap="round"/>')
 
 
 def ears_cel():
@@ -317,10 +410,15 @@ def ear_left_clean():
 def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
     backing = "".join(f'<ellipse cx="{f(x)}" cy="{f(y)}" rx="9" ry="9" fill="{H2["colours"]["outline"]}"/>'
                       for x, y in from_new([(686, 684), (262, 684)]))   # dark behind the ear bottoms (no white specks)
-    face_fill = backing + (f'<path d="{smooth(H2["face_fill"], True)}" fill="{CF.C["skin"]}" stroke="{H2["colours"]["outline"]}" '
-                 f'stroke-width="14" stroke-linejoin="round"/>'
+    face_fill = backing + not_eyes_clip().replace("clip_hair_not_eyes", "clip_ff_not_eyes") + (
+                 f'<path d="{smooth(H2["face_fill"], True)}" fill="{CF.C["skin"]}" stroke="{H2["colours"]["outline"]}" '
+                 f'stroke-width="14" stroke-linejoin="round" clip-path="url(#clip_ff_not_eyes)"/>'
                  f'<path d="{smooth(H2["face_fill"], True)}" fill="{CF.C["skin"]}"/>')
-    return (face_fill + hair_cel() + (temp_body() if body else "") + CF.blush() + CF.nose()
+    blush = "".join(f'<ellipse cx="{x}" cy="459.5" rx="18.5" ry="13.5" fill="#febdaa" opacity=".5"/>'
+                    f'<ellipse cx="{x}" cy="459.5" rx="17" ry="12.2" fill="#febdaa"/>' for x in (111, 266.5))
+    eye_skin = "".join(f'<circle cx="{f(c[0])}" cy="{f(c[1])}" r="{f(c[2] + 9)}" fill="{CF.C["skin"]}"/>'
+                       for c in (E.master_eye("right")[0], E.master_eye("left")[0]))
+    return (face_fill + hair_cel() + crown_clean() + (temp_body() if body else "") + eye_skin + blush + CF.nose()
             + CF.mouth(mouth_shape) + E.eye("right", eyes, look) + E.eye("left", eyes, look) + E.brow("right")
             + E.brow("left") + ears_cel())
 

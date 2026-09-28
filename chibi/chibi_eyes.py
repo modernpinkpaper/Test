@@ -16,7 +16,8 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 M = json.load(open(os.path.join(HERE, "ref", "measured_eyes.json")))
 FACE_MID_X = (M["right_eye"]["circle"][0] + M["left_eye"]["circle"][0]) / 2
-MAX_LOOK = (7.0, 3.0)      # how far the irises can move inside the eye (x, y) when she glances around
+MAX_LOOK = (7.0, 3.0)
+IRIS_INWARD = 2.5          # iris shift toward the nose (old-reference px)      # how far the irises can move inside the eye (x, y) when she glances around
 
 
 def master_eye(side):
@@ -24,6 +25,10 @@ def master_eye(side):
     e = M["left_eye"]
     cx, cy, r = e["circle"]
     ix, iy, irx, iry = e["iris"]
+    # as in the reference: a big iris that nearly fills the eye, sitting a little toward the nose,
+    # so the white shows as a crescent on the outer side
+    irx, iry = irx * 1.03, iry * 1.0
+    ix = ix - IRIS_INWARD
     liner = e["liner"]
     if side == "right":
         cx, ix = 2 * FACE_MID_X - cx, 2 * FACE_MID_X - ix
@@ -35,7 +40,7 @@ C = {   # sampled from the reference
     "iris_top": "#3a160e",
     "iris_mid": "#5a2c22",
     "iris_low": "#74402b",
-    "iris_rim": "#250900",
+    "iris_rim": "#1f0a04",
     "iris_band": "#7a4431",
     "pupil": "#240b05",
     "shine_ring": "#d9a89b",
@@ -119,7 +124,7 @@ def eye(side, state="open", look=(0.0, 0.0)):
             f'<g clip-path="url(#iclip_{gid})">'
             f'<ellipse cx="{f(ix + 1)}" cy="{f(iy + iry * .78)}" rx="{f(irx * 1.05)}" ry="{f(iry * .5)}" fill="url(#irisBand)"/>'
             f'<circle cx="{f(ix + PUPIL_OFFSET[0])}" cy="{f(iy + PUPIL_OFFSET[1])}" r="{f(PUPIL_R * 1.35)}" fill="url(#pupil)"/></g>'
-            f'<ellipse cx="{f(ix)}" cy="{f(iy)}" rx="{f(irx)}" ry="{f(iry)}" fill="none" stroke="{C["iris_rim"]}" stroke-width="1.8"/>'
+            f'<ellipse cx="{f(ix)}" cy="{f(iy)}" rx="{f(irx)}" ry="{f(iry)}" fill="none" stroke="{C["iris_rim"]}" stroke-width="3.6"/>'
             + star(star_c, STAR_RX, STAR_RY) +
             f'<circle cx="{f(dot[0])}" cy="{f(dot[1])}" r="6" fill="{C["shine_ring"]}" opacity=".55"/>'
             f'<circle cx="{f(dot[0])}" cy="{f(dot[1])}" r="3.2" fill="{C["white"]}"/>'
@@ -127,7 +132,10 @@ def eye(side, state="open", look=(0.0, 0.0)):
             f'<ellipse cx="{f(cx)}" cy="{f(cy - r)}" rx="{f(r * 1.02)}" ry="{f(r * .3)}" fill="{C["liner"]}"/></g>')
     liner = (f'<path d="{smooth(liner_pts, True, corners=sharp_points(liner_pts))}" fill="{C["liner"]}" '
              f'stroke="{C["liner"]}" stroke-width="1.2" stroke-linejoin="round"/>')
-    return f'<g id="{gid}">{clip}{iris_clip}{white}{iris}{liner}</g>'
+    # the lash line sits on the top half of the eye only (the trace also caught a bit of the lower outline)
+    top_clip = (f'<clipPath id="tclip_{gid}"><rect x="{f(cx - r * 2)}" y="{f(cy - r * 3)}" width="{f(r * 4)}" '
+                f'height="{f(r * 3.1)}"/></clipPath>')
+    return f'<g id="{gid}">{clip}{iris_clip}{top_clip}{white}{iris}<g clip-path="url(#tclip_{gid})">{liner}</g></g>'
 
 
 def brow(side, lift=0.0):
