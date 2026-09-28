@@ -229,11 +229,24 @@ def hair_cel():
     return '<g id="hair">' + "".join(parts) + "</g>"
 
 
+def ears_cel():
+    """Ears traced from the new reference: skin shape with a dark outline and the orange inner fold.
+    Drawn on top of the hair (in the reference the ears sit between the locks)."""
+    col, out = H2["ear_colours"], []
+    for side, e in H2["ears"].items():
+        g = [path(p, fill=col["skin"], stroke=col["outline"], stroke_width=2.2, stroke_linejoin="round") for p in e["skin"]]
+        # an ear with no traced skin (only its orange inside peeks out between the locks) gets an outline too
+        edge = {} if e["skin"] else dict(stroke=col["outline"], stroke_width=2.2, stroke_linejoin="round")
+        g += [path(p, fill=col["fold"], **edge) for p in e["fold"]]
+        out.append(f'<g id="{side}_ear">' + "".join(g) + "</g>")
+    return "".join(out)
+
+
 def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
     face_fill = f'<path d="{smooth(H2["face_fill"], True)}" fill="{CF.C["skin"]}"/>'
     return (CF.head() + face_fill + hair_cel() + (temp_body() if body else "") + CF.blush() + CF.nose()
             + CF.mouth(mouth_shape) + E.eye("right", eyes, look) + E.eye("left", eyes, look) + E.brow("right")
-            + E.brow("left") + CF.ear("left"))
+            + E.brow("left") + ears_cel())
 
 
 def compare_v2(out, new_ref):

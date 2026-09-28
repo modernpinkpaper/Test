@@ -87,5 +87,43 @@ def blobs(mask, sigma, eps, min_area):
     return [traced(lab == i, (0, 0), sigma, eps) for i in range(1, n) if st[i, cv2.CC_STAT_AREA] >= min_area]
 
 
+
+
+def measure_ears(path):
+    """Ears of the new reference: skin shape + the orange inner fold, in old-reference coordinates."""
+    T = json.load(open(os.path.join(HERE, "ref", "new_to_old.json")))
+    s, (nx, ny), (ox, oy) = T["scale"], T["new_mid"], T["old_mid"]
+    to_old = lambda pts: [[round((x - nx) / s + ox, 2), round((y - ny) / s + oy, 2)] for x, y in pts]
+    a = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB).astype(int)
+    R, G, B = a[..., 0], a[..., 1], a[..., 2]
+    skinish = (R > 225) & (G > 130) & (B > 80)
+    fold = skinish & ((R - G) > 58)
+    out = {}
+    for side, (x0, y0, x1, y1), seed in (("left", (690, 560, 790, 700), (745, 650)),
+                                        ("right", (225, 590, 270, 700), (250, 645))):
+        m = np.zeros(skinish.shape, np.uint8)
+        m[y0:y1, x0:x1] = skinish[y0:y1, x0:x1]
+        m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+        n, lab, st, _ = cv2.connectedComponentsWithStats(m)
+        k = lab[seed[1], seed[0]]                       # only the blob under the seed point (the ear itself)
+        shapes = [to_old(traced(lab == k, (0, 0), 1.5, 0.7))] if k else []
+        f = np.zeros(skinish.shape, np.uint8)
+        f[y0:y1, x0:x1] = fold[y0:y1, x0:x1]
+        f = cv2.morphologyEx(f, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+        n, lab, st, _ = cv2.connectedComponentsWithStats(f)
+        folds = [to_old(traced(lab == i, (0, 0), 1.5, 0.7)) for i in range(1, n) if st[i, cv2.CC_STAT_AREA] > 60]
+        if side == "left":
+            # the inner fold is a soft painted curl in the reference; drawn as a clean crescent along its measured path
+            folds = [to_old([(754, 590), (736, 594), (718, 606), (706, 624), (701, 644), (708, 646), (716, 628),
+                             (727, 614), (740, 604), (754, 598)])]
+        out[side] = {"skin": shapes, "fold": folds}
+    d = json.load(open(os.path.join(HERE, "ref", "measured_hair2.json")))
+    d["ears"] = out
+    d["ear_colours"] = {"skin": "#fdccac", "fold": "#f5956a", "outline": "#2d0b00"}
+    json.dump(d, open(os.path.join(HERE, "ref", "measured_hair2.json"), "w"))
+    print({k: (len(v["skin"]), len(v["fold"])) for k, v in out.items()})
+
+
 if __name__ == "__main__":
     main(sys.argv[1])
+    measure_ears(sys.argv[1])
