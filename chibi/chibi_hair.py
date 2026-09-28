@@ -233,13 +233,49 @@ def ears_cel():
     """Ears traced from the new reference: skin shape with a dark outline and the orange inner fold.
     Drawn on top of the hair (in the reference the ears sit between the locks)."""
     col, out = H2["ear_colours"], []
+    out.append(ear_left_clean())
     for side, e in H2["ears"].items():
+        if side == "left":
+            continue
         g = [path(p, fill=col["skin"], stroke=col["outline"], stroke_width=2.2, stroke_linejoin="round") for p in e["skin"]]
         # an ear with no traced skin (only its orange inside peeks out between the locks) gets an outline too
         edge = {} if e["skin"] else dict(stroke=col["outline"], stroke_width=2.2, stroke_linejoin="round")
         g += [path(p, fill=col["fold"], **edge) for p in e["fold"]]
         out.append(f'<g id="{side}_ear">' + "".join(g) + "</g>")
     return "".join(out)
+
+
+# her left ear (viewer's right), fitted to the traced ear: centre, half-axes, tilt (degrees)
+EAR_L = dict(cx=316.8, cy=433.0, rx=16.0, ry=27.0, tilt=26)
+
+
+def ear_left_clean():
+    """Tilted oval ear with the reference's thick, even dark rim, an orange inner rim along the top-right,
+    and the curled inner fold (thin at the top, thicker comma lower down)."""
+    col, e = H2["ear_colours"], EAR_L
+    t = f'translate({e["cx"]} {e["cy"]}) rotate({e["tilt"]})'
+    rx, ry = e["rx"], e["ry"]
+    # inner fold: thin arc under the top rim, curling down into a thicker comma
+    fold = smooth([(10, -16), (1, -16.5), (-6.5, -12), (-10.5, -3), (-10.5, 8), (-6, 12), (-3.5, 5), (-3.5, -3),
+                   (0, -9.5), (5, -12.5), (10.5, -13)], True)
+    band = f'<ellipse rx="{rx + 4.4}" ry="{ry + 4.4}" fill="{H2["colours"]["outline"]}"/>'
+    # the dark rim runs round the top, the outer side and the bottom; at the lower inner side the ear meets the
+    # cheek with no line, just a soft orange crease
+    import math
+    wedge_pts = [(0, 0)] + [(60 * math.cos(math.radians(a)), 60 * math.sin(math.radians(a))) for a in range(96, 170, 8)]
+    wedge = "M" + " L".join(f"{f(x)},{f(y)}" for x, y in wedge_pts) + " Z"
+    rim_keep = "M-80,-80 L80,-80 L80,80 L-80,80 Z " + wedge
+    crease = smooth([(-rx + 1.5, 4), (-rx + 3.5, 14), (-rx + 7.5, 23), (-rx + 6, 13), (-rx + 3.8, 3)], True)
+    return (f'<g id="left_ear" transform="{t}">'
+            f'<clipPath id="clip_ear_l"><ellipse rx="{rx}" ry="{ry}"/></clipPath>'
+            f'<clipPath id="clip_ear_rim"><path d="{rim_keep}" clip-rule="evenodd"/></clipPath>'
+            f'<clipPath id="clip_ear_gap"><path d="{wedge}"/></clipPath>'
+            f'<g clip-path="url(#clip_ear_rim)">{band}</g>'
+            f'<g clip-path="url(#clip_ear_gap)"><ellipse cx="-3" rx="{rx + 5}" ry="{ry + 5}" fill="{col["skin"]}"/></g>'
+            f'<g clip-path="url(#clip_ear_l)"><ellipse rx="{rx}" ry="{ry}" fill="#f7a67c"/>'
+            f'<ellipse cx="-2.4" cy="2" rx="{rx}" ry="{ry}" fill="{col["skin"]}"/>'
+            f'<path d="{crease}" fill="#f39a70"/>'
+            f'<path d="{fold}" fill="{col["fold"]}"/></g></g>')
 
 
 def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
