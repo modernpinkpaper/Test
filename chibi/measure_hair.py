@@ -62,6 +62,33 @@ def main(path):
             if area >= 20 and max(w, h) >= 14 and max(w, h) / max(1, min(w, h)) >= 2.0:
                 strands[kind].append(traced(lab == i, (0, 0), 1.5, 0.8))
     out["strands"] = strands
+    # hairline: the top and side edges of the visible face skin, per column / row (for a smooth arch)
+    skin = ((R > 225) & (G > 160) & (B > 120) & ((R - G) < 75)).astype(np.uint8)
+    n, lab, stats, _ = cv2.connectedComponentsWithStats(skin)
+    fk = lab[440, 186]
+    fm = (lab == fk)
+    top = []
+    for x in range(95, 285, 5):
+        ys = np.where(fm[250:420, x])[0]
+        if len(ys):
+            top.append([x, int(ys[0]) + 250])
+    sides = []
+    for y in range(300, 505, 5):
+        xs = np.where(fm[y, 40:340])[0]
+        if len(xs):
+            sides.append([y, int(xs[0]) + 40, int(xs[-1]) + 40])
+    out["hairline_top"], out["face_sides"] = top, sides
+    # the two long side locks below the shoulders: outer and inner edge per row, and the lowest tip
+    locks = {}
+    hb = hair.astype(bool)
+    for side, (xa, xb) in (("right", (0, 150)), ("left", (230, 370))):
+        rows = []
+        for y in range(560, im.shape[0], 4):
+            xs = np.where(hb[y, xa:xb])[0]
+            if len(xs) > 2:
+                rows.append([y, int(xs[0]) + xa, int(xs[-1]) + xa])
+        locks[side] = rows
+    out["locks"] = locks
     body = (S < 700) & ~hair.astype(bool) & (yy > 505)
     tmp = {"skin": [], "clothes": []}
     for kind, m in (("skin", body & (R > 200)), ("clothes", body & (R < 120) & ((R - B) < 28))):
