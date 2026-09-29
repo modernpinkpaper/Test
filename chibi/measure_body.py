@@ -27,6 +27,7 @@ NAMES = list(PALETTE)
 SIGMA, EPS, RING = 1.2, 0.7, 15
 SHOE_RIM = 15
 SHOE_OUT = 15
+LEG_OVERLAP = 40
 
 
 def classify(im):
@@ -74,27 +75,32 @@ def main(path):
     parts["neck"] = {"skin": biggest(neck_all, seed=(int(mid), neckline_y - 12))}
     for side, sgn in (("right", -1), ("left", 1)):          # her right = viewer's left
         arm = skin & (sgn * (xx - mid) > 60) & (yy > shirt_top + 40)
-        parts[f"{side}_arm"] = {"skin": arm & C["skin"], "skin_shade": arm & C["skin_shade"]}
+        # base = all the skin (light + shade) as one shape, the shade drawn on top: no dark seams between them
+        # dark specks inside the hand (the cores of the soft finger lines) become shade, not black outline
+        arm_full = solid_fill(biggest(arm), 5)
+        parts[f"{side}_arm"] = {"skin": arm_full, "skin_shade": (arm & C["skin_shade"]) | (arm_full & ~arm)}
     crotch = int(np.where((jeans & (abs(xx - mid) < 6)).any(1))[0][0]) + 20       # first row where the legs part
     crotch = max(crotch, shirt_bottom + 60)
     near_legs = abs(xx - mid) < 125                                   # (dark hair pixels can look like denim)
     jeans = jeans & near_legs
-    hips = jeans & (yy <= crotch + 10)
+    split_y = crotch + int(np.argmax(outline[crotch:, int(mid)]))   # where the legs really part (the dark V at the centre)
+    hips = jeans & (yy <= split_y + 4)
     # details inside the jeans: light stitching / button (lighter than the denim) and dark seam lines
-    hip_box = (yy >= shirt_bottom - 6) & (yy <= crotch + 10) & (abs(xx - mid) < 125)
+    hip_box = (yy >= shirt_bottom - 6) & (yy <= split_y + 4) & (abs(xx - mid) < 125)
     grey = im.astype(int).sum(2)
     light = hip_box & ~background & ((C["stitch"] | C["white"] | C["paper"]) | (grey > 330)) & ~C["skin"] & ~C["skin_shade"] & (np.abs(im[..., 2].astype(int) - im[..., 0].astype(int)) < 90)
     light &= cv2.erode((jeans | light).astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool)
     inner_dark = hip_box & outline & cv2.erode(cv2.morphologyEx((jeans | outline).astype(np.uint8), cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8)), np.ones((9, 9), np.uint8)).astype(bool)
     hull = cv2.morphologyEx(hips.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((25, 25), np.uint8)).astype(bool)
-    solid = cv2.morphologyEx((hips | ((light | inner_dark) & hull)).astype(np.uint8), cv2.MORPH_CLOSE, np.ones((11, 11), np.uint8))
-    cnts, _ = cv2.findContours(solid, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    solid = np.zeros_like(solid)
-    cv2.drawContours(solid, cnts, -1, 1, -1)                     # one solid denim shape, no holes
-    parts["hips"] = {"jeans": solid.astype(bool)}               # details are drawn as clean shapes (chibi_body)
+    # hips and legs are cut from ONE smoothed denim shape, so their edges line up exactly where they overlap
+    hips_raw = smooth_mask(solid_fill((hips | ((light | inner_dark) & hull)), 11), 21)
+    legs_raw = jeans & (yy > split_y - LEG_OVERLAP - 10)          # (not closed: that would bridge the gap between the legs)
+    denim = cv2.morphologyEx((hips_raw | legs_raw).astype(np.uint8), cv2.MORPH_OPEN,
+                             cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))).astype(bool)
+    parts["hips"] = {"jeans": denim & (yy <= split_y + 4)}       # details are drawn as clean shapes (chibi_body)
     for side, sgn in (("right", -1), ("left", 1)):
-        leg = jeans & (yy > crotch - 10) & (sgn * (xx - mid) > -4)
-        parts[f"{side}_leg"] = {"jeans": leg & C["jeans"], "stitch": leg & C["stitch"]}
+        leg = denim & (yy > split_y - LEG_OVERLAP) & (sgn * (xx - mid) > -4)   # reaches up under the hips (no seam line)
+        parts[f"{side}_leg"] = {"jeans": solid_fill(biggest(leg), 5)}           # one flat denim colour, no speckles
     counts = jeans.sum(1)
     shoe_top = next(y for y in range(1000, H) if counts[y] < 50) - 4     # the jeans cuffs end where the shoes begin
     for side, sgn in (("right", -1), ("left", 1)):
@@ -135,6 +141,10 @@ def main(path):
         r_ = ring if "shoe" not in name else cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (SHOE_OUT, SHOE_OUT))
         sil = cv2.dilate(allm.astype(np.uint8), r_).astype(bool) & (outline | allm | C["shirt"])
         sil = cv2.morphologyEx(sil.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+        if name.endswith("_leg"):                     # the outline must not poke out above / below the overlap
+            sil &= (yy > split_y - LEG_OVERLAP + 4).astype(np.uint8)
+        if name == "hips":
+            sil &= (yy <= split_y).astype(np.uint8)
         entry = {"silhouette": blobs(sil, 300, to_old, only_biggest=True), "layers": {}}
         for lname, m in layers.items():
             entry["layers"][lname] = blobs(m, 12 if lname in ("stitch", "seam") else 40, to_old)
@@ -152,9 +162,27 @@ def main(path):
         return (float(xs[ys < y0 + 10].mean()), float(y0))
     out["joints"] = {"neck": c((mid, shirt_top)), "right_shoulder": c(top_mid(arm_r)), "left_shoulder": c(top_mid(arm_l)),
                      "right_hip": c((mid - 60, crotch - 40)), "left_hip": c((mid + 60, crotch - 40))}
+    denim_all = denim | parts["right_leg"]["jeans"] | parts["left_leg"]["jeans"]
+    out["denim_outline"] = blobs(denim_all, 300, to_old, only_biggest=False)   # outer edge of all the jeans (clip)
     json.dump(out, open(os.path.join(HERE, "ref", "measured_body.json"), "w"))
     print({k: (len(v["silhouette"]), {a: len(b) for a, b in v["layers"].items()}) for k, v in out["parts"].items()})
     print(out["joints"])
+
+
+def smooth_mask(mask, k):
+    """Round off notches and corners: close then open with a k px disc."""
+    d = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k))
+    m = cv2.morphologyEx(mask.astype(np.uint8), cv2.MORPH_CLOSE, d)
+    return cv2.morphologyEx(m, cv2.MORPH_OPEN, d).astype(bool)
+
+
+def solid_fill(mask, k):
+    """Mask closed by k px, with every hole filled: one solid shape."""
+    m = cv2.morphologyEx(mask.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((k, k), np.uint8))
+    cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    out = np.zeros_like(m)
+    cv2.drawContours(out, cnts, -1, 1, -1)
+    return out.astype(bool)
 
 
 def blobs(mask, min_area, to_old, only_biggest=False):

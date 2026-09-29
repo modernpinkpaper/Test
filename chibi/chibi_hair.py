@@ -5,6 +5,7 @@ Layers (so the hair can sway / follow the head separately later):
   hair_front - the crown and the locks framing the face, drawn over the forehead edge
   strands    - darker strand lines and lighter shine streaks
 """
+import functools
 import json
 import os
 
@@ -526,6 +527,27 @@ def head_tf(svg):
             f'translate({f(-px)},{f(-py)})">' + svg + "</g>")
 
 
+HAIR_EDGE_SMOOTH = 24     # px at 4x (6 units): the outer hair edge is smoothed along its length by this much
+
+
+@functools.lru_cache(maxsize=8)
+def hair_edge(svg):
+    """One smooth outer edge for the whole head of hair: the head picture's hair (scaled) and the body picture's lower
+    hair are two tracings whose edges differ by a few units; everything hair is clipped to this edge."""
+    import cairosvg
+    import cv2
+    from measure_face import traced
+    k = 4
+    doc = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{400 * k}" height="{1000 * k}" viewBox="0 0 400 1000">'
+           f'<defs>{DEFS}</defs>{svg}</svg>')
+    png = cairosvg.svg2png(bytestring=doc.encode())
+    a = cv2.imdecode(np.frombuffer(png, np.uint8), cv2.IMREAD_UNCHANGED)[..., 3] > 127
+    disc = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (17, 17))
+    m = cv2.morphologyEx(cv2.morphologyEx(a.astype(np.uint8), cv2.MORPH_CLOSE, disc), cv2.MORPH_OPEN, disc)
+    pts = traced(m, (0, 0), HAIR_EDGE_SMOOTH, 1.0)
+    return smooth([(x / k, y / k) for x, y in pts], True)
+
+
 def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
     backing = "".join(f'<ellipse cx="{f(x)}" cy="{f(y)}" rx="9" ry="9" fill="{H2["colours"]["outline"]}"/>'
                       for x, y in from_new([(686, 684), (262, 684)]))   # dark behind the ear bottoms (no white specks)
@@ -549,8 +571,12 @@ def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
     neck_hole = smooth([(x, 495 if y < 508 else y) for x, y in CB.B["parts"]["neck"]["layers"]["skin"][0]], True)
     no_neck = (f'<clipPath id="clip_hair_not_neck"><path d="M-500,-500 H1000 V1500 H-500 Z {neck_hole}" '
                f'clip-rule="evenodd"/></clipPath>')   # the head picture's hair behind the neck: the body picture's neck wins
-    return (hb_under + head_tf(face_fill) + CB.neck() + no_neck + '<g clip-path="url(#clip_hair_not_neck)">'
-            + head_tf(hair_cel()) + "</g>" + hair_body_lower() + head_tf(crown_clean())
+    hair = head_tf(hair_cel())
+    edge = hair_edge(hb_under + head_tf(face_fill) + hair + hair_body_lower() + head_tf(crown_clean()))
+    clip = lambda svg: f'<g clip-path="url(#clip_hair_edge)">{svg}</g>'
+    return (f'<clipPath id="clip_hair_edge"><path d="{edge}"/></clipPath><path d="{edge}" fill="{H2["colours"]["outline"]}"/>'
+            + clip(hb_under + head_tf(face_fill)) + CB.neck() + no_neck
+            + clip('<g clip-path="url(#clip_hair_not_neck)">' + hair + "</g>" + hair_body_lower() + head_tf(crown_clean()))
             + (CB.body() if body else "")
             + '<g id="face">' + head_tf(eye_skin + blush + CF.nose() + CF.mouth(mouth_shape) + E.eye("right", eyes, look)
                                         + E.eye("left", eyes, look) + E.brow("right") + E.brow("left") + ears_cel()) + "</g>")
@@ -559,6 +585,8 @@ def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
 def compare_v2(out, new_ref):
     import cairosvg
     from PIL import Image
+    global HEAD_S, HEAD_DX, HEAD_DY
+    keep, (HEAD_S, HEAD_DX, HEAD_DY) = (HEAD_S, HEAD_DX, HEAD_DY), (1.0, 0.0, 0.0)   # head picture: its own size
     T = json.load(open(os.path.join(HERE, "ref", "new_to_old.json")))
     box = (0, 170, 370, 740)
     sc = 2
@@ -566,6 +594,7 @@ def compare_v2(out, new_ref):
            f'viewBox="{box[0]} {box[1]} {box[2] - box[0]} {box[3] - box[1]}"><defs>{DEFS}</defs>'
            f'<rect x="0" y="0" width="2000" height="2000" fill="#ffffff"/>{head_svg_v2()}</svg>')
     cairosvg.svg2png(bytestring=svg.encode(), write_to=out + ".mine.png")
+    HEAD_S, HEAD_DX, HEAD_DY = keep
     s, (nx, ny), (ox, oy) = T["scale"], T["new_mid"], T["old_mid"]
     nb = [(box[0] - ox) * s + nx, (box[1] - oy) * s + ny, (box[2] - ox) * s + nx, (box[3] - oy) * s + ny]
     a = Image.open(new_ref).convert("RGB").crop(tuple(int(v) for v in nb)).resize(((box[2] - box[0]) * sc, (box[3] - box[1]) * sc), Image.LANCZOS)

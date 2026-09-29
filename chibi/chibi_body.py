@@ -6,6 +6,8 @@ right/left leg, right/left shoe. "right"/"left" = her own right/left (her right 
 import json
 import os
 
+import numpy as np
+
 import chibi_eyes as E
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -39,27 +41,52 @@ def dashed(pts, colour, w=1.0, dash="2.6 2"):
             f'stroke-dasharray="{dash}" stroke-linecap="round"/>')
 
 
+def band_top(x):
+    return 645 - 6 * ((x - 188) / 55) ** 2          # waistband edges: they dip in the middle, like the shirt hem
+
+
+def band_bottom(x):
+    return 656 - 9 * ((x - 188) / 55) ** 2
+
+
 def jeans_details():
-    """Waistband, belt loops, button, fly and front pockets, measured on the reference (clean shapes)."""
-    navy, stitch, band, loop = "#253a53", "#8e9bb0", "#3a516e", "#4c6481"
-    g = [f'<path d="{smooth([(131, 641), (188, 643), (246, 640), (246, 654), (188, 656.5), (131, 655)], True, corners=(0, 2, 3, 5))}" fill="{band}"/>']
-    g.append(taper_line([(131, 655.5), (160, 657), (188, 657.3), (216, 657), (246, 655)], 1.4, navy))       # waistband seam
-    g.append(dashed([(133, 651.5), (160, 653), (188, 653.3), (216, 653), (244, 651)], stitch, .9))
-    for x in (154.5, 211.5):                                                                             # belt loops
-        g.append(f'<rect x="{x}" y="643" width="5.5" height="14" rx="1" fill="{loop}" stroke="{navy}" stroke-width="1"/>')
-    g.append('<circle cx="187.6" cy="648.3" r="3.1" fill="#c9cdd3" stroke="#8c919a" stroke-width=".6"/>')      # button
-    g.append(taper_line([(182, 658), (182.3, 672), (182.2, 688), (181.5, 699)], 1.5, navy))                # fly edge
-    g.append(dashed([(193.5, 658), (193.8, 676), (191, 686), (183, 690)], stitch, .9))                    # fly stitch
-    for sgn in (-1, 1):                                                                                # front pockets
-        P = [(188 + sgn * dx, y) for dx, y in ((38, 657.5), (42, 661), (49, 665.5), (58, 668), (64, 668.5))]
-        g.append(taper_line(P, 1.8, navy))
-        g.append(dashed([(188 + sgn * dx, y) for dx, y in ((36, 660), (40, 664), (47, 668.5), (56, 671), (62, 671.5))],
-                        stitch, .9))
+    """Waistband, belt loops, button, fly, front pockets and crotch folds, measured on the reference (clean shapes)."""
+    navy, stitch = "#253a53", "#8e9bb0"
+    xs = np.linspace(128, 248, 13)
+    g = [taper_line([(x, band_bottom(x)) for x in xs], 1.6, navy)]                        # waistband seam
+    g.append(dashed([(x, band_bottom(x) - 3.5) for x in np.linspace(132, 244, 13)], stitch, .9))
+    for x in (157.5, 214.5):                                                             # belt loops (follow the curve)
+        t0, t1 = band_top(x) - 1.5, band_bottom(x) + 1.5
+        pts = [(x - 3, t0), (x + 3, t0), (x + 3, t1), (x - 3, t1)]
+        g.append(f'<path d="{smooth(pts, True, corners=(0, 1, 2, 3))}" fill="{COL["jeans"]}" stroke="{navy}" stroke-width="1.1"/>')
+    g.append(f'<circle cx="188" cy="{band_top(188) + 4.6:.1f}" r="3.4" fill="#c9cdd3" stroke="#8c919a" stroke-width=".6"/>')   # button
+    g.append(taper_line([(181.8, 657), (182, 672), (182, 688), (182.5, 701)], 1.6, navy))       # fly edge
+    g.append(dashed([(195.5, 658), (195.6, 676), (193, 686), (184, 689.5)], stitch, .9))        # fly stitch
+    for sgn in (-1, 1):                                                                  # front pockets
+        P = [(188 + sgn * dx, y) for dx, y in ((36, band_bottom(152) + .5), (39, 660), (46, 666), (55, 669.5), (64, 671))]
+        g.append(taper_line(P, 1.9, navy))
+        g.append(dashed([(188 + sgn * dx, y) for dx, y in ((34, 660), (38, 665), (45, 670), (54, 673), (62, 674.5))], stitch, .9))
+    for pts in ([(163, 692), (174, 698), (187.5, 704.5)], [(213, 690), (201, 698), (189, 704.5)]):   # crotch folds
+        g.append(taper_line(pts, 3.0, navy))
     return '<g id="jeans_details">' + "".join(g) + "</g>"
 
 
+def jeans():
+    """Hips + both legs: all the dark outlines first, then all the denim, so no outline slivers where they overlap."""
+    names = ["right_leg", "left_leg", "hips"]
+    sil = "".join(f'<path d="{smooth(s, True)}" fill="{OUTLINE}"/>' for n in names for s in B["parts"][n]["silhouette"])
+    # the denim pieces overlap (no seams); all of it is trimmed to the outer edge of the jeans, so the smoothed
+    # corners of the pieces never poke out; the top of the gap between the legs is a clean point like the reference
+    edge = "".join(f'<path d="{smooth(s, True)}"/>' for s in B["denim_outline"])
+    fill = "".join(f'<path d="{smooth(s, True)}"/>' for n in names for s in B["parts"][n]["layers"]["jeans"])
+    # top of the gap between the legs: redrawn as one clean tapering shape (measured on the reference)
+    tip = (f'<path d="M176,699 H200 V728 H176 Z" fill="{COL["jeans"]}"/>'
+           f'<path d="{smooth([(188.2, 704), (190.2, 707), (191.3, 715), (192.2, 729), (182.4, 729), (184.8, 715), (186.4, 707)], True, corners=(0, 3, 4))}" fill="{OUTLINE}"/>')
+    return (f'<g id="jeans">{sil}<clipPath id="clip_denim">{edge}</clipPath>'
+            f'<g clip-path="url(#clip_denim)" fill="{COL["jeans"]}">{fill}</g>{tip}'
+            f'<g clip-path="url(#clip_denim)">{jeans_details()}</g></g>')
+
 def body():
     """Everything below the neck, back to front."""
-    order = ["right_leg", "left_leg", "right_shoe", "left_shoe", "hips", "torso", "right_arm", "left_arm"]
-    parts = "".join(part(n) + (jeans_details() if n == "hips" else "") for n in order)
+    parts = part("right_shoe") + part("left_shoe") + jeans() + "".join(part(n) for n in ("torso", "right_arm", "left_arm"))
     return '<g id="body">' + parts + "</g>"
