@@ -91,8 +91,13 @@ class Toon:
         self.x, self.floor, self.facing, self.head, self.hair = x, floor, facing, head, hair
         self.hair_col, self.s, self.outfit = hair_col, scale, outfit
 
+    def neck_at(self, bob=0.0):
+        s = self.s
+        hip = (self.x, self.floor - 2 * 150 * s * 0.98 + bob)
+        return (hip[0], hip[1] - 175 * s)
+
     def draw(self, ctx, arms=((10, 10), (10, 10)), legs=(6, 6), face="neutral", mouth=0.0, look=(0, 0), blink=False,
-             tilt=0.0, bob=0.0, squash=1.0, hold=None):
+             tilt=0.0, bob=0.0, squash=1.0, hold=None, socks=(False, False), inside_out=False, before_head=None):
         s = self.s
         leg = 150 * s
         hip = (self.x, self.floor - 2 * leg * 0.98 + bob)
@@ -106,12 +111,19 @@ class Toon:
             knee = (hip[0] + math.sin(ang) * leg, hip[1] + math.cos(ang) * leg)
             foot = (knee[0] + math.sin(ang * 0.3) * leg, min(knee[1] + math.cos(ang * 0.3) * leg, self.floor))
             curve(ctx, [hip, knee, foot], w=lw)
-            ellipse(ctx, foot[0] + 16 * s * self.facing, foot[1] - 6 * s, 24 * s, 11 * s, fill=OUT, line=None)
+            if socks[0 if side < 0 else 1]:              # a white sock instead of a shoe
+                ellipse(ctx, foot[0] + 12 * s * self.facing, foot[1] - 7 * s, 20 * s, 10 * s, fill=(0.96, 0.96, 0.96), w=4 * s)
+            else:
+                ellipse(ctx, foot[0] + 16 * s * self.facing, foot[1] - 6 * s, 24 * s, 11 * s, fill=OUT, line=None)
         # body: a stick, or an outfit shape (a shirt) over it
         if self.outfit:
             top, col = neck[1] + 10 * s, self.outfit
             poly(ctx, [(neck[0] - 36 * s, top), (neck[0] + 36 * s, top), (hip[0] + 30 * s, hip[1] + 8 * s),
                        (hip[0] - 30 * s, hip[1] + 8 * s)], fill=col, w=6 * s)
+            if inside_out:                                 # seams on the outside and the tag sticking out
+                for dx in (-1, 1):
+                    curve(ctx, [(neck[0] + dx * 30 * s, top + 6 * s), (hip[0] + dx * 25 * s, hip[1])], line=(1, 1, 1), w=2.5 * s)
+                rrect(ctx, neck[0] - 9 * s, top - 2 * s, 18 * s, 16 * s, 3 * s, fill=(1, 1, 1), w=3 * s)
         else:
             curve(ctx, [neck, hip], w=lw)
         # arms
@@ -127,6 +139,8 @@ class Toon:
             hands.append(hd)
         if hold:
             hold(ctx, hands)
+        if before_head:
+            before_head(ctx, neck)
         # hair behind (bun)
         if self.hair == "bun":
             ellipse(ctx, hc[0] - self.facing * 20 * s, hc[1] - R * 0.95, 34 * s, 30 * s, fill=self.hair_col, w=6 * s)
@@ -151,6 +165,7 @@ class Toon:
                         (hc[0] + R * 0.6, hc[1] - R * 0.9), (hc[0] + R * 0.95, hc[1] - R * 0.3), (hc[0], hc[1] - R * 0.62)],
                   fill=self.hair_col, w=6 * s, close=True)
         self.face(ctx, hc, R, face, mouth, look, blink)
+        self.head_c, self.head_r, self.hands = hc, R, hands
         return hc, hands
 
     def face(self, ctx, hc, R, face, mouth, look, blink):
@@ -207,3 +222,45 @@ class Toon:
             curve(ctx, [(mx - 24 * s, my + 4 * s), (mx - 8 * s, my - 2 * s), (mx + 8 * s, my + 4 * s), (mx + 24 * s, my - 2 * s)], w=7 * s)
         else:
             curve(ctx, [(mx - 22 * s, my + 2 * s), (mx + 22 * s, my + 2 * s)], w=7 * s)
+
+
+# ------------------------------------------------------------------ fonts (cairocffi has no TTF loader: go via FreeType)
+_FACES = {}
+
+
+def font_face(path_):
+    if path_ in _FACES:
+        return _FACES[path_]
+    import cffi
+    ffi = cffi.FFI()
+    ffi.cdef("""typedef void* FT_Library; typedef void* FT_Face; int FT_Init_FreeType(FT_Library*);
+                int FT_New_Face(FT_Library, const char*, long, FT_Face*);
+                void* cairo_ft_font_face_create_for_ft_face(FT_Face, int);""")
+    ft, cft = ffi.dlopen("freetype"), ffi.dlopen("cairo")
+    lib, face = ffi.new("FT_Library*"), ffi.new("FT_Face*")
+    ft.FT_Init_FreeType(lib)
+    ft.FT_New_Face(lib[0], path_.encode(), 0, face)
+    ptr = cft.cairo_ft_font_face_create_for_ft_face(face[0], 0)
+    ff = cairo.FontFace._from_pointer(cairo.ffi.cast("cairo_font_face_t *", ptr), incref=False)
+    _FACES[path_] = (ff, (ffi, ft, cft, lib, face))
+    return _FACES[path_]
+
+
+def text(ctx, s, x, y, size, font, col=OUT, anchor="mm", outline=None, ow=8):
+    ctx.save()
+    ctx.set_font_face(font_face(font)[0])
+    ctx.set_font_size(size)
+    xb, yb, tw, th, _, _ = ctx.text_extents(s)
+    dx = {"l": 0, "m": -tw / 2, "r": -tw}[anchor[0]] - xb
+    dy = {"t": -yb, "m": -yb - th / 2, "b": -yb - th}[anchor[1]]
+    ctx.move_to(x + dx, y + dy)
+    ctx.text_path(s)
+    if outline:
+        ctx.set_source_rgb(*outline)
+        ctx.set_line_width(ow)
+        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        ctx.stroke_preserve()
+    ctx.set_source_rgb(*(rgb(col) if isinstance(col, str) else col))
+    ctx.fill()
+    ctx.restore()
+    return tw

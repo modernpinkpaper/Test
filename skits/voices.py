@@ -113,23 +113,30 @@ def clarity(a):
     return np.tanh(a * 1.1).astype(np.float32) / np.tanh(1.1)                   # soft limiter, no clipping
 
 
-def room(a, amount=0.06):
-    """A little room echo so lines sound recorded in the same place, not studio-dry."""
-    ir = np.zeros(int(0.25 * SR), np.float32)
-    rng = np.random.default_rng(3)
-    t = np.arange(len(ir)) / SR
-    ir[:] = rng.normal(0, 1, len(ir)) * np.exp(-t / 0.05) * amount
+def gate(a, floor_db=-28.0):
+    """Quiet the gaps between words (where the voice model leaves faint noise) before anything boosts them."""
+    env = np.sqrt(np.convolve(a ** 2, np.ones(720) / 720, "same"))                # 30 ms loudness
+    thr = 0.06 * np.percentile(env, 98)
+    g = np.where(env > thr, 1.0, 10 ** (floor_db / 20))
+    g = np.convolve(g, np.ones(480) / 480, "same")                                  # 20 ms fades, no clicks
+    return (a * g).astype(np.float32)
+
+
+def room(a, amount=0.05):
+    """A little room echo (a few soft early reflections, no noise), so lines don't sound studio-dry."""
+    ir = np.zeros(int(0.09 * SR), np.float32)
     ir[0] = 1.0
+    for d, k in ((0.011, .5), (0.019, .35), (0.031, .25), (0.047, .15), (0.071, .08)):
+        ir[int(d * SR)] += k * amount / .05 * .3
     return np.convolve(a, ir)[:len(a) + len(ir) // 2].astype(np.float32)
 
 
 def conversation(lines, gap=0.25, overlap=None):
-    """lines: [(who, text), ...] -> one track; small gaps, room tone, a faint background hiss."""
+    """lines: [(who, text), ...] -> one clean, level track (the skit adds its own room sound per scene)."""
     out = []
     for who, text in lines:
-        out += [room(say(who, text)), np.zeros(int(gap * SR), np.float32)]
-    a = clarity(np.concatenate(out))
-    return a + np.random.default_rng(1).normal(0, 0.0015, len(a)).astype(np.float32)
+        out += [room(gate(say(who, text))), np.zeros(int(gap * SR), np.float32)]
+    return clarity(np.concatenate(out))
 
 
 if __name__ == "__main__":
