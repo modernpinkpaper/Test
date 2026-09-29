@@ -35,6 +35,7 @@ def _median(v, k=5):
     return np.array([np.median(v[max(0, i - k // 2):i + k // 2 + 1]) for i in range(len(v))])
 
 
+HAIR_SPLIT_Y = 2000   # below this y the hair comes from the full-body picture (chibi_body hair_behind)
 COVER_BOTTOM = 480
 TIP_START = 640         # below this the two locks are rebuilt as smooth tapered tips      # the front hair frames the face down to here; below, the jaw sits over the back hair
 
@@ -234,8 +235,9 @@ def hair_cel():
     # the hair never covers the face (the trace also caught one eye's browns as "hair")
     return (f'<clipPath id="clip_hair_not_face"><path d="M-500,-500 H1000 V1500 H-500 Z {face_d}" clip-rule="evenodd"/>'
             f'</clipPath>' + not_eyes_clip() +
-            f'<g id="hair" clip-path="url(#clip_hair_not_face)"><g clip-path="url(#clip_hair_not_eyes)">'
-            + "".join(parts) + "</g></g>")
+            f'<clipPath id="clip_hair_top"><rect x="-100" y="-100" width="600" height="{HAIR_SPLIT_Y + 100}"/></clipPath>'
+            f'<g id="hair" clip-path="url(#clip_hair_not_face)"><g clip-path="url(#clip_hair_not_eyes)"><g clip-path="url(#clip_hair_top)">'
+            + "".join(parts) + "</g></g></g>")
 
 
 def not_eyes_clip():
@@ -504,7 +506,8 @@ def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
                     f'<ellipse cx="{x}" cy="459.5" rx="17" ry="12.2" fill="#febdaa"/>' for x in (111, 266.5))
     eye_skin = "".join(f'<circle cx="{f(c[0])}" cy="{f(c[1])}" r="{f(c[2] + 9)}" fill="{CF.C["skin"]}"/>'
                        for c in (E.master_eye("right")[0], E.master_eye("left")[0]))
-    return (face_fill + hair_cel() + crown_clean() + (temp_body() if body else "") + eye_skin + blush + CF.nose()
+    import chibi_body as CB
+    return (CB.neck() + face_fill + hair_cel() + crown_clean() + (CB.body() if body else "") + eye_skin + blush + CF.nose()
             + CF.mouth(mouth_shape) + E.eye("right", eyes, look) + E.eye("left", eyes, look) + E.brow("right")
             + E.brow("left") + ears_cel())
 
