@@ -86,7 +86,41 @@ def jeans():
             f'<g clip-path="url(#clip_denim)" fill="{COL["jeans"]}">{fill}</g>{tip}'
             f'<g clip-path="url(#clip_denim)">{jeans_details()}</g></g>')
 
+FINGER_CORE, FINGER_SOFT = "#c96e47", "#eb9f78"
+
+
+def pointed_line(pts, wmax, colour, extend=4.0):
+    """A line that starts at a fine point (top) and reaches full width by its middle; the bottom end is carried on
+    `extend` units so it runs into the outline (the line is clipped to the skin)."""
+    import chibi_hair as CH
+    P = np.array(pts, float)
+    d = P[-1] - P[-2]
+    P = np.vstack([P, P[-1] + d / (np.linalg.norm(d) + 1e-9) * extend])
+    C = np.array(CH.sample_curve([tuple(p) for p in P], 12), float)
+    t = np.linspace(0, 1, len(C))
+    w = wmax * np.clip(t / 0.5, 0, 1) ** 0.7
+    tang = np.gradient(C, axis=0)
+    nrm = np.stack([-tang[:, 1], tang[:, 0]], 1) / (np.linalg.norm(tang, axis=1, keepdims=True) + 1e-9)
+    L, R = C + nrm * w[:, None] / 2, C - nrm * w[:, None] / 2
+    ring = [tuple(p) for p in L] + [tuple(p) for p in R[::-1]]
+    return f'<path d="M{" L".join(f"{x:.2f},{y:.2f}" for x, y in ring)} Z" fill="{colour}"/>'
+
+
+def finger_lines(side):
+    """The lines between the fingers and the crease above the thumb, measured on the reference: thin strokes with a
+    pointed top (soft wide edge + darker core), clipped to the hand's skin."""
+    lines = B.get("finger_lines", {}).get(side, [])
+    skin = "".join(f'<path d="{smooth(s, True)}"/>' for s in B["parts"][f"{side}_arm"]["layers"]["skin"])
+    g = "".join(pointed_line(ln["points"], ln["width"] * 1.7, FINGER_SOFT) + pointed_line(ln["points"], ln["width"] * .95, FINGER_CORE)
+                for ln in lines)
+    return f'<clipPath id="clip_skin_{side}">{skin}</clipPath><g clip-path="url(#clip_skin_{side})">{g}</g>'
+
+
+def arm(side):
+    return part(f"{side}_arm")[:-4] + finger_lines(side) + "</g>"
+
+
 def body():
     """Everything below the neck, back to front."""
-    parts = part("right_shoe") + part("left_shoe") + jeans() + "".join(part(n) for n in ("torso", "right_arm", "left_arm"))
+    parts = part("right_shoe") + part("left_shoe") + jeans() + part("torso") + arm("right") + arm("left")
     return '<g id="body">' + parts + "</g>"

@@ -28,6 +28,7 @@ SIGMA, EPS, RING = 1.2, 0.7, 15
 SHOE_RIM = 15
 SHOE_OUT = 15
 LEG_OVERLAP = 40
+FINGER_G = 146     # finger lines: orange-brown pixels in the hand darker (green channel) than this
 
 
 def classify(im):
@@ -73,11 +74,19 @@ def main(path):
     neck_all = (skin | inner_white) & (yy < shirt_top + 70) & (abs(xx - mid) < 90) & (yy > 520)
     neckline_y = int(np.where(shirt[:, int(mid)])[0][0])            # lowest point of the neckline, at the centre
     parts["neck"] = {"skin": biggest(neck_all, seed=(int(mid), neckline_y - 12))}
+    finger_lines = {}
     for side, sgn in (("right", -1), ("left", 1)):          # her right = viewer's left
         arm = skin & (sgn * (xx - mid) > 60) & (yy > shirt_top + 40)
         # base = all the skin (light + shade) as one shape, the shade drawn on top: no dark seams between them
         # dark specks inside the hand (the cores of the soft finger lines) become shade, not black outline
         arm_full = solid_fill(biggest(arm), 5)
+        # the soft orange-brown lines between the fingers (and the crease above the thumb): their own layer
+        a3 = im.astype(int)
+        hand = arm_full & (yy > np.where(arm_full.any(1))[0][-1] - 110)
+        R_, G_, B_ = a3[..., 0], a3[..., 1], a3[..., 2]
+        core = hand & (R_ > 170) & (G_ > 85) & (G_ < FINGER_G) & (B_ < 150)
+        core = cv2.morphologyEx(core.astype(np.uint8), cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 11)))
+        finger_lines[side] = centre_lines(core, to_old, s)
         parts[f"{side}_arm"] = {"skin": arm_full, "skin_shade": (arm & C["skin_shade"]) | (arm_full & ~arm)}
     crotch = int(np.where((jeans & (abs(xx - mid) < 6)).any(1))[0][0]) + 20       # first row where the legs part
     crotch = max(crotch, shirt_bottom + 60)
@@ -162,6 +171,7 @@ def main(path):
         return (float(xs[ys < y0 + 10].mean()), float(y0))
     out["joints"] = {"neck": c((mid, shirt_top)), "right_shoulder": c(top_mid(arm_r)), "left_shoulder": c(top_mid(arm_l)),
                      "right_hip": c((mid - 60, crotch - 40)), "left_hip": c((mid + 60, crotch - 40))}
+    out["finger_lines"] = finger_lines
     denim_all = denim | parts["right_leg"]["jeans"] | parts["left_leg"]["jeans"]
     out["denim_outline"] = blobs(denim_all, 300, to_old, only_biggest=False)   # outer edge of all the jeans (clip)
     json.dump(out, open(os.path.join(HERE, "ref", "measured_body.json"), "w"))
@@ -183,6 +193,30 @@ def solid_fill(mask, k):
     out = np.zeros_like(m)
     cv2.drawContours(out, cnts, -1, 1, -1)
     return out.astype(bool)
+
+
+def centre_lines(mask, to_old, scale, min_len=8):
+    """Each thin, roughly vertical line in the mask as a centre line + its widest width (drawing units)."""
+    n, lab, st, _ = cv2.connectedComponentsWithStats(mask.astype(np.uint8))
+    out = []
+    for i in range(1, n):
+        ys, xs = np.where(lab == i)
+        if ys.max() - ys.min() < min_len:
+            continue
+        rows = np.arange(ys.min(), ys.max() + 1)
+        cx = np.array([xs[ys == y].mean() if (ys == y).any() else np.nan for y in rows])
+        wd = np.array([(ys == y).sum() for y in rows], float)
+        ok = ~np.isnan(cx)
+        cx = np.interp(rows, rows[ok], cx[ok])
+        k = np.ones(5) / 5
+        cx = np.convolve(np.r_[[cx[0]] * 2, cx, [cx[-1]] * 2], k, "valid")
+        step = max(1, len(rows) // 6)
+        idx = list(range(0, len(rows), step))
+        if idx[-1] != len(rows) - 1:
+            idx.append(len(rows) - 1)
+        pts = to_old([(cx[j], rows[j]) for j in idx])
+        out.append({"points": pts, "width": round(float(np.percentile(wd, 50)) / scale, 2)})
+    return out
 
 
 def blobs(mask, min_area, to_old, only_biggest=False):
