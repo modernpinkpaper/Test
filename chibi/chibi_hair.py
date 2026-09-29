@@ -549,6 +549,8 @@ def hair_edge(svg):
 
 
 NECK_PIVOT = (188.1, 505.0)     # the head (with all its hair) tilts around this point
+H2_SIL_BOTTOM = 655             # below here, between these x, the head picture's dark hair shape is cut away
+H2_SIL_CUT_X = (55, 330)        # (it holds the outline around the hand-hip gaps: a loop when an arm lifts)
 
 
 def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True, pose=None, tilt=0.0):
@@ -558,7 +560,11 @@ def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True, pose=N
     hb_under = ("".join(path(p, fill=HB["colours"]["outline"]) for p in HB["silhouette"])     # dark behind the head,
                 + path(HB["face_fill"], fill=HB["colours"]["outline"])                          # so no white gaps anywhere
                 + f'<rect x="135" y="490" width="110" height="40" fill="{HB["colours"]["outline"]}"/>') if HB else ""
-    under = ("".join(path(p, fill=H2["colours"]["outline"]) for p in H2["silhouette"])     # no gaps at the face edge
+    x0, x1 = H2_SIL_CUT_X
+    under = (f'<clipPath id="clip_h2_top"><path d="M-100,-100 H600 V1100 H-100 Z M{x0},{H2_SIL_BOTTOM} V1100 H{x1} V{H2_SIL_BOTTOM} Z" '
+             f'clip-rule="evenodd"/></clipPath>'
+             f'<g clip-path="url(#clip_h2_top)">'
+             + "".join(path(p, fill=H2["colours"]["outline"]) for p in H2["silhouette"]) + "</g>"   # no gaps at the face edge
              + f'<path d="{smooth(H2["face_fill"], True)}" fill="#f4a47c" stroke="#f4a47c" stroke-width="30" '
                f'stroke-linejoin="round" clip-path="url(#clip_ff_not_eyes2)"/>'
              + not_eyes_clip().replace("clip_hair_not_eyes", "clip_ff_not_eyes2"))

@@ -28,6 +28,7 @@ SIGMA, EPS, RING = 1.2, 0.7, 15
 SHOE_RIM = 15
 SHOE_OUT = 15
 LEG_OVERLAP = 40
+ARM_LINE = 15          # arm outline band: px around the skin (the reference's arm outline is ~7 px)
 FINGER_G = 146     # finger lines: orange-brown pixels in the hand darker (green channel) than this
 
 
@@ -79,6 +80,9 @@ def main(path):
         arm = skin & (sgn * (xx - mid) > 60) & (yy > shirt_top + 40)
         # base = all the skin (light + shade) as one shape, the shade drawn on top: no dark seams between them
         # dark specks inside the hand (the cores of the soft finger lines) become shade, not black outline
+        # (thin shade opened away: the soft edge of a white gap next to the hand reads as a fringe of skin shade)
+        core = biggest(cv2.morphologyEx(arm.astype(np.uint8), cv2.MORPH_OPEN, np.ones((5, 5), np.uint8)).astype(bool))
+        arm = arm & cv2.dilate(core.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool)   # edges kept, strands not
         arm_full = solid_fill(biggest(arm), 5)
         # the soft orange-brown lines between the fingers (and the crease above the thumb): their own layer
         a3 = im.astype(int)
@@ -140,6 +144,7 @@ def main(path):
     body_union = cv2.morphologyEx(body_union, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (61, 61)))
     body_union = cv2.dilate(body_union, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (55, 55)))
     backing_sil = figure.astype(bool) & body_union.astype(bool) & (yy > shirt_top - 10)   # gaps between / around the parts
+    backing_sil |= figure.astype(bool) & cv2.dilate(hbo.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool) & (yy > shirt_top - 10)
     # the arms move: nothing dark may stay behind them, except inside the hair, where the hidden hair is painted in
     arms = parts["right_arm"]["skin"] | parts["left_arm"]["skin"]
     arms_zone = cv2.dilate(arms.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (RING + 8, RING + 8))).astype(bool)
@@ -172,11 +177,13 @@ def main(path):
     gap = (C["paper"] | C["white"]) & ~background & cv2.dilate(arms.astype(np.uint8), np.ones((41, 41), np.uint8)).astype(bool) & (yy > shirt_bottom)
     gap_ring = cv2.dilate(gap.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3 * RING, 3 * RING))).astype(bool)
     under_arm = cv2.dilate(arms.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (RING, RING))).astype(bool)
-    backing_sil &= ~(gap_ring & under_arm)
+    arm_line = cv2.dilate(arms.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (RING - 6, RING - 6))).astype(bool)
+    backing_sil &= ~(gap_ring & arm_line)                  # (only right under the arm's own outline: no slivers)
     behind &= ~(gap_ring & under_arm)
     parts["hair_behind_arms"] = {"hair_hidden": behind}
     out = {"colours": {n: "#%02x%02x%02x" % PALETTE[n] for n in NAMES}, "parts": {}}
     ring = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (RING, RING))
+    stray = np.zeros((H, W), bool)
     for name, layers in parts.items():
         allm = np.zeros((H, W), bool)
         for m in layers.values():
@@ -188,6 +195,10 @@ def main(path):
         if not name.endswith("_arm") and name not in ("backing", "hair_behind", "hair_behind_arms"):
             # an arm's outline belongs to the arm (it moves): not to the shirt / jeans silhouette next to it
             sil &= ~(under_arm & ~cv2.dilate(allm.astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)).astype(np.uint8)
+        if name.endswith("_arm"):     # an even outline band around the skin: strands of neighbouring outlines stay behind
+            band = cv2.dilate(allm.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (ARM_LINE, ARM_LINE)))
+            stray |= (sil & ~band).astype(bool) & ~gap_ring        # (hair tips etc.: they stay, drawn with the backing)
+            sil = cv2.morphologyEx(sil & band, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
         if name.endswith("_leg"):                     # the outline must not poke out above / below the overlap
             sil &= (yy > split_y - LEG_OVERLAP + 4).astype(np.uint8)
         if name == "hips":
@@ -196,7 +207,9 @@ def main(path):
         for lname, m in layers.items():
             entry["layers"][lname] = blobs(m, 12 if lname in ("stitch", "seam") else 40, to_old)
         if name == "backing":
-            entry = {"silhouette": blobs(backing_sil, 300, to_old, only_biggest=True), "layers": {}}
+            entry = {"silhouette": blobs(backing_sil, 300, to_old)       # (all pieces: the arm cuts split it)
+                     + blobs(cv2.morphologyEx(stray.astype(np.uint8), cv2.MORPH_OPEN, np.ones((3, 3), np.uint8)), 20, to_old),
+                     "layers": {}}
         out["parts"][name] = entry
     # joints (for animation): measured in the reference, in drawing coordinates
     def c(pt):
