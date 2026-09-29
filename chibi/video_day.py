@@ -29,7 +29,7 @@ import video_321 as V                                    # noqa: E402
 import voices                                            # noqa: E402
 from day_lines import CALLER, LINES, VOICE               # noqa: E402
 from demo_hands2 import reach                            # noqa: E402
-from five_min import ogg, synth                          # noqa: E402
+from five_min import bathroom, ogg, synth                          # noqa: E402
 from toon import OUT, ellipse, lin, poly, rad, rgb, rrect, text   # noqa: E402
 
 W, H, FPS, SR = 1080, 1920, 24, voices.SR
@@ -79,7 +79,7 @@ def blend(a, b, k, props=None):
     out = {}
     for side in ("right", "left"):
         pa, pb = POSES[a].get(side, (0, 0, 0, None)), POSES[b].get(side, (0, 0, 0, None))
-        ang = [lerp(x, y, k) for x, y in zip(pa[:3], pb[:3])]
+        ang = [x + ((y - x + 180) % 360 - 180) * k for x, y in zip(pa[:3], pb[:3])]   # the short way round
         hand = pb[3] if (k > 0.5 or pa[3] is None) and (k > 0.25 or pb[3] is None) else pa[3]
         if pb[3] is None and k > 0.75:
             hand = None
@@ -340,6 +340,17 @@ def shots():
                     mouth="oh" if on and t < ls + 1.2 else None, arms=arms, tilt=-4 if on else 3)
     add("stretch", 0.2, 0.3, bedroom, None, (1.3, 720, 930), (1.4, 730, 900), stretch, [("cloth", 0.5)])
 
+    # 2b. bathroom: brushing teeth
+    def brush(t, d, ls, le):
+        arms = moves(t, [(0, "rest"), (0.4, "bite")], {"right": P.toothbrush(foam=t > 0.9)})
+        r = list(arms["right"])
+        if t > 0.5:
+            r[2] += 10 * math.sin(t * 28)                    # scrub scrub
+        arms["right"] = tuple(r)
+        return dict(pos=stand(420), face="smug" if ls <= t <= le else "calm", arms=arms, tilt=3 * math.sin(t * 14) if t > .5 else 0,
+                    mouth="wide" if t > 0.5 and not (ls <= t <= le) else None)
+    add("brush", 1.0, 0.8, bathroom, None, (1.4, 480, 900), (1.5, 470, 880), brush, [("brush", 0.5)])
+
     # 3. kitchen: coffee
     props_mug = lambda t: {"right": P.mug(t * 0.7)}
 
@@ -549,6 +560,8 @@ def build():
                 put(ogg("impactSoft_heavy_001", .8), at)
             elif name == "cloth":
                 put(ogg("cloth3", .9), at)
+            elif name == "brush":
+                put(synth("brush", s["d"] - at) * .8, s["t0"] + at)
             elif name in ("sip", "whoosh", "sting", "chime"):
                 put(synth(name, .6 if name == "sip" else (.5 if name == "whoosh" else 1.0)), at)
             else:

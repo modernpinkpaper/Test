@@ -51,9 +51,10 @@ def phone(lit=True):
 
 
 def toothbrush(foam=False):
-    s = (f'<rect x="30" y="-175" width="360" height="42" rx="20" fill="#7ec8ff" stroke="{OUT}" stroke-width="{LW}"/>'
-         f'<rect x="300" y="-215" width="80" height="45" rx="10" fill="#ffffff" stroke="{OUT}" stroke-width="{LW}"/>')
+    """Toothbrush in the C grip, head at the far end (+x): at her mouth in the same pose as a donut bite."""
+    s = (f'<rect x="-60" y="-175" width="330" height="40" rx="20" fill="#7ec8ff" stroke="{OUT}" stroke-width="{LW}"/>'
+         f'<rect x="190" y="-212" width="85" height="42" rx="10" fill="#ffffff" stroke="{OUT}" stroke-width="{LW}"/>')
     if foam:
-        s += "".join(f'<circle cx="{x}" cy="-230" r="22" fill="#ffffff" stroke="#dfe8f0" stroke-width="4"/>'
-                     for x in (310, 340, 370))
+        s += "".join(f'<circle cx="{x}" cy="{y}" r="20" fill="#ffffff" stroke="#dfe8f0" stroke-width="4"/>'
+                     for x, y in ((200, -196), (262, -200), (232, -214)))
     return s, ""

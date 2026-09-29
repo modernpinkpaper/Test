@@ -8,6 +8,7 @@ CALLER = "af_nicole"
 LINES = [
     ("wake", "her", "[annoyed] Ugh. Seven AM. Who approved this?"),
     ("stretch", "her", "[calm] Okay. Stretch. Pretend you're a morning person."),
+    ("brush", "her", "[sassy] Brushing my teeth like the dentist is watching."),
     ("coffee", "her", "[sassy] Coffee first. Personality later."),
     ("donut", "her", "[sassy] Breakfast of champions. It's a donut. Don't judge me."),
     ("caller", CALLER, "[excited] Girl! Check your bank app. Payday hit!"),
