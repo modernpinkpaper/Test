@@ -1,5 +1,5 @@
-"""'The most honest job interview ever' - stylized stick-people skit (1080x1920, ~60 s). Original script
-(interview_lines.py) in the popular stick-figure job-interview format.
+"""'POV: Gen Z brings iced coffee to the job interview' - stylized stick-people skit (1080x1920, ~65 s), on the viral
+September 2026 iced-coffee-at-interviews debate (interview_lines.py, our own dialogue).
 
     python skits/interview.py out.mp4
 
@@ -108,6 +108,39 @@ def desk(ctx, t):
     ctx.paint()
 
 
+HOLD, SIP = (25, -115), (-10, -150)          # candidate's coffee arm: holding it up, cup at her mouth
+
+
+def iced_coffee(ctx, hands, i=1):
+    """A big clear cup: coffee, ice, dome lid, straw."""
+    x, y = hands[i]
+    top, bot = y - 105, y + 18
+    poly(ctx, [(x - 30, top), (x + 30, top), (x + 22, bot), (x - 22, bot)], fill="#eaf6ff", w=5)       # the cup
+    poly(ctx, [(x - 27, top + 22), (x + 27, top + 22), (x + 21, bot - 4), (x - 21, bot - 4)], fill="#b77a45", line=None)
+    poly(ctx, [(x - 27, top + 22), (x + 27, top + 22), (x + 25, top + 44), (x - 25, top + 44)], fill="#e9cfa9", line=None)
+    for dx, dy in ((-12, 55), (8, 70), (-4, 88)):                                                     # ice
+        rrect(ctx, x + dx - 9, top + dy - 9, 18, 18, 4, fill="#f4fbff", line="#cfe6f5", w=2)
+    ctx.move_to(x - 32, top)
+    ctx.curve_to(x - 28, top - 26, x + 28, top - 26, x + 32, top)
+    ctx.set_source_rgb(*rgb("#eaf6ff"))
+    ctx.fill_preserve()
+    ctx.set_source_rgb(0.1, 0.08, 0.1)
+    ctx.set_line_width(5)
+    ctx.stroke()
+    poly(ctx, [(x + 4, top - 18), (x + 16, top - 70)], line="#3fae6a", w=9, close=False)                  # straw
+    poly(ctx, [(x - 30, top + 60), (x - 22, bot - 10)], line=(1, 1, 1), w=4, close=False)               # shine
+
+
+def coffee_arm(plan, T):
+    """Hold the cup up; lift it to her mouth for the slurp and for 'keeping my coffee'."""
+    by = {p["key"]: p for p in plan}
+    k = 0.0
+    for a, b in ((by["a3"]["t1"] - .1, by["q3b"]["t0"] + .7), (by["a3b"]["t0"] + .9, by["a3b"]["t1"] + .2),
+                 (by["a8"]["t1"] - .2, by["q9"]["t0"] + .6)):
+        k = max(k, ease((T - a) / .3) * (1 - ease((T - b) / .3)))
+    return tuple(h + (s_ - h) * k for h, s_ in zip(HOLD, SIP))
+
+
 def build():
     t, plan = 0.6, []
     tracks = {BOSS: np.zeros(int(120 * SR), np.float32), GIRL: np.zeros(int(120 * SR), np.float32)}
@@ -121,8 +154,10 @@ def build():
         plan.append(dict(key=key, who=who, tone=tone, text=txt, t0=t, t1=t + dur,
                          words=list(zip(words, t + dur * 0.93 * np.r_[0, np.cumsum(lens)[:-1]] / lens.sum()))))
         gap = 0.2 if key.startswith("q") else 0.3
-        if key in ("a3", "a5", "a7"):
-            gap = 0.45                                                   # beat before the manager's comeback
+        if key in ("a5", "a7"):
+            gap = 0.45
+        if key == "a3":
+            gap = 1.0                                                    # room for the slurp                                                   # beat before the manager's comeback
         t += dur + gap
     total = t + 2.4
     n = int(total * SR)
@@ -140,6 +175,9 @@ def build():
         fx[i:i + len(x)] += x[:max(0, n - i)]
     add(ogg("cloth3", .8), 0.1)                                          # paper shuffle
     by = {p["key"]: p for p in plan}
+    add(synth("sip", .9) * 2.2, by["a3"]["t1"] + .15)                  # the slurp
+    add(synth("sip", .6) * 1.6, by["a3b"]["t0"] + 1.0)
+    add(synth("sip", .6) * 1.6, by["a8"]["t1"] + .05)
     add(synth("sting", .8), by["q3b"]["t0"] - .1)
     add(synth("sting", .8), by["a6"]["t0"] + .3)
     scratch = np.sin(2 * np.pi * (900 - 2400 * np.arange(int(.35 * SR)) / SR) * np.arange(int(.35 * SR)) / SR) * .12
@@ -194,6 +232,7 @@ def render(out):
             last = GEST[plan[i - 1]["key"]] if i else (REST, REST, "neutral")
             k = ease((t + .25) / .35)
             arms = {BOSS: blend_arms(last[0], ga, k), GIRL: blend_arms(last[1], gb, k)}
+            arms[GIRL] = (arms[GIRL][0], coffee_arm(plan, T))                 # her other hand never lets go
             for who, person, x in ((BOSS, boss, BX), (GIRL, girl, GX)):
                 speaking = p["who"] == who
                 face = TONE_FACE.get(p["tone"], "neutral") if speaking else listen
@@ -204,13 +243,17 @@ def render(out):
                 blink = (T + (0.9 if who == GIRL else 0)) % 3.6 < 0.1
                 look = (0.8, 0) if who == BOSS else (-0.8, 0)
                 bob = 3 * math.sin(T * 2.2 + (1 if who == GIRL else 0))
+                if who == BOSS and p["key"] in ("q1", "q3b", "q9"):
+                    look = (0.9, 0.6)                                    # staring at the coffee
                 person.draw(ctx, arms=arms[who], legs=((4, 0), (4, 0)), face=face, mouth=min(1, m * 0.9), look=look,
-                            tilt=(4 if who == BOSS else -4) * (1 if speaking else 0.3), bob=bob, blink=blink)
+                            tilt=(4 if who == BOSS else -4) * (1 if speaking else 0.3), bob=bob, blink=blink,
+                            hold=iced_coffee if who == GIRL else None)
             desk(ctx, T)
             ctx.identity_matrix()
             # title + captions
-            rrect(ctx, 130, 80, W - 260, 120, 34, fill=(1, 1, 1), w=6)
-            text(ctx, "the most HONEST job interview", W / 2, 140, 44, FONT, col="#e0457b")
+            rrect(ctx, 110, 70, W - 220, 145, 34, fill=(1, 1, 1), w=6)
+            text(ctx, "POV: Gen Z brings iced coffee", W / 2, 128, 42, FONT, col="#e0457b")
+            text(ctx, "to the job interview", W / 2, 178, 30, FONT2, col="#4b5563")
             said = [j for j, (_, st) in enumerate(p["words"]) if st <= T]
             if said and T <= p["t1"] + .3:
                 c0 = said[-1] // 3 * 3
@@ -223,8 +266,8 @@ def render(out):
             if T > plan[-1]["t1"] + .4:
                 kk = ease((T - plan[-1]["t1"] - .4) / .3)
                 rrect(ctx, 140, 1560, W - 280, 230, 40, fill="#e0457b", w=6)
-                text(ctx, "part 2: her first day?", W / 2, 1640, 54 * kk + 1, FONT, col=(1, 1, 1))
-                text(ctx, "follow so you don't miss it", W / 2, 1715, 36 * kk + 1, FONT2, col=(1, 1, 1))
+                text(ctx, "team coffee or team no coffee?", W / 2, 1640, 46 * kk + 1, FONT, col=(1, 1, 1))
+                text(ctx, "tell me in the comments", W / 2, 1715, 36 * kk + 1, FONT2, col=(1, 1, 1))
             surf.flush()
             enc.stdin.write(bytes(surf.get_data()))
         enc.stdin.close()
