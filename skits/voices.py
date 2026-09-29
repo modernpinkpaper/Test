@@ -24,10 +24,10 @@ SR = 24000
 TONES = {           # tone: (chatterbox exaggeration, cfg_weight, kokoro speed)
     "calm":     (0.45, 0.55, 0.95),
     "neutral":  (0.55, 0.50, 1.00),
-    "sassy":    (0.85, 0.35, 1.00),
+    "sassy":    (0.85, 0.35, 1.00),     # = the settings of her favourite test (my_voice_test)
     "annoyed":  (0.80, 0.40, 1.05),
-    "excited":  (1.00, 0.30, 1.12),
-    "shocked":  (1.10, 0.30, 1.10),
+    "excited":  (0.95, 0.32, 1.12),
+    "shocked":  (0.90, 0.30, 1.10),
     "whisper":  (0.40, 0.60, 0.90),
     "sheepish": (0.50, 0.50, 0.92),
     "fake":     (0.95, 0.35, 1.10),     # over-the-top fake cheerful
@@ -77,7 +77,7 @@ def say(who, line):
     ex, cfg, speed = TONES[tone]
     os.makedirs(CACHE, exist_ok=True)
     ref = ref_for(who)
-    tag = f"cb2|{who}|{tone}|{text}|{os.path.getsize(ref)}"
+    tag = f"cb3|{who}|{tone}|{ex}|{cfg}|{text}|{os.path.getsize(ref)}"
     path = os.path.join(CACHE, hashlib.md5(tag.encode()).hexdigest() + ".wav")
     if not os.path.exists(path):
         import torchaudio
@@ -96,24 +96,19 @@ def say(who, line):
 
 
 def clarity(a):
-    """Easier to understand on a phone: cut rumble, lift the 'presence' range (2-5 kHz) a little,
-    even out loud and quiet syllables (gentle compression), then level to about -14 LUFS (TikTok loudness)."""
+    """Keep the voice untouched (her favourite test had no processing): only remove rumble and level the whole
+    track to about -16 dBFS speech loudness, with a peak ceiling. No compression, EQ or limiter colour."""
     import scipy.signal as ss
-    b, c = ss.butter(2, 90 / (SR / 2), "high")
+    b, c = ss.butter(2, 60 / (SR / 2), "high")
     a = ss.filtfilt(b, c, a)
-    b, c = ss.butter(2, [2000 / (SR / 2), 5000 / (SR / 2)], "band")
-    a = a + 0.35 * ss.filtfilt(b, c, a)
-    env = np.sqrt(np.convolve(a ** 2, np.ones(480) / 480, "same")) + 1e-6       # 20 ms loudness
-    thr = np.percentile(env, 70)
-    gain = np.where(env > thr, (thr / env) ** 0.45, 1.0)                        # ~ 1.8:1 above the threshold
-    a = a * np.convolve(gain, np.ones(240) / 240, "same")
     speech = np.abs(a) > 0.02 * np.abs(a).max()
     rms = np.sqrt(np.mean(a[speech] ** 2)) if speech.any() else 1e-6
-    a = a * (10 ** (-14 / 20) / rms) * 0.95                                     # speech RMS ~ -14 dBFS
-    return np.tanh(a * 1.1).astype(np.float32) / np.tanh(1.1)                   # soft limiter, no clipping
+    a = a * (10 ** (-16 / 20) / rms)
+    peak = np.abs(a).max()
+    return (a * (0.97 / peak) if peak > 0.97 else a).astype(np.float32)
 
 
-def gate(a, floor_db=-28.0):
+def gate(a, floor_db=-20.0):
     """Quiet the gaps between words (where the voice model leaves faint noise) before anything boosts them."""
     env = np.sqrt(np.convolve(a ** 2, np.ones(720) / 720, "same"))                # 30 ms loudness
     thr = 0.06 * np.percentile(env, 98)
@@ -122,7 +117,7 @@ def gate(a, floor_db=-28.0):
     return (a * g).astype(np.float32)
 
 
-def room(a, amount=0.05):
+def room(a, amount=0.03):
     """A little room echo (a few soft early reflections, no noise), so lines don't sound studio-dry."""
     ir = np.zeros(int(0.09 * SR), np.float32)
     ir[0] = 1.0

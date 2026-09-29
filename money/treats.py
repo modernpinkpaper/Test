@@ -70,8 +70,8 @@ def build():
     tmp = tempfile.mkdtemp()
     for k, (key, line) in enumerate(lines):
         if key == "item9":
-            t += 1.3                                       # drum roll before #1
-        a = voices.room(voices.gate(voices.say("her", line)))
+            t += 1.0                                       # drum roll before #1
+        a = voices.say("her", line)                         # untouched, like her favourite test
         text = line.split("] ", 1)[-1]
         p = os.path.join(tmp, f"{k}.wav")
         sf.write(p, a, SR)
@@ -83,7 +83,7 @@ def build():
         voice[int(t * SR):int(t * SR) + len(a)] += a
         plan.append(dict(key=key, text=text, tone=line[1:line.index("]")], t0=t, t1=t + dur, cues=cues,
                          words=list(zip(words, starts))))
-        t += dur + (0.45 if key.startswith("item") else 0.35)
+        t += dur + 0.15
     total = t + 1.8
     voice = voices.clarity(voice[:int(total * SR)])
     fx = np.zeros_like(voice)
@@ -103,7 +103,7 @@ def build():
             ching[:200] += rng.normal(0, .3, 200) * np.exp(-np.arange(200) / 40)
             add(ching.astype(np.float32), count_end(p) + .02)
         if p["key"] == "item9":                                                                          # drum roll
-            n = 1.25
+            n = 0.95
             x = tt(n)
             hits = np.zeros(len(x), np.float32)
             k, rate = 0.0, 9.0
@@ -113,7 +113,7 @@ def build():
                 hits[i:i + m] += rng.normal(0, 1, m) * np.exp(-np.arange(m) / 250) * (.15 + .25 * k / n)
                 rate *= 1.06
                 k += 1 / rate
-            add(hits, p["t0"] - 1.3)
+            add(hits, p["t0"] - 1.0)
             boom = np.sin(2 * np.pi * 55 * tt(.9)) * np.exp(-tt(.9) / .3) * .5
             add(boom.astype(np.float32), p["t0"] + 1.6)
     mix = voice + fx
@@ -180,12 +180,12 @@ def leaderboard(im, t, plan):
             if rank == 1:                                   # the big secret: a blurred, shimmering bar
                 sh = int(40 + 30 * math.sin(t * 4))
                 d.rounded_rectangle((130, y + 44, 130 + 760, y + 70), 12, fill=(220 - sh // 3, 205, 170))
-            d.text((130, y + 22), txt, font=font(34), fill=MUTED, anchor="lm")
+            d.text((130, y + 22), txt, font=font(38), fill=MUTED, anchor="lm")
             continue
         k = ease((t - p["t0"]) / max(count_end(p) - p["t0"], .3))
         val = fv(monthly) * k
-        d.text((130, y + 20), label, font=font(32), fill=INK, anchor="lm")
-        d.text((W - 60, y + 20), f"${monthly}/mo", font=font(28, False), fill=(120, 112, 100), anchor="rm")
+        d.text((130, y + 18), label, font=font(38), fill=INK, anchor="lm")
+        d.text((W - 60, y + 18), f"${monthly}/mo", font=font(32, False), fill=(120, 112, 100), anchor="rm")
         bw = 760 * fv(monthly) / vmax * k
         col = GOLD if rank == 1 else (GREEN if rank <= 3 else (86, 160, 120))
         if bw > 4:
@@ -253,7 +253,7 @@ TONE_FACE = {"sassy": ("smug", "hip"), "annoyed": ("eye_roll", "shrug"), "excite
              "shocked": ("surprised", "hands_up"), "neutral": ("neutral", "rest")}
 
 
-CHIBI_KEYS = {"hook": 1, "setup": 1, "item9": 1, "outro": 1}
+CHIBI_KEYS = {"hook": 1, "setup": 1, "outro": 1}
 
 
 def running_total(im, t, plan):
