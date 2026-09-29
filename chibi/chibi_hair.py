@@ -548,7 +548,7 @@ def hair_edge(svg):
     return smooth([(x / k, y / k) for x, y in pts], True)
 
 
-def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
+def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True, pose=None):
     backing = "".join(f'<ellipse cx="{f(x)}" cy="{f(y)}" rx="9" ry="9" fill="{H2["colours"]["outline"]}"/>'
                       for x, y in from_new([(686, 684), (262, 684)]))   # dark behind the ear bottoms (no white specks)
     hb_under = ("".join(path(p, fill=HB["colours"]["outline"]) for p in HB["silhouette"])     # dark behind the head,
@@ -577,9 +577,10 @@ def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
     return (f'<clipPath id="clip_hair_edge"><path d="{edge}"/></clipPath><path d="{edge}" fill="{H2["colours"]["outline"]}"/>'
             + clip(hb_under + head_tf(face_fill)) + CB.neck() + no_neck
             + clip('<g clip-path="url(#clip_hair_not_neck)">' + hair + "</g>" + hair_body_lower() + head_tf(crown_clean()))
-            + (CB.body() if body else "")
+            + (CB.body(pose, arms=False) if body else "")
             + '<g id="face">' + head_tf(eye_skin + blush + CF.nose() + CF.mouth(mouth_shape) + E.eye("right", eyes, look)
-                                        + E.eye("left", eyes, look) + E.brow("right") + E.brow("left") + ears_cel()) + "</g>")
+                                        + E.eye("left", eyes, look) + E.brow("right") + E.brow("left") + ears_cel()) + "</g>"
+            + (CB.arms_front(pose) if body else ""))       # arms last: a raised hand goes in front of the face
 
 
 def compare_v2(out, new_ref):

@@ -208,30 +208,70 @@ def torso():
     return _clip("clip_torso", [band, top, below] + discs) + _clipped("clip_torso", part("torso"))
 
 
-def arm(side, shoulder=0.0, elbow=0.0, wrist=0.0):
-    """One arm as nested groups; angles in degrees (positive = clockwise on screen)."""
+JOINT_LINE = 3.5     # outline width around a bent joint's round knob
+
+
+def _ring(c, r):
+    return f'<circle cx="{c[0]:.2f}" cy="{c[1]:.2f}" r="{r:.2f}" fill="{OUTLINE}"/>'
+
+
+HAND_INSET = 4.0     # a swapped-in hand's wrist cut sits this far inside the end of the forearm (hidden joint)
+
+
+def swapped_hand(side, name, J, d_lower):
+    """A hand from the hands sheet at the wrist: scaled to her wrist, fingers along the forearm, flipped for the other
+    side when the sheet shows the opposite hand."""
+    import chibi_hands as CHd
+    h = CHd.H["hands"][name]
+    scale = 2 * (J["wrist_r"] - 3) / (h["wrist_width"] + 9)          # (the cut excludes ~4.5 px of skin at each side)
+    d = np.array(d_lower, float) / np.linalg.norm(d_lower)
+    at = np.array(J["wrist"]) - d * HAND_INSET
+    ang = np.degrees(np.arctan2(d[1], d[0]) - np.arctan2(-1, 0))
+    mirror = (h["which"] == "L") == (side == "right")
+    return (f'<g id="{side}_hand_{name}" transform="translate({at[0]:.2f},{at[1]:.2f}) rotate({ang:.2f}) '
+            f'scale({scale:.4f})">{CHd.hand(name, mirror)}</g>')
+
+
+def arm(side, shoulder=0.0, elbow=0.0, wrist=0.0, hand=None):
+    """One arm as nested groups; angles in degrees (positive = clockwise on screen). hand: None = her own relaxed
+    hand, or a hand from the hands sheet ("open", "flat", "point", "fist", "peace", "thumbs_up")."""
     J = arm_joints(side)
     drawing = part(f"{side}_arm")[:-4] + finger_lines(side) + "</g>"
     d_upper = np.subtract(J["elbow"], J["top"])
     d_lower = np.subtract(J["wrist"], J["elbow"])
     cid = f"clip_{side}"
-    clips = (_clip(cid + "_upper", [_halfplane(J["elbow"], d_upper, True), _disc(J["elbow"], J["elbow_r"])])
-             + _clip(cid + "_fore", [_halfplane(J["elbow"], d_upper, False, OVERLAP), _disc(J["elbow"], J["elbow_r"])])
-             + _clip(cid + "_fore2", [_halfplane(J["wrist"], d_lower, True), _disc(J["wrist"], J["wrist_r"])])
-             + _clip(cid + "_hand", [_halfplane(J["wrist"], d_lower, False, OVERLAP), _disc(J["wrist"], J["wrist_r"])])
+    # joints: each side's round end is skin of radius r - JOINT_LINE over a dark disc of radius r, so a bent joint
+    # shows a round knob with an outline; the dark disc is inside the arm's outline, so a straight arm hides it
+    re_, rw = J["elbow_r"] - JOINT_LINE, J["wrist_r"] - JOINT_LINE
+    wrist_end = ([_halfplane(J["wrist"], d_lower, True)] if hand else          # swapped hand: forearm ends at the wrist
+                 [_halfplane(J["wrist"], d_lower, True), _disc(J["wrist"], rw)])
+    clips = (_clip(cid + "_upper", [_halfplane(J["elbow"], d_upper, True), _disc(J["elbow"], re_)])
+             + _clip(cid + "_fore", [_halfplane(J["elbow"], d_upper, False, OVERLAP), _disc(J["elbow"], re_)])
+             + _clip(cid + "_fore2", wrist_end)
+             + _clip(cid + "_hand", [_halfplane(J["wrist"], d_lower, False, OVERLAP), _disc(J["wrist"], rw)])
              + _clip(cid + "_sleeve", [sleeve_region(side)]))
     # (hard cuts: a soft cut through the stacked layers of a drawing leaves a faint seam line)
-    hand = f'<g id="{side}_hand"{_rot(wrist, J["wrist"])}>{_clipped(cid + "_hand", drawing)}</g>'
-    fore = (f'<g id="{side}_forearm"{_rot(elbow, J["elbow"])}>{hand}'
-            + _clipped(cid + "_fore", _clipped(cid + "_fore2", drawing)) + "</g>")
+    forearm = _clipped(cid + "_fore", _clipped(cid + "_fore2", drawing))
+    if hand:        # the sheet hand goes over the end of the forearm (its open wrist cut hides inside the forearm)
+        hand_g = f'<g id="{side}_hand"{_rot(wrist, J["wrist"])}>{swapped_hand(side, hand, J, d_lower)}</g>'
+        fore = f'<g id="{side}_forearm"{_rot(elbow, J["elbow"])}>{forearm}{hand_g}</g>'
+    else:
+        hand_g = f'<g id="{side}_hand"{_rot(wrist, J["wrist"])}>{_clipped(cid + "_hand", drawing)}</g>'
+        ring = _ring(J["wrist"], J["wrist_r"])
+        fore = f'<g id="{side}_forearm"{_rot(elbow, J["elbow"])}>{ring}{hand_g}{forearm}</g>'
     upper = _clipped(cid + "_upper", drawing)
     sleeve = _clipped(cid + "_sleeve", part("torso"))
-    return clips + f'<g id="{side}_arm"{_rot(shoulder, J["shoulder"])}>{fore}{upper}{sleeve}</g>'
+    return clips + (f'<g id="{side}_arm"{_rot(shoulder, J["shoulder"])}>{_ring(J["elbow"], J["elbow_r"])}'
+                    f'{fore}{upper}{sleeve}</g>')
 
 
-def body(pose=None):
-    """Everything below the neck, back to front. pose: {"right": (shoulder, elbow, wrist), "left": (...)} degrees."""
-    pose = pose or {}
-    parts = (part("right_shoe") + part("left_shoe") + jeans() + torso()
-             + arm("right", *pose.get("right", ())) + arm("left", *pose.get("left", ())))
+def body(pose=None, arms=True):
+    """Everything below the neck, back to front. pose: {"right": (shoulder, elbow, wrist[, hand]), "left": (...)}
+    in degrees. arms=False leaves the arms out (they are then drawn last, over the face, with arms_front)."""
+    parts = part("right_shoe") + part("left_shoe") + jeans() + torso() + (arms_front(pose) if arms else "")
     return '<g id="body">' + parts + "</g>"
+
+
+def arms_front(pose=None):
+    pose = pose or {}
+    return arm("right", *pose.get("right", ())) + arm("left", *pose.get("left", ()))
