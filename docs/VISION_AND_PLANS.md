@@ -249,3 +249,26 @@ the box, so a prompt may be captured partially, not always the final full wordin
 - Setup check: all team PCs run Google Drive for desktop. Confirm whether each is signed into Dalia's
   own Google account (logs reach her, but employees could open her whole Drive) vs a shared folder /
   dedicated logging account (safer). This decides where logs land.
+
+## Confirmed features to build (Dalia, 2026-09-29)
+1. Decision Capture toggle — CONFIRMED (ads decision reverse-engineering; see Project 2).
+2. Weekly zip — CONFIRMED. After each finished WEEK, per PC, zip that PC's date folders into one
+   weekly .zip (e.g. DALIAOFFICEPC_2026-W40.zip), then DELETE the raw .jsonl. Only touches closed
+   days already synced (never the day in progress). Dalia never browses single files; she sends the
+   batch to AI. Purpose is tidiness (space is fine on paid Drive). Analysis unzips to read.
+3. Higher detail default — Dalia is fine on space; capture richer per-event context during the
+   data-gathering phase so patterns are richer.
+
+## "Record Task" capture mode -> super-detailed SOPs (Dalia wants: "teach a newborn baby")
+One tray toggle mechanism, shared with Decision Capture:
+- Start Recording -> ask for a short LABEL (e.g. "Create RA file for a KS order") and purpose
+  (SOP or decision). Tag every event in the window with that label + capture_mode.
+- Capture EVERY step in high fidelity: each click (control name + path), each finished field, each
+  menu/tab, each page/URL, files opened/saved, in order.
+- Stop -> AI reads only the tagged stretch and writes a step-by-step SOP with the real SKUs/paths used.
+
+OPEN DECISION (reverses the original no-screenshot rule):
+- (a) Text-only SOP: keeps no-screenshot rule; detailed word steps from the click/field trail.
+- (b) Optional screenshots ONLY while an SOP recording is on (off the rest of the time): makes
+  picture-perfect SOPs but means the tool can screen-capture during those deliberate recordings.
+Dalia to choose (a) or (b). Claude's suggestion: (b) strictly scoped to SOP recordings only.
