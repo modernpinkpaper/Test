@@ -109,8 +109,59 @@ EYE_MEASURED = {
 }
 
 
+def _taper(pts, wmax, colour, n=24, power=0.6):
+    """A stroke that is widest in the middle and ends in fine points."""
+    P = np.array(pts, float)
+    seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
+    t = np.linspace(0, seg[-1], n)
+    Q = np.stack([np.interp(t, seg, P[:, 0]), np.interp(t, seg, P[:, 1])], 1)
+    w = wmax * np.sin(np.linspace(0, np.pi, n)) ** power
+    d = np.gradient(Q, axis=0)
+    nrm = np.stack([-d[:, 1], d[:, 0]], 1) / (np.linalg.norm(d, axis=1, keepdims=True) + 1e-9)
+    ring = np.vstack([Q + nrm * w[:, None] / 2, (Q - nrm * w[:, None] / 2)[::-1]])
+    return f'<path d="{smooth([tuple(p) for p in ring], True)}" fill="{colour}"/>'
+
+
+def closed_eye(side, cx, cy, r, happy=False):
+    """Closed eye as in her expressions sheet: a thick lash line (a U for calm, an arch for happy) whose outer end
+    flicks up into two lashes."""
+    o = 1 if side == "left" else -1                    # outer side of this eye (her left eye's outer side is +x)
+    bend = -0.42 if happy else 0.30                    # arch (happy) or a downward curve (calm)
+    base = cy + (r * 0.18 if happy else 0.0)
+    xs = np.linspace(-1.02, 1.02, 9)
+    line = [(cx + x * r, base + bend * r * (1 - x * x)) for x in xs]
+    line = line if o > 0 else line[::-1]               # run from the inner end to the outer end
+    ex, ey = line[-1]
+    g = _taper(line + [(ex + o * 6, ey - 4)], 6.2, C["liner"], power=0.35)
+    for dx, dy, w in ((o * 13, -9, 3.6), (o * 12, -1, 3.2)):   # two lashes flicking out at the outer end
+        g += _taper([(ex - o * 3, ey + 1), (ex + dx * .55, ey + dy * .6), (ex + dx, ey + dy)], w, C["liner"])
+    return g
+
+
+LID_SKIN = "#fecdab"      # her face skin (chibi_face.C["skin"])
+
+
+def half_lid(side, cx, cy, r):
+    """Half-closed (smug / unimpressed) lid: skin down to a flat lid line across the top of the eye, with the lash
+    line along it and a small wing at the outer end."""
+    o = 1 if side == "left" else -1
+    y = cy - r * 0.12
+    skin = LID_SKIN
+    cover = (f'<clipPath id="lid_{side}"><circle cx="{f(cx)}" cy="{f(cy)}" r="{f(r + 1)}"/></clipPath>'
+             f'<rect x="{f(cx - r - 6)}" y="{f(cy - r - 12)}" width="{f(2 * r + 12)}" height="{f(y - (cy - r - 12))}" '
+             f'fill="{skin}" clip-path="url(#lid_{side})"/>')
+    w = math.sqrt(max(r * r - (y - cy) ** 2, 0))
+    line = [(cx - o * (w + 2), y + 3), (cx - o * w * .4, y + 0.5), (cx + o * w * .4, y + 0.5), (cx + o * (w + 3), y + 2),
+            (cx + o * (w + 12), y - 6)]
+    ex, ey = line[-2]
+    lashes = "".join(_taper([(ex - o * 3, ey), (ex + o * dx * .55, ey + dy * .6), (ex + o * dx, ey + dy)], w, C["liner"])
+                     for dx, dy, w in ((13, -10, 3.6), (14, -2, 3.2)))
+    return cover + _taper(line, 6.0, C["liner"], power=0.3) + lashes
+
+
 def eye(side, state="open", look=(0.0, 0.0)):
-    """state: open | closed.  look: (-1..1, -1..1) moves both irises together (left/right, up/down)."""
+    """state: open | half | closed | happy.  look: (-1..1, -1..1) moves both irises together (left/right, up/down);
+    look y down to about -4 rolls the eyes up."""
     (ocx, ocy, orr), _, liner_pts = master_eye(side)
     m = EYE_MEASURED[side]
     (cx, cy, r), (ix, iy, irx, iry) = m["globe"], m["iris"]
@@ -121,14 +172,8 @@ def eye(side, state="open", look=(0.0, 0.0)):
     liner_pts = [(cx + (x - ocx) * k * lk + ldx, cy + (y - ocy) * k * lk + ldy) for x, y in liner_pts]
     ix, iy = ix + look[0] * MAX_LOOK[0], iy + look[1] * MAX_LOOK[1]
     gid = f"{side}_eye"
-    if state == "closed":
-        o = -1 if side == "right" else 1
-        pts = [(cx - r * 1.05, cy + 2), (cx - r * .5, cy + r * .28), (cx, cy + r * .36), (cx + r * .5, cy + r * .28),
-               (cx + r * 1.05, cy + 2)]
-        tail = (cx + o * (r + 9), cy - 6)
-        pts = pts + [tail] if o > 0 else [tail] + pts
-        return (f'<g id="{gid}"><path d="{smooth(pts, False)}" fill="none" stroke="{C["liner"]}" stroke-width="5" '
-                f'stroke-linecap="round" stroke-linejoin="round"/></g>')
+    if state in ("closed", "happy"):
+        return f'<g id="{gid}">{closed_eye(side, cx, cy, r, happy=state == "happy")}</g>'
     clip = f'<clipPath id="clip_{gid}"><circle cx="{f(cx)}" cy="{f(cy)}" r="{f(r)}"/></clipPath>'
     white = f'<circle cx="{f(cx)}" cy="{f(cy)}" r="{f(r)}" fill="{C["white"]}"/>'
     star_c = (ix + STAR_OFFSET[0], iy + STAR_OFFSET[1])
@@ -155,15 +200,22 @@ def eye(side, state="open", look=(0.0, 0.0)):
     a0, a1 = math.radians(200), math.radians(335)
     top_arc = (f'<path d="M{f(cx + r * math.cos(a0))},{f(cy + r * math.sin(a0))} A{f(r)},{f(r)} 0 0,1 '
                f'{f(cx + r * math.cos(a1))},{f(cy + r * math.sin(a1))}" fill="none" stroke="{C["liner"]}" stroke-width="3"/>')
+    if state == "half":         # the lid (with its own lash line) replaces the upper lash line
+        return f'<g id="{gid}">{clip}{iris_clip}{white}{iris}{half_lid(side, cx, cy, r)}</g>'
     return (f'<g id="{gid}">{clip}{iris_clip}{top_clip}{white}{iris}'
             f'<g clip-path="url(#tclip_{gid})">{top_arc}{liner}</g></g>')
 
 
-def brow(side, lift=0.0):
-    """Both brows use the traced shape of her left brow (viewer's right); the other side is its mirror."""
+def brow(side, lift=0.0, angle=0.0):
+    """Both brows use the traced shape of her left brow (viewer's right); the other side is its mirror.
+    lift: up (+) / down; angle: degrees the inner end goes down (+, angry) or up (-, sad / worried)."""
     src = M["left_brow"]
     pts = src if side == "left" else [(2 * FACE_MID_X - x, y) for x, y in src[::-1]]
-    pts = [(x, y - lift) for x, y in pts]
+    P = np.array(pts, float)
+    c = P.mean(0)
+    a = math.radians(angle) * (1 if side == "right" else -1)     # her right brow's inner end is at +x
+    R = np.array([[math.cos(a), -math.sin(a)], [math.sin(a), math.cos(a)]])
+    pts = [(x, y - lift) for x, y in (P - c) @ R.T + c]
     return f'<g id="{side}_eyebrow"><path d="{smooth(pts, True, corners=sharp_points(pts, 70))}" fill="{C["brow"]}" stroke="{C["brow"]}" stroke-width="1.6" stroke-linejoin="round"/></g>'
 
 

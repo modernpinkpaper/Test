@@ -93,8 +93,12 @@ def mouth(shape="smile", open_amount=None):
     """Clean shapes sized from the traced mouths:
     smile = a thick curved line; open / wide = a "D" (flat top, round bottom); oh = an oval.
     Each open mouth: red rim, darker back of the mouth at the top, pink tongue sitting on the bottom."""
-    x0, x1, y0, y1 = mouth_box(shape)
+    x0, x1, y0, y1 = mouth_box("smile" if shape == "frown" else shape)
     cx = (x0 + x1) / 2
+    if shape == "frown":        # small downturned mouth (pouty / annoyed), as in her pose sheet
+        w, sag = (x1 - x0) * .42, 5.0
+        return (f'<g id="mouth"><path d="M{f(cx - w)},{f(y0 + 9)} Q{f(cx)},{f(y0 + 9 - 2 * sag)} {f(cx + w)},{f(y0 + 9)}" '
+                f'fill="none" stroke="{C["mouth_dark"]}" stroke-width="3.6" stroke-linecap="round"/></g>')
     if shape == "smile":
         # a true circular arc through both corners and the lowest point, drawn as a thick round-capped line
         (ax, ay), (bx, by), (mx, my) = (x0 + 3, y0 + 3), (x1 - 3, y0 + 3), (cx, y1 - 2.4)

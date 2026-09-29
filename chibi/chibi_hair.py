@@ -553,8 +553,12 @@ H2_SIL_BOTTOM = 655             # below here, between these x, the head picture'
 H2_SIL_CUT_X = (55, 330)        # (it holds the outline around the hand-hip gaps: a loop when an arm lifts)
 
 
-def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True, pose=None, tilt=0.0):
-    """The whole character. pose: arm angles (chibi_body.body); tilt: head tilt in degrees (+ = clockwise)."""
+def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True, pose=None, tilt=0.0, brows=(0.0, 0.0)):
+    """The whole character. pose: arm angles (chibi_body.body); tilt: head tilt in degrees (+ = clockwise).
+    eyes: one state for both eyes or (her right, her left), e.g. ("happy", "open") = a wink;
+    brows: (lift, angle) for both or ((lift, angle), (lift, angle)) per brow (see chibi_eyes.brow)."""
+    eye_r, eye_l = (eyes, eyes) if isinstance(eyes, str) else eyes
+    brow_r, brow_l = (brows, brows) if not isinstance(brows[0], (tuple, list)) else brows
     backing = "".join(f'<ellipse cx="{f(x)}" cy="{f(y)}" rx="9" ry="9" fill="{H2["colours"]["outline"]}"/>'
                       for x, y in from_new([(686, 684), (262, 684)]))   # dark behind the ear bottoms (no white specks)
     hb_under = ("".join(path(p, fill=HB["colours"]["outline"]) for p in HB["silhouette"])     # dark behind the head,
@@ -591,8 +595,9 @@ def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True, pose=N
             + rot(no_neck + clip('<g clip-path="url(#clip_hair_not_neck)">' + hair + "</g>" + hair_body_lower()
                                  + head_tf(crown_clean())))
             + (CB.body(pose, arms=False) if body else "")
-            + rot('<g id="face">' + head_tf(eye_skin + blush + CF.nose() + CF.mouth(mouth_shape) + E.eye("right", eyes, look)
-                                            + E.eye("left", eyes, look) + E.brow("right") + E.brow("left") + ears_cel()) + "</g>")
+            + rot('<g id="face">' + head_tf(eye_skin + blush + CF.nose() + CF.mouth(mouth_shape) + E.eye("right", eye_r, look)
+                                            + E.eye("left", eye_l, look) + E.brow("right", *brow_r) + E.brow("left", *brow_l)
+                                            + ears_cel()) + "</g>")
             + (CB.arms_front(pose) if body else ""))       # arms last: a raised hand goes in front of the face
 
 
