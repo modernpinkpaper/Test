@@ -6,7 +6,14 @@ from treats_lines import LINES
 from faster_whisper import WhisperModel
 import soundfile as sf
 m = WhisperModel("small", device="cpu", compute_type="int8")
-norm = lambda s: re.sub(r"[^a-z ]", "", s.lower().replace("-", " "))
+from num2words import num2words
+
+
+def norm(s):
+    """Lower-case words only; digits spelled out (Whisper writes 183,000 where the script says the words)."""
+    s = re.sub(r"(\d),(\d)", r"\1\2", s.replace("$", ""))
+    s = re.sub(r"\d+", lambda m: " " + num2words(int(m.group())) + " ", s)
+    return re.sub(r"[^a-z ]", " ", s.lower().replace("-", " ").replace(" and ", " "))
 for attempt in range(3):
     bad = []
     for line in LINES:
