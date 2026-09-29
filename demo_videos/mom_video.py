@@ -2,7 +2,7 @@
 
 Framed from the knees up. She walks in, then talks with gestures (wave, shrug, hand on hip,
 arms out, hands to heart, point up). Mouth follows the voice, she blinks, hair swings.
-Voice: Chatterbox copying voices/narrator-ref.wav (see truth_bomb.voice).
+Voice: Chatterbox copying voices/my-voice-ref.wav (see truth_bomb.voice).
 
     python demo_videos/mom_video.py
 """

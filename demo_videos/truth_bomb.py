@@ -3,7 +3,7 @@
 The girl is six cut-out poses (girl_sprites/). Code makes her move: pose pops with
 squash and stretch, a talking bounce that follows the voice, a walk-in, screen
 shake, zoom punches, hearts and sparkles, props, and word-by-word captions.
-Voice: Chatterbox copying voices/narrator-ref.wav (emotion 0.6). No GPU needed.
+Voice: Chatterbox copying voices/my-voice-ref.wav (emotion 0.6). No GPU needed.
 
 Setup (once):
     pip install pillow numpy imageio imageio-ffmpeg soundfile num2words chatterbox-tts "setuptools<81"
@@ -25,7 +25,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 W, H, FPS, SR = 1080, 1920, 30, 24000
-VOICE_REF = os.path.join(HERE, "voices", "narrator-ref.wav")
+VOICE_REF = os.path.join(HERE, "voices", "my-voice-ref.wav")
 EMOTION, VOICE_SPEED = 0.6, 1.12
 GAP = 0.18
 CACHE = os.path.join(HERE, "_voice_cache")

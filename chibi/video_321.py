@@ -4,7 +4,7 @@ expression and a gesture per line, word-by-word captions and animated graphics (
     python chibi/video_321.py out.mp4
 
 Needs: ffmpeg; chatterbox-tts (voice clone, CPU is fine); Rhubarb Lip Sync (RHUBARB env var or on PATH);
-the voice sample demo_videos/voices/narrator-ref.wav (private, not in the repo); a Poppins TTF (FONT_DIR);
+the voice sample demo_videos/voices/my-voice-ref.wav (private, not in the repo); a Poppins TTF (FONT_DIR);
 Twemoji SVGs (downloaded once into chibi/.cache; Twemoji by Twitter, CC-BY 4.0).
 """
 import hashlib
@@ -29,7 +29,7 @@ import chibi_hair as CH
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(HERE, ".cache")
-VOICE_REF = os.path.join(HERE, "..", "demo_videos", "voices", "narrator-ref.wav")
+VOICE_REF = os.path.join(HERE, "..", "demo_videos", "voices", "my-voice-ref.wav")
 FONT_DIR = os.environ.get("FONT_DIR", CACHE)
 RHUBARB = os.environ.get("RHUBARB", shutil.which("rhubarb") or "rhubarb")
 W, H, FPS, SR = 1080, 1920, 24, 24000

@@ -1,7 +1,7 @@
 """"Sammy invests $100 at 18" - a short money story video.
 
 Characters and props are vector animations built with python-lottie.
-Voiceover: Chatterbox (free, open source) copies the voice in voices/narrator-ref.wav
+Voiceover: Chatterbox (free, open source) copies the voice in voices/my-voice-ref.wav
 (falls back to Kokoro if that file is missing). Text and captions: Pillow.
 No GPU and no AI image/video models. Each scene is also saved as a
 Lottie .json file you can open in any Lottie player.
@@ -34,7 +34,7 @@ OUT_DIR = os.path.join(HERE, "sammy_lottie")
 W, H, FPS = 1080, 1920, 30
 SR = 24000
 SPEED = 1.4  # animation speed (1.0 = calm, 1.4 = energetic)
-VOICE_REF = os.path.join(HERE, "voices", "narrator-ref.wav")  # 10-20 s of the voice to copy (used with permission)
+VOICE_REF = os.path.join(HERE, "voices", "my-voice-ref.wav")  # 10-20 s of the voice to copy (used with permission)
 EMOTION = 0.6  # Chatterbox exaggeration: 0.5 = normal, higher = more expressive
 VOICE_SPEED = 1.15  # speeds the voice up without changing its pitch
 GAP = 0.12  # pause between sentences (seconds)

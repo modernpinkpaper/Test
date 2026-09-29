@@ -3,7 +3,7 @@ professionally ("can you put that in an email and copy HR?") and the boss is lef
 
     python skits/stick_office.py out.mp4
 
-Voices: employee = Chatterbox clone of her own voice sample (demo_videos/voices/narrator-ref.wav, private);
+Voices: employee = Chatterbox clone of her own voice sample (demo_videos/voices/my-voice-ref.wav, private);
 boss = Piper "ryan" (MIT-licensed voice; downloaded into chibi/.cache/piper).
 Everything is drawn with wobbly hand-drawn lines (they "boil": redrawn slightly differently every 3 frames).
 """
