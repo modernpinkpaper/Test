@@ -133,5 +133,16 @@
   },
   "deduplication": {
     "window_seconds": 10
+  },
+  "archive": {
+    "weekly_zip": true,
+    "delete_raw_after_zip": true
+  },
+  "capture": {
+    "sop_screenshots": true,
+    "screenshot_quality": 70,
+    "screenshot_max_width": 1600,
+    "screenshot_active_window_only": true,
+    "screenshot_min_gap_ms": 400
   }
 }

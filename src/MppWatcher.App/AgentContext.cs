@@ -22,6 +22,8 @@ internal sealed class AgentContext : ApplicationContext
     private readonly EventWaitHandle _exportSignal;
     private readonly EventWaitHandle _exportDone;
     private readonly RegisteredWaitHandle _exportWait;
+    private readonly EventWaitHandle _captureSignal;
+    private readonly RegisteredWaitHandle _captureWait;
     private readonly SynchronizationContext _ui;
     private int _stopping;
 
@@ -48,6 +50,32 @@ internal sealed class AgentContext : ApplicationContext
         _exportSignal = new EventWaitHandle(false, EventResetMode.AutoReset, Program.ExportNowEventName);
         _exportDone = new EventWaitHandle(false, EventResetMode.AutoReset, Program.ExportDoneEventName);
         _exportWait = ThreadPool.RegisterWaitForSingleObject(_exportSignal, (_, _) => ExportOnRequest(), null, Timeout.Infinite, executeOnlyOnce: false);
+
+        // "MTLog.exe --capture-*": read the command file and apply on the UI thread.
+        _captureSignal = new EventWaitHandle(false, EventResetMode.AutoReset, Program.CaptureEventName);
+        _captureWait = ThreadPool.RegisterWaitForSingleObject(_captureSignal, (_, _) => _ui.Post(_ => ApplyCaptureCommand(), null), null, Timeout.Infinite, executeOnlyOnce: false);
+    }
+
+    private void ApplyCaptureCommand()
+    {
+        try
+        {
+            var file = Path.Combine(_runtime.Paths.DataFolder, "capture-command.json");
+            if (!File.Exists(file)) return;
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(file));
+            var action = doc.RootElement.TryGetProperty("action", out var a) ? a.GetString() : null;
+            var label = doc.RootElement.TryGetProperty("label", out var l) ? l.GetString() : null;
+            switch (action)
+            {
+                case "start-sop": _runtime.StartCapture(MppWatcher.Core.Capture.CaptureMode.Sop, label ?? "SOP"); break;
+                case "start-decision": _runtime.StartCapture(MppWatcher.Core.Capture.CaptureMode.Decision, label ?? "Decision"); break;
+                case "stop": _runtime.StopCapture(); break;
+                case "pause": _runtime.PauseCapture(); break;
+                case "resume": _runtime.ResumeCapture(); break;
+            }
+            RefreshRecordMenu();
+        }
+        catch (Exception e) { _log.Error("capture", "Could not apply capture command", e); }
     }
 
     private void ExportOnRequest()
@@ -82,6 +110,8 @@ internal sealed class AgentContext : ApplicationContext
         };
         menu.Items.Add(exportItem);
         menu.Items.Add(new ToolStripSeparator());
+        BuildRecordMenu(menu);
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Open data folder", null, (_, _) => OpenFolder(_runtime.Paths.DataFolder));
         menu.Items.Add("Open diagnostic logs", null, (_, _) => OpenFolder(_runtime.Paths.LogFolder));
         menu.Items.Add("Open export folder", null, (_, _) =>
@@ -110,6 +140,75 @@ internal sealed class AgentContext : ApplicationContext
         };
         tray.DoubleClick += (_, _) => StartSelf("--viewer");
         return tray;
+    }
+
+    private ToolStripMenuItem? _recordItem, _pauseItem, _stopItem;
+
+    /// <summary>Tray items to record a task for an SOP or an ads decision, with pause and stop.</summary>
+    private void BuildRecordMenu(ContextMenuStrip menu)
+    {
+        _recordItem = new ToolStripMenuItem("Record a task…");
+        _recordItem.DropDownItems.Add("For an SOP (with screenshots)", null, (_, _) => StartRecording(MppWatcher.Core.Capture.CaptureMode.Sop));
+        _recordItem.DropDownItems.Add("For an ads decision", null, (_, _) => StartRecording(MppWatcher.Core.Capture.CaptureMode.Decision));
+        menu.Items.Add(_recordItem);
+
+        _pauseItem = new ToolStripMenuItem("Pause recording", null, (_, _) => TogglePause()) { Visible = false };
+        menu.Items.Add(_pauseItem);
+        _stopItem = new ToolStripMenuItem("Stop recording", null, (_, _) => StopRecording()) { Visible = false };
+        menu.Items.Add(_stopItem);
+        RefreshRecordMenu();
+    }
+
+    private void StartRecording(MppWatcher.Core.Capture.CaptureMode mode)
+    {
+        var what = mode == MppWatcher.Core.Capture.CaptureMode.Sop ? "SOP" : "ads decision";
+        var label = Prompt($"Name this {what} recording (e.g. \"Create RA file for a KS order\"):", "MT Log — Record a task");
+        if (label is null) return; // cancelled
+        _runtime.StartCapture(mode, label);
+        RefreshRecordMenu();
+    }
+
+    private void TogglePause()
+    {
+        var s = _runtime.Capture.Current;
+        if (!s.Active) return;
+        if (s.Paused) _runtime.ResumeCapture(); else _runtime.PauseCapture();
+        RefreshRecordMenu();
+    }
+
+    private void StopRecording()
+    {
+        _runtime.StopCapture();
+        RefreshRecordMenu();
+    }
+
+    private void RefreshRecordMenu()
+    {
+        var s = _runtime.Capture.Current;
+        if (_recordItem is not null) _recordItem.Visible = !s.Active;
+        if (_pauseItem is not null)
+        {
+            _pauseItem.Visible = s.Active;
+            _pauseItem.Text = s.Paused ? $"Resume recording: {s.Label}" : $"Pause recording: {s.Label}";
+        }
+        if (_stopItem is not null)
+        {
+            _stopItem.Visible = s.Active;
+            _stopItem.Text = $"Stop recording: {s.Label}";
+        }
+    }
+
+    /// <summary>A small one-line text prompt (WinForms has no built-in InputBox). Returns null if cancelled.</summary>
+    private static string? Prompt(string message, string title)
+    {
+        using var form = new Form { Text = title, FormBorderStyle = FormBorderStyle.FixedDialog, StartPosition = FormStartPosition.CenterScreen, Width = 460, Height = 170, MinimizeBox = false, MaximizeBox = false, TopMost = true };
+        var lbl = new Label { Left = 12, Top = 12, Width = 430, Height = 40, Text = message };
+        var box = new TextBox { Left = 12, Top = 58, Width = 430 };
+        var ok = new Button { Text = "Start", Left = 286, Top = 92, Width = 75, DialogResult = DialogResult.OK };
+        var cancel = new Button { Text = "Cancel", Left = 367, Top = 92, Width = 75, DialogResult = DialogResult.Cancel };
+        form.Controls.Add(lbl); form.Controls.Add(box); form.Controls.Add(ok); form.Controls.Add(cancel);
+        form.AcceptButton = ok; form.CancelButton = cancel;
+        return form.ShowDialog() == DialogResult.OK && box.Text.Trim().Length > 0 ? box.Text.Trim() : null;
     }
 
     private void ShowStatus()
@@ -194,6 +293,8 @@ internal sealed class AgentContext : ApplicationContext
             _exportWait.Unregister(null);
             _exportSignal.Dispose();
             _exportDone.Dispose();
+            _captureWait.Unregister(null);
+            _captureSignal.Dispose();
             StopRuntime("watcher_stopped");
             if (_tray is not null)
             {

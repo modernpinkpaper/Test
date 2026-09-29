@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using MppWatcher.Core.Configuration;
 using MppWatcher.Core.Diagnostics;
+using MppWatcher.Core.Runtime;
 
 namespace MppWatcher.App;
 
@@ -15,6 +16,9 @@ internal static class Program
     /// <summary>Signalled by "MTLog.exe --export-now"; the agent signals <see cref="ExportDoneEventName"/> when finished.</summary>
     public const string ExportNowEventName = @"Local\MTLog.ExportNow";
     public const string ExportDoneEventName = @"Local\MTLog.ExportDone";
+
+    /// <summary>Signalled by "MTLog.exe --capture-*"; the agent reads capture-command.json in the data folder.</summary>
+    public const string CaptureEventName = @"Local\MTLog.Capture";
 
     [STAThread]
     private static int Main(string[] args)
@@ -34,6 +38,8 @@ internal static class Program
                 return RequestStop();
             case RunMode.ExportNow:
                 return RequestExportNow();
+            case RunMode.Capture:
+                return RequestCapture(cmd);
         }
 
         var configPath = cmd.ConfigPath ?? WatcherPaths.DefaultConfigPath;
@@ -131,6 +137,25 @@ internal static class Program
         }
         WriteConsole("MT Log did not finish the export within 2 minutes.");
         return 2;
+    }
+
+    /// <summary>Writes the capture command to the data folder and signals the running agent. 0 = delivered, 1 = not running.</summary>
+    private static int RequestCapture(CommandLine cmd)
+    {
+        using var provider = new ConfigProvider(cmd.ConfigPath ?? WatcherPaths.DefaultConfigPath, NullDiagnosticLog.Instance);
+        var paths = RuntimePaths.From(provider.Current, cmd.DataFolder);
+        Directory.CreateDirectory(paths.DataFolder);
+        var file = Path.Combine(paths.DataFolder, "capture-command.json");
+        var json = System.Text.Json.JsonSerializer.Serialize(new { action = cmd.CaptureAction, label = cmd.CaptureLabel });
+        File.WriteAllText(file, json);
+        if (!EventWaitHandle.TryOpenExisting(CaptureEventName, out var ev))
+        {
+            WriteConsole("MT Log is not running in this session.");
+            return 1;
+        }
+        using (ev) ev.Set();
+        WriteConsole("Capture command sent: " + cmd.CaptureAction);
+        return 0;
     }
 
     private static void InstallCrashHandlers(IDiagnosticLog log)

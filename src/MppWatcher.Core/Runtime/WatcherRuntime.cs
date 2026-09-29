@@ -75,7 +75,7 @@ public sealed class WatcherRuntime : IAsyncDisposable
 
         var context = new CollectorContext(_pipeline, _config, _log, _clock);
         _host = new CollectorHost(context);
-        var services = new RuntimeServices(Identity, Paths, _config, _log, _clock, Activity);
+        var services = new RuntimeServices(Identity, Paths, _config, _log, _clock, Activity, Capture);
         foreach (var c in _collectorFactory(services)) _host.Add(c);
 
         EmitStarted(imported, extraStartInfo);
@@ -355,4 +355,4 @@ public sealed class WatcherRuntime : IAsyncDisposable
 
 /// <summary>What a collector factory may use when constructing collectors.</summary>
 public sealed record RuntimeServices(WatcherIdentity Identity, RuntimePaths Paths, ConfigProvider Config, IDiagnosticLog Log, IClock Clock,
-    Activity.ActivityContext Activity);
+    Activity.ActivityContext Activity, Capture.CaptureController Capture);

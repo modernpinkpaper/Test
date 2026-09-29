@@ -40,14 +40,16 @@ public sealed class UiAutomationCollector : ICollector
     private string? _trackedWindowClass;
     private IntPtr _trackedWindow;
     private (MppWatcher.Core.Ui.UiElementInfo Field, string Value, IntPtr Dialog)? _pendingDialogChoice;
+    private readonly SopScreenshotter? _sop;
 
-    public UiAutomationCollector(MppWatcher.Core.Activity.ActivityContext? activity = null) : this(ignoreOwnProcess: true, activity) { }
+    public UiAutomationCollector(MppWatcher.Core.Activity.ActivityContext? activity = null, SopScreenshotter? sop = null) : this(ignoreOwnProcess: true, activity, sop) { }
 
     /// <summary>Tests host their sample windows in the test process, so they turn the self-filter off.</summary>
-    internal UiAutomationCollector(bool ignoreOwnProcess, MppWatcher.Core.Activity.ActivityContext? activity = null)
+    internal UiAutomationCollector(bool ignoreOwnProcess, MppWatcher.Core.Activity.ActivityContext? activity = null, SopScreenshotter? sop = null)
     {
         _ownPid = ignoreOwnProcess ? Environment.ProcessId : -1;
         _activity = activity;
+        _sop = sop;
     }
 
     public string Name => UiEventFactory.CollectorName;
@@ -325,6 +327,20 @@ public sealed class UiAutomationCollector : ICollector
         if (!decision.Log) return;
         _ctx.Sink.Emit(UiEventFactory.Action(info, decision, "click", now));
         _actionsLogged++;
+        MaybeSopShot(info.Name ?? info.ControlType, "click");
+    }
+
+    /// <summary>During an SOP recording, save a screenshot of this step and emit a sop_screenshot event.</summary>
+    private void MaybeSopShot(string? about, string trigger)
+    {
+        if (_sop is null) return;
+        var file = _sop.MaybeCapture();
+        if (file is null) return;
+        var e = this.NewEvent(MppWatcher.Core.Events.EventTypes.SopScreenshot, _ctx!.Clock.Now);
+        e.Metadata["screenshot_file"] = file;
+        e.Metadata["trigger"] = trigger;
+        if (!string.IsNullOrEmpty(about)) e.Metadata["after_step"] = about;
+        _ctx.Sink.Emit(e);
     }
 
     /// <summary>COM callback object for UI Automation focus events. Must return quickly.</summary>

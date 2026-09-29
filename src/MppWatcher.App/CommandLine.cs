@@ -1,6 +1,6 @@
 namespace MppWatcher.App;
 
-internal enum RunMode { Agent, Viewer, Inspect, Service, SmokeTest, Stop, ExportNow, WriteDefaultConfig, Version, Help }
+internal enum RunMode { Agent, Viewer, Inspect, Service, SmokeTest, Stop, ExportNow, Capture, WriteDefaultConfig, Version, Help }
 
 /// <summary>
 /// MTLog.exe                       run the background watcher (normal mode, started at logon)
@@ -10,13 +10,14 @@ internal enum RunMode { Agent, Viewer, Inspect, Service, SmokeTest, Stop, Export
 /// Options: --config &lt;path&gt;  use another config file; --data &lt;folder&gt;  override data folder;
 ///          --result &lt;file&gt;  smoke test report path.
 /// </summary>
-internal sealed record CommandLine(RunMode Mode, string? ConfigPath, string? DataFolder, int Seconds, string? OutputPath)
+internal sealed record CommandLine(RunMode Mode, string? ConfigPath, string? DataFolder, int Seconds, string? OutputPath, string? CaptureAction = null, string? CaptureLabel = null)
 {
     public static CommandLine Parse(string[] args)
     {
         var mode = RunMode.Agent;
         string? config = null, data = null, output = null;
         var seconds = 20;
+        string? capAction = null, capLabel = null;
         for (var i = 0; i < args.Length; i++)
         {
             var a = args[i].ToLowerInvariant();
@@ -33,6 +34,11 @@ internal sealed record CommandLine(RunMode Mode, string? ConfigPath, string? Dat
                 case "--write-default-config": mode = RunMode.WriteDefaultConfig; output = Next(); break;
                 case "--stop": mode = RunMode.Stop; break;
                 case "--export-now": mode = RunMode.ExportNow; break;
+                case "--capture-sop": mode = RunMode.Capture; capAction = "start-sop"; capLabel = Next(); break;
+                case "--capture-decision": mode = RunMode.Capture; capAction = "start-decision"; capLabel = Next(); break;
+                case "--capture-stop": mode = RunMode.Capture; capAction = "stop"; break;
+                case "--capture-pause": mode = RunMode.Capture; capAction = "pause"; break;
+                case "--capture-resume": mode = RunMode.Capture; capAction = "resume"; break;
                 case "--version": mode = RunMode.Version; break;
                 case "--help": case "-h": case "/?": mode = RunMode.Help; break;
                 case "--config": config = Next(); break;
@@ -40,7 +46,7 @@ internal sealed record CommandLine(RunMode Mode, string? ConfigPath, string? Dat
                 case "--result": output = Next(); break;
             }
         }
-        return new CommandLine(mode, config, data, seconds, output);
+        return new CommandLine(mode, config, data, seconds, output, capAction, capLabel);
     }
 
     public const string HelpText = """
@@ -52,6 +58,11 @@ internal sealed record CommandLine(RunMode Mode, string? ConfigPath, string? Dat
           MTLog.exe --smoke-test [seconds]   Run briefly, write a report, exit 0 if OK.
           MTLog.exe --stop                   Ask the watcher in this Windows session to stop cleanly.
           MTLog.exe --export-now             Ask the watcher in this Windows session to export its logs now.
+          MTLog.exe --capture-sop "<label>"  Start recording a task for an SOP (with screenshots).
+          MTLog.exe --capture-decision "<label>"  Start recording an ads decision (no screenshots).
+          MTLog.exe --capture-pause          Pause the current recording.
+          MTLog.exe --capture-resume         Resume the current recording.
+          MTLog.exe --capture-stop           Stop the current recording.
           MTLog.exe --service                (Windows service) watchdog that restarts stopped watchers.
           MTLog.exe --write-default-config <path>
           MTLog.exe --version
