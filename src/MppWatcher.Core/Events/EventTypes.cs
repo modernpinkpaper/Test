@@ -9,6 +9,8 @@ public static class EventTypes
     public const string WatcherHeartbeat = "watcher_heartbeat";
     public const string CollectorStatus = "collector_status";
     public const string ConfigChanged = "config_changed";
+    public const string CaptureMarker = "capture_marker";
+    public const string SopScreenshot = "sop_screenshot";
 
     // Foreground application / window sessions
     public const string AppSessionStart = "app_session_start";

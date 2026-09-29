@@ -42,6 +42,7 @@ public sealed class WatcherRuntime : IAsyncDisposable
     private ExportService? _export;
     private Timer? _heartbeatTimer, _exportTimer, _retentionTimer;
     private bool _stopped;
+    public Capture.CaptureController Capture { get; } = new();
 
     public WatcherRuntime(ConfigProvider config, IDiagnosticLog log, IClock clock, WatcherIdentity identity, RuntimePaths paths,
         Func<RuntimeServices, IEnumerable<ICollector>> collectorFactory)
@@ -70,7 +71,7 @@ public sealed class WatcherRuntime : IAsyncDisposable
         Directory.CreateDirectory(Paths.DataFolder);
         _store = new SqliteEventStore(Paths.DatabasePath, Paths.FallbackFolder);
         var imported = SafeImportFallback();
-        _pipeline = EventPipeline.Create(_config, Identity, _store, _log, _clock, Activity);
+        _pipeline = EventPipeline.Create(_config, Identity, _store, _log, _clock, Activity, Capture);
 
         var context = new CollectorContext(_pipeline, _config, _log, _clock);
         _host = new CollectorHost(context);
@@ -126,6 +127,40 @@ public sealed class WatcherRuntime : IAsyncDisposable
 
     /// <summary>The export folder with {GoogleDrive} replaced. Throws when Google Drive is not available.</summary>
     public string ResolveExportFolder() => ExportDestination.Resolve(Paths.ExportFolder);
+
+    /// <summary>The per-person top folder name used in the export path (employee id, else PC name).</summary>
+    public string PersonLabel() =>
+        MppWatcher.Core.Pipeline.EventNormalizer.ResolveEmployeeId(_config.Current, Identity.WindowsUsername, Identity.ComputerName);
+
+    /// <summary>Starts a Record-Task capture (SOP or ads decision) and writes a start marker.</summary>
+    public Capture.CaptureSnapshot StartCapture(Capture.CaptureMode mode, string label)
+    {
+        var snap = Capture.Start(mode, label);
+        EmitCaptureMarker("start", snap);
+        _log.Info("capture", $"Capture started ({snap.Mode}): {snap.Label}");
+        return snap;
+    }
+
+    public Capture.CaptureSnapshot StopCapture()
+    {
+        var was = Capture.Stop();
+        if (was.Active) { EmitCaptureMarker("stop", was); _log.Info("capture", $"Capture stopped: {was.Label}"); }
+        return was;
+    }
+
+    public Capture.CaptureSnapshot PauseCapture() { var s = Capture.Pause(); if (s.Active) EmitCaptureMarker("pause", s); return s; }
+    public Capture.CaptureSnapshot ResumeCapture() { var s = Capture.Resume(); if (s.Active) EmitCaptureMarker("resume", s); return s; }
+
+    private void EmitCaptureMarker(string action, Capture.CaptureSnapshot s)
+    {
+        if (_pipeline is null) return;
+        var e = NewWatcherEvent(EventTypes.CaptureMarker);
+        e.Metadata["action"] = action;
+        e.Metadata["capture_mode"] = s.Mode == MppWatcher.Core.Capture.CaptureMode.Sop ? "sop" : "decision";
+        e.Metadata["capture_label"] = s.Label;
+        e.Metadata["capture_session_id"] = s.SessionId;
+        _pipeline.Emit(e);
+    }
 
     public async Task<ExportResult> ExportNowAsync()
     {
@@ -257,11 +292,26 @@ public sealed class WatcherRuntime : IAsyncDisposable
                 if (deleted > 0) _log.Info("retention", $"Deleted {deleted} uploaded events older than {r.KeepUploadedEventsDays} days");
             }
             (_log as FileDiagnosticLog)?.DeleteOlderThan(r.KeepDiagnosticLogsDays);
+            RunWeeklyArchive();
         }
         catch (Exception e)
         {
             _log.Warn("retention", "Retention cleanup failed", e);
         }
+    }
+
+    /// <summary>Zips this PC's finished weeks in the export folder (best effort; never disturbs the open week).</summary>
+    private void RunWeeklyArchive()
+    {
+        var a = _config.Current.Archive;
+        if (!a.WeeklyZip) return;
+        string root;
+        try { root = ResolveExportFolder(); } // may throw if Google Drive is not available right now
+        catch (Exception e) { _log.Info("archive", "Export folder not available yet; skipping weekly zip: " + e.Message); return; }
+        var label = PersonLabel();
+        var personFolder = Path.Combine(root, LocalFolderUploader.SafeSegment(label));
+        try { Export.WeeklyArchiver.Run(personFolder, label, _clock.Now.LocalDateTime, a.DeleteRawAfterZip, _log); }
+        catch (Exception e) { _log.Warn("archive", "Weekly zip failed", e); }
     }
 
     private int SafeImportFallback()

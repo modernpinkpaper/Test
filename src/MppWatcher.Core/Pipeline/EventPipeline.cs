@@ -22,14 +22,17 @@ public sealed class EventPipeline : IEventSink, IAsyncDisposable
     private readonly IDiagnosticLog _log;
     private readonly IClock _clock;
     private readonly Activity.ActivityContext? _activity;
+    private readonly Capture.CaptureController? _capture;
     private readonly Channel<WatchEvent> _queue = Channel.CreateUnbounded<WatchEvent>(new UnboundedChannelOptions { SingleReader = true });
     private readonly Task _writer;
     private long _written, _dropped, _failed;
 
     public EventPipeline(EventNormalizer normalizer, PrivacyFilter privacy, DuplicateSuppressor dedup,
-        IEventStore store, IDiagnosticLog log, IClock clock, Activity.ActivityContext? activity = null)
+        IEventStore store, IDiagnosticLog log, IClock clock, Activity.ActivityContext? activity = null,
+        Capture.CaptureController? capture = null)
     {
         _activity = activity;
+        _capture = capture;
         _normalizer = normalizer;
         _privacy = privacy;
         _dedup = dedup;
@@ -40,11 +43,11 @@ public sealed class EventPipeline : IEventSink, IAsyncDisposable
     }
 
     public static EventPipeline Create(ConfigProvider config, WatcherIdentity identity, IEventStore store, IDiagnosticLog log, IClock clock,
-        Activity.ActivityContext? activity = null) =>
+        Activity.ActivityContext? activity = null, Capture.CaptureController? capture = null) =>
         new(new EventNormalizer(identity, () => config.Current),
             new PrivacyFilter(() => config.Current),
             new DuplicateSuppressor(() => TimeSpan.FromSeconds(config.Current.Deduplication.WindowSeconds)),
-            store, log, clock, activity);
+            store, log, clock, activity, capture);
 
     /// <summary>Raised on the writer thread after events are safely stored. Used by the smoke test.</summary>
     public event Action<IReadOnlyList<WatchEvent>>? Stored;
@@ -67,6 +70,7 @@ public sealed class EventPipeline : IEventSink, IAsyncDisposable
                 _activity.Observe(e);
             }
             _normalizer.Normalize(e, now);
+            _capture?.Tag(e); // stamp capture_label/mode while a Record-Task session is running
             if (_privacy.Apply(e) is null) { Interlocked.Increment(ref _dropped); return; }
             if (!_dedup.ShouldWrite(e, now)) return;
             _queue.Writer.TryWrite(e);

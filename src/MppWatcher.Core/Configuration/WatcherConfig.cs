@@ -36,6 +36,35 @@ public sealed class WatcherConfig
     [JsonPropertyName("export")] public ExportConfig Export { get; set; } = new();
     [JsonPropertyName("retention")] public RetentionConfig Retention { get; set; } = new();
     [JsonPropertyName("deduplication")] public DeduplicationConfig Deduplication { get; set; } = new();
+    [JsonPropertyName("archive")] public ArchiveConfig Archive { get; set; } = new();
+    [JsonPropertyName("capture")] public CaptureConfig Capture { get; set; } = new();
+}
+
+/// <summary>Weekly zip of this PC's finished weeks in the export folder, to keep it tidy.</summary>
+public sealed class ArchiveConfig
+{
+    [JsonPropertyName("weekly_zip")] public bool WeeklyZip { get; set; } = true;
+    /// <summary>Delete the raw .jsonl files after they are safely zipped.</summary>
+    [JsonPropertyName("delete_raw_after_zip")] public bool DeleteRawAfterZip { get; set; } = true;
+}
+
+/// <summary>
+/// "Record Task" capture (SOP or ads decision). Off by default; started/stopped from the tray or CLI.
+/// While on, every event is tagged with the session label, and (for SOPs, if enabled) a screenshot of
+/// the active window is saved on each step.
+/// </summary>
+public sealed class CaptureConfig
+{
+    /// <summary>Allow screenshots during an SOP recording (never at any other time).</summary>
+    [JsonPropertyName("sop_screenshots")] public bool SopScreenshots { get; set; } = true;
+    /// <summary>JPEG quality 1-100 for step screenshots.</summary>
+    [JsonPropertyName("screenshot_quality")] public int ScreenshotQuality { get; set; } = 70;
+    /// <summary>Downscale screenshots so the widest side is at most this many pixels (0 = no downscale).</summary>
+    [JsonPropertyName("screenshot_max_width")] public int ScreenshotMaxWidth { get; set; } = 1600;
+    /// <summary>Capture only the active window (true) instead of the whole desktop (false).</summary>
+    [JsonPropertyName("screenshot_active_window_only")] public bool ScreenshotActiveWindowOnly { get; set; } = true;
+    /// <summary>Never take two step screenshots closer together than this many milliseconds.</summary>
+    [JsonPropertyName("screenshot_min_gap_ms")] public int ScreenshotMinGapMs { get; set; } = 400;
 }
 
 public sealed class CollectorsConfig
