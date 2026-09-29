@@ -223,3 +223,14 @@ can separate "Dalia did X" from "Claude did X for her". Also useful for honest t
 Keep recording what is typed into chat/AI/prompt boxes (ChatGPT, Claude, BeeBEEP, Teams) so a report can
 show a simple timeline of when Dalia asked for something. Limit: values are captured when focus leaves
 the box, so a prompt may be captured partially, not always the final full wording.
+
+## Identifier rule correction (Dalia, 2026-09-29)
+- ORDERS: identify by ORDER NUMBER (already captured for Etsy/Amazon/Shopify).
+- LISTINGS: Dalia identifies listings by SKU, not by URL/listing ID. Today's logs capture the Etsy
+  listing ID (from the URL) and the Amazon ASIN, and a SKU only when she searches inventory by SKU.
+  GAP: to report listings by SKU, add a lookup table (Etsy listing ID / Amazon ASIN -> MPP SKU), which
+  Dalia likely already has in a sheet. The report/brain translates listing ID/ASIN -> SKU automatically.
+- "Why a task happened" (e.g. jsx script update): MT Log captures the TYPE/reason from the request text
+  and chat title (e.g. she asked Claude about a "JSON parsing error" opening the MPP orders JSON), but
+  NOT the exact error text/line or what the fix changed (those live in the file + the AI reply, which
+  MT Log does not read). Prompts are captured on focus-leave, so they can be partial.
