@@ -287,7 +287,7 @@ def arm(side, shoulder=0.0, elbow=0.0, wrist=0.0, hand=None):
     upper = _clipped(cid + "_upper", drawing)
     sleeve = _clipped(cid + "_sleeve", part("torso"))
     return clips + (f'<g id="{side}_arm"{_rot(shoulder, J["shoulder"])}>{_ring(J["elbow"], J["elbow_r"])}'
-                    f'{fore}{upper}{sleeve}</g>')
+                    f'{upper}{sleeve}{fore}</g>')      # forearm in front: a folded elbow shows no line across it
 
 
 def body(pose=None, arms=True):
