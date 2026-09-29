@@ -1,9 +1,8 @@
-"""Her as a stylized stick figure (cairo): the chibi girl's look - long brown side-parted hair with highlights, big
-brown eyes with lashes and sparkles, thick brows, blush, black tee, blue jeans, white sneakers - on a slim figure
-with tapered limbs (thick at the joint, thin at the tip) instead of plain lines.
+"""Stylized stick people (cairo) for skits: big expressive faces, hair styles, outfits, slim tapered limbs (thick at
+the joint, thin at the tip) instead of plain lines.
 
-    her = StickHer(x=540, floor=1560, scale=1.0)
-    her.draw(ctx, arms=((20, 30), (20, 30)), legs=((4, 0), (4, 0)), face="smug", mouth=0.0, look=(0, 0))
+    boss = StickPerson(LOOKS["boss"], x=300, floor=1560)
+    boss.draw(ctx, arms=((20, 30), (20, 30)), legs=((4, 0), (4, 0)), face="smug", mouth=0.0, look=(0, 0))
 
 arms: ((shoulder, elbow), (shoulder, elbow)) in degrees for her right / left arm (0 = hanging down, + = outwards);
 legs: ((hip, knee), ...) likewise. face: neutral | happy | smug | annoyed | shock | sad | wink | closed.
@@ -68,8 +67,23 @@ def taper(ctx, pts, w0, w1, fill, line=OUT, lw=5.0, cap=True):
     ctx.stroke()
 
 
-class StickHer:
-    def __init__(self, x=540, floor=1560, scale=1.0, facing=0.0):
+LOOKS = {
+    # hairdo: long | bob | short | bald ; build: f | m
+    "candidate": dict(hairdo="bob", hair="#e8b04a", hair_dark="#b9822a", hair_hi="#ffd98a", hair_light="#f3c569", skin="#f6c7a4",
+                      shirt="#ffffff", jacket="#f27ca8", pants="#2f3a55", shoes="#1f1a1a", lashes=True, cheeks=True,
+                      build="f", glasses=False, tie=None, brow="#8a5a2a", iris="#2f6fb0", iris_dark="#1d3f6a"),
+    "boss": dict(hairdo="bald", hair="#6b6b6b", hair_dark="#4a4a4a", hair_hi="#9a9a9a", hair_light="#8a8a8a", skin="#e9b28f",
+                 shirt="#e9eef6", jacket="#4b5563", pants="#3b4250", shoes="#1f1a1a", lashes=False, cheeks=False,
+                 build="m", glasses=True, tie="#c0392b", brow="#4a4a4a", iris="#5a3a22", iris_dark="#2a180c",
+                 mustache=True),
+}
+
+
+class StickPerson:
+    def __init__(self, look, x=540, floor=1560, scale=1.0, facing=0.0):
+        self.L = dict(COL, pants=COL["jeans"], shoes=COL["shoe"], lashes=True, cheeks=True, build="f", hairdo="long", glasses=False,
+                      tie=None, jacket=None, brow="#3a2216", mustache=False)
+        self.L.update(look)
         self.x, self.floor, self.s, self.facing = x, floor, scale, facing     # facing: -1 left .. 0 front .. 1 right
 
     # ---------------------------------------------------------------- body
@@ -90,15 +104,15 @@ class StickHer:
             knee = (h[0] + math.sin(u) * leg, h[1] + math.cos(u) * leg)
             lo = u - math.radians(k) * side
             foot = (knee[0] + math.sin(lo) * leg, min(knee[1] + math.cos(lo) * leg, self.floor - 16 * s))
-            taper(ctx, [h, knee, foot], 34 * s, 20 * s, COL["jeans"], lw=5 * s)
+            taper(ctx, [h, knee, foot], 34 * s, 20 * s, self.L["pants"], lw=5 * s)
             feet.append((side, foot))
         for side, f in feet:
             fx = f[0] + side * 8 * s + self.facing * 10 * s
-            ellipse(ctx, fx, f[1] + 8 * s, 28 * s, 15 * s, fill=COL["shoe"], w=5 * s)
-            curve(ctx, [(fx - 26 * s, f[1] + 14 * s), (fx + 26 * s, f[1] + 14 * s)], line=rgb(COL["sole"]), w=4 * s)
+            ellipse(ctx, fx, f[1] + 8 * s, 28 * s, 15 * s, fill=self.L["shoes"], w=5 * s)
+            curve(ctx, [(fx - 26 * s, f[1] + 14 * s), (fx + 26 * s, f[1] + 14 * s)], line=rgb(self.L["sole"]), w=4 * s)
         # torso: fitted black tee (a soft hourglass), neck
         top = neck[1] + 14 * s
-        tw, ww, hw = 54 * s, 36 * s, 52 * s
+        tw, ww, hw = (54 * s, 36 * s, 52 * s) if self.L["build"] == "f" else (64 * s, 54 * s, 52 * s)
         mid = (top + hip[1]) / 2 + 10 * s
         ctx.move_to(neck[0] - tw, top + 8 * s)
         ctx.curve_to(neck[0] - tw * .6, top - 4 * s, neck[0] + tw * .6, top - 4 * s, neck[0] + tw, top + 8 * s)
@@ -106,21 +120,31 @@ class StickHer:
         ctx.line_to(hip[0] - hw, hip[1] + 12 * s)
         ctx.curve_to(hip[0] - ww, mid, neck[0] - tw * .95, mid - 40 * s, neck[0] - tw, top + 8 * s)
         ctx.close_path()
-        ctx.set_source_rgb(*rgb(COL["shirt"]))
+        ctx.set_source_rgb(*rgb(self.L["shirt"]))
         ctx.fill_preserve()
         ctx.set_source_rgb(*OUT)
         ctx.set_line_width(5 * s)
         ctx.stroke()
         poly(ctx, [(hip[0] - hw, hip[1] + 6 * s), (hip[0] + hw, hip[1] + 6 * s), (hip[0] + hw, hip[1] + 26 * s),
-                   (hip[0] - hw, hip[1] + 26 * s)], fill=COL["jeans"], w=5 * s)                    # waistband
+                   (hip[0] - hw, hip[1] + 26 * s)], fill=self.L["pants"], w=5 * s)                    # waistband
         ellipse(ctx, hip[0], hip[1] + 16 * s, 5 * s, 5 * s, fill="#d8d8d8", w=2 * s)
-        taper(ctx, [(neck[0], neck[1] - 30 * s), (neck[0], top + 6 * s)], 26 * s, 24 * s, COL["skin"], lw=5 * s, cap=False)
+        taper(ctx, [(neck[0], neck[1] - 30 * s), (neck[0], top + 6 * s)], 26 * s, 24 * s, self.L["skin"], lw=5 * s, cap=False)
         ctx.move_to(neck[0] - 22 * s, top + 2 * s)                                                  # crew neck
         ctx.curve_to(neck[0] - 12 * s, top + 22 * s, neck[0] + 12 * s, top + 22 * s, neck[0] + 22 * s, top + 2 * s)
         ctx.set_source_rgb(*OUT)
         ctx.set_line_width(4 * s)
         ctx.stroke()
-        # arms: short sleeve, tapered skin, round hand
+        if self.L["tie"]:
+            poly(ctx, [(neck[0] - 9 * s, top + 14 * s), (neck[0] + 9 * s, top + 14 * s), (neck[0] + 13 * s, mid + 30 * s),
+                       (neck[0], mid + 48 * s), (neck[0] - 13 * s, mid + 30 * s)], fill=self.L["tie"], w=4 * s)
+        if self.L["jacket"]:                                           # open blazer: two panels, lapels
+            for side in (-1, 1):
+                poly(ctx, [(neck[0] + side * 18 * s, top + 2 * s), (neck[0] + side * tw, top + 8 * s),
+                           (hip[0] + side * (hw + 4 * s), hip[1] + 18 * s), (hip[0] + side * 16 * s, hip[1] + 18 * s),
+                           (neck[0] + side * 24 * s, mid - 10 * s)], fill=self.L["jacket"], w=5 * s)
+                poly(ctx, [(neck[0] + side * 18 * s, top + 2 * s), (neck[0] + side * 34 * s, top + 30 * s),
+                           (neck[0] + side * 24 * s, mid - 10 * s)], fill=self.L["jacket"], w=4 * s)
+        # arms: short sleeve (or blazer sleeve), tapered skin, round hand
         sh_y = top + 18 * s
         hands = []
         for side, (a1, a2) in ((-1, arms[0]), (1, arms[1])):
@@ -129,11 +153,15 @@ class StickHer:
             el = (sh[0] + math.sin(u) * 92 * s, sh[1] + math.cos(u) * 92 * s)
             lo = u + math.radians(a2) * side
             hd = (el[0] + math.sin(lo) * 84 * s, el[1] + math.cos(lo) * 84 * s)
-            taper(ctx, [sh, el, hd], 24 * s, 15 * s, COL["skin"], lw=5 * s)
-            sl = (sh[0] + math.sin(u) * 34 * s, sh[1] + math.cos(u) * 34 * s)                          # sleeve
-            taper(ctx, [sh, sl], 30 * s, 28 * s, COL["shirt"], lw=5 * s, cap=False)
-            ellipse(ctx, sh[0], sh[1], 15 * s, 15 * s, fill=COL["shirt"], line=None)
-            ellipse(ctx, hd[0], hd[1], 15 * s, 15 * s, fill=COL["skin"], w=5 * s)
+            if self.L["jacket"]:                                        # long sleeve to the wrist
+                taper(ctx, [sh, el, hd], 30 * s, 22 * s, self.L["jacket"], lw=5 * s)
+                ellipse(ctx, sh[0], sh[1], 17 * s, 17 * s, fill=self.L["jacket"], line=None)
+            else:
+                taper(ctx, [sh, el, hd], 24 * s, 15 * s, self.L["skin"], lw=5 * s)
+                sl = (sh[0] + math.sin(u) * 34 * s, sh[1] + math.cos(u) * 34 * s)                      # sleeve
+                taper(ctx, [sh, sl], 30 * s, 28 * s, self.L["shirt"], lw=5 * s, cap=False)
+                ellipse(ctx, sh[0], sh[1], 15 * s, 15 * s, fill=self.L["shirt"], line=None)
+            ellipse(ctx, hd[0], hd[1], 15 * s, 15 * s, fill=self.L["skin"], w=5 * s)
             hands.append(hd)
         if hold:
             hold(ctx, hands)
@@ -148,34 +176,52 @@ class StickHer:
         s = self.s
         x, y = hc
         sw = sway * 20 * s
+        if self.L["hairdo"] == "bob":
+            curve(ctx, [(x - R * 1.08, y - R * 0.3), (x - R * 1.2, y + R * 0.5), (x - R * 1.1 + sw, y + R * 1.05),
+                        (x, y + R * 0.9), (x + R * 1.1 + sw, y + R * 1.05), (x + R * 1.2, y + R * 0.5),
+                        (x + R * 1.08, y - R * 0.3), (x, y - R * 1.15)], fill=self.L["hair"], line=OUT, w=6 * s, close=True)
+            return
+        if self.L["hairdo"] != "long":
+            return
         pts = [(x - R * 1.05, y - R * 0.2), (x - R * 1.25, y + R * 0.9), (x - R * 1.2 + sw, y + R * 2.1),
                (x - R * 1.35 + sw, y + R * 3.0), (x - R * 0.9 + sw, y + R * 3.35), (x - R * 0.6 + sw, y + R * 3.05),
                (x, y + R * 1.6), (x + R * 0.6 + sw, y + R * 3.05), (x + R * 0.95 + sw, y + R * 3.3),
                (x + R * 1.35 + sw, y + R * 2.95), (x + R * 1.2 + sw, y + R * 2.0), (x + R * 1.25, y + R * 0.9),
                (x + R * 1.05, y - R * 0.2), (x, y - R * 1.12)]
-        curve(ctx, pts, fill=COL["hair"], line=OUT, w=6 * s, close=True)
+        curve(ctx, pts, fill=self.L["hair"], line=OUT, w=6 * s, close=True)
         for dx in (-1, 1):                                                              # soft streaks
             curve(ctx, [(x + dx * R * 1.0, y + R * 0.4), (x + dx * R * 1.1 + sw * .6, y + R * 1.5),
-                        (x + dx * R * 1.05 + sw, y + R * 2.6)], line=rgb(COL["hair_light"]), w=9 * s)
+                        (x + dx * R * 1.05 + sw, y + R * 2.6)], line=rgb(self.L["hair_light"]), w=9 * s)
 
     def _hair_front(self, ctx, hc, R):
         """Side part on her left, bangs sweeping across the forehead, face-framing locks."""
         s = self.s
         x, y = hc
+        if self.L["hairdo"] == "bald":                                   # side tufts + a shiny head
+            for side in (-1, 1):
+                curve(ctx, [(x + side * R * 0.8, y - R * 0.45), (x + side * R * 1.06, y - R * 0.1), (x + side * R * 1.0, y + R * 0.3),
+                            (x + side * R * 0.9, y - R * 0.1)], fill=self.L["hair"], line=OUT, w=5 * s, close=True)
+            ellipse(ctx, x - R * 0.35, y - R * 0.72, R * 0.2, R * 0.09, fill=(1, 1, 1), line=None)
+            return
+        if self.L["hairdo"] == "short":
+            curve(ctx, [(x - R * 1.0, y - R * 0.1), (x - R * 0.85, y - R * 0.8), (x, y - R * 1.12), (x + R * 0.85, y - R * 0.8),
+                        (x + R * 1.0, y - R * 0.1), (x + R * 0.6, y - R * 0.55), (x - R * 0.4, y - R * 0.6)],
+                  fill=self.L["hair"], line=OUT, w=6 * s, close=True)
+            return
         part = x + R * 0.28
         # the big sweep from the part to her right temple
         curve(ctx, [(part, y - R * 1.08), (x - R * 0.35, y - R * 0.98), (x - R * 0.9, y - R * 0.55),
                     (x - R * 1.02, y + R * 0.1), (x - R * 0.95, y + R * 0.55), (x - R * 0.8, y + R * 0.05),
                     (x - R * 0.55, y - R * 0.45), (x - R * 0.05, y - R * 0.62), (part - R * 0.05, y - R * 0.9)],
-              fill=COL["hair"], line=OUT, w=6 * s, close=True)
+              fill=self.L["hair"], line=OUT, w=6 * s, close=True)
         # the smaller side
         curve(ctx, [(part, y - R * 1.08), (x + R * 0.8, y - R * 0.8), (x + R * 1.03, y - R * 0.1),
                     (x + R * 0.98, y + R * 0.6), (x + R * 0.85, y + R * 0.0), (x + R * 0.62, y - R * 0.55),
-                    (part + R * 0.06, y - R * 0.88)], fill=COL["hair"], line=OUT, w=6 * s, close=True)
+                    (part + R * 0.06, y - R * 0.88)], fill=self.L["hair"], line=OUT, w=6 * s, close=True)
         # shine
         curve(ctx, [(x - R * 0.15, y - R * 0.9), (x - R * 0.55, y - R * 0.72), (x - R * 0.78, y - R * 0.35)],
-              line=rgb(COL["hair_hi"]), w=8 * s)
-        curve(ctx, [(x + R * 0.45, y - R * 0.92), (x + R * 0.78, y - R * 0.55)], line=rgb(COL["hair_light"]), w=7 * s)
+              line=rgb(self.L["hair_hi"]), w=8 * s)
+        curve(ctx, [(x + R * 0.45, y - R * 0.92), (x + R * 0.78, y - R * 0.55)], line=rgb(self.L["hair_light"]), w=7 * s)
 
     # ---------------------------------------------------------------- face
     def _head(self, ctx, hc, R, face, mouth, look, blink):
@@ -186,11 +232,12 @@ class StickHer:
         curve(ctx, [(x - R * 0.98, y - R * 0.15), (x - R * 0.9, y + R * 0.45), (x - R * 0.55, y + R * 0.85),
                     (x + f, y + R * 1.0), (x + R * 0.55, y + R * 0.85), (x + R * 0.9, y + R * 0.45),
                     (x + R * 0.98, y - R * 0.15), (x + R * 0.7, y - R * 0.85), (x, y - R * 1.02),
-                    (x - R * 0.7, y - R * 0.85)], fill=COL["skin"], line=OUT, w=6 * s, close=True)
+                    (x - R * 0.7, y - R * 0.85)], fill=self.L["skin"], line=OUT, w=6 * s, close=True)
         for side in (-1, 1):                                                              # ears peek out
-            ellipse(ctx, x + side * R * 0.97, y + R * 0.12, 12 * s, 18 * s, fill=COL["skin"], w=4 * s)
-        for side in (-1, 1):
-            ellipse(ctx, x + f + side * R * 0.5, y + R * 0.4, 20 * s, 12 * s, fill=COL["blush"], line=None)
+            ellipse(ctx, x + side * R * 0.97, y + R * 0.12, 12 * s, 18 * s, fill=self.L["skin"], w=4 * s)
+        if self.L["cheeks"]:
+            for side in (-1, 1):
+                ellipse(ctx, x + f + side * R * 0.5, y + R * 0.4, 20 * s, 12 * s, fill=self.L["blush"], line=None)
         ellipse(ctx, x + f, y + R * 0.33, 4 * s, 3 * s, fill="#e8977a", line=None)          # nose
         ey = y + R * 0.08
         for side in (-1, 1):
@@ -215,8 +262,8 @@ class StickHer:
                 ctx.arc(0, 0, 0.95, 0, 2 * math.pi)
                 ctx.restore()
                 ctx.clip()
-                ellipse(ctx, ix, iy + 2 * s, 21 * s, 27 * s, fill=COL["iris"], line=None)
-                ellipse(ctx, ix, iy + 5 * s, 13 * s, 16 * s, fill=COL["iris_dark"], line=None)
+                ellipse(ctx, ix, iy + 2 * s, 21 * s, 27 * s, fill=self.L["iris"], line=None)
+                ellipse(ctx, ix, iy + 5 * s, 13 * s, 16 * s, fill=self.L["iris_dark"], line=None)
                 ellipse(ctx, ix - 7 * s, iy - 9 * s, 7 * s, 7 * s, fill=(1, 1, 1), line=None)   # sparkles
                 ellipse(ctx, ix + 7 * s, iy + 10 * s, 3.5 * s, 3.5 * s, fill=(1, 1, 1), line=None)
                 ctx.reset_clip()
@@ -227,14 +274,14 @@ class StickHer:
                 ctx.set_line_width(9 * s)
                 ctx.stroke()
                 ox = cx + side * 26 * s
-                for k in range(2):                                                    # two lash flicks
+                for k in range(2 if self.L["lashes"] else 0):                          # two lash flicks
                     ctx.move_to(ox - side * k * 8 * s, ey - ry * 0.3 - k * 9 * s)
                     ctx.line_to(ox + side * (12 - k * 3) * s, ey - ry * 0.55 - k * 12 * s)
                     ctx.set_line_width(5 * s)
                     ctx.stroke()
                 if face == "annoyed":                                              # heavy lid
                     poly(ctx, [(cx - 26 * s, ey - ry - 4 * s), (cx + 26 * s, ey - ry - 4 * s), (cx + 26 * s, ey - 2 * s),
-                               (cx - 26 * s, ey - 2 * s)], fill=COL["skin"], line=None)
+                               (cx - 26 * s, ey - 2 * s)], fill=self.L["skin"], line=None)
                     curve(ctx, [(cx - 25 * s, ey - 2 * s), (cx + 25 * s, ey - 2 * s)], w=6 * s)
             # thick brows (her thing)
             by = ey - 50 * s
@@ -243,24 +290,31 @@ class StickHer:
             inner, outer = cx - side * 22 * s, cx + side * 24 * s
             ctx.move_to(inner, by + lift + tilt_b)
             ctx.curve_to(cx - side * 6 * s, by + lift - 10 * s, cx + side * 12 * s, by + lift - 10 * s, outer, by + lift + 2 * s)
-            ctx.set_source_rgb(*rgb("#3a2216"))
+            ctx.set_source_rgb(*rgb(self.L["brow"]))
             ctx.set_line_width(11 * s)
             ctx.set_line_cap(1)
             ctx.stroke()
+        if self.L["glasses"]:
+            for side in (-1, 1):
+                ellipse(ctx, x + f + side * R * 0.36, ey, 36 * s, 36 * s, fill=None, line=OUT, w=6 * s)
+            curve(ctx, [(x + f - R * 0.36 + 36 * s, ey - 4 * s), (x + f, ey - 10 * s), (x + f + R * 0.36 - 36 * s, ey - 4 * s)], w=6 * s)
         # mouth
         mx, my = x + f, y + R * 0.62
+        if self.L["mustache"]:
+            curve(ctx, [(mx - 30 * s, my - 4 * s), (mx - 14 * s, my - 22 * s), (mx, my - 14 * s), (mx + 14 * s, my - 22 * s),
+                        (mx + 30 * s, my - 4 * s), (mx, my - 8 * s)], fill=self.L["hair"], line=OUT, w=4 * s, close=True)
         o = max(mouth, {"shock": 0.8}.get(face, 0))
         if o > 0.1:
             wd, hg = 18 * s * (1 + 0.3 * o), 6 * s + 26 * s * o
             curve(ctx, [(mx - wd, my - hg * .2), (mx, my - hg * .35), (mx + wd, my - hg * .2), (mx + wd * .7, my + hg * .6),
                         (mx, my + hg * .75), (mx - wd * .7, my + hg * .6)], fill="#7a1f2a", w=5 * s, close=True)
-            ellipse(ctx, mx, my + hg * .45, wd * .5, hg * .2, fill=COL["lips"], line=None)
+            ellipse(ctx, mx, my + hg * .45, wd * .5, hg * .2, fill=self.L["lips"], line=None)
         elif face in ("happy", "wink"):
             curve(ctx, [(mx - 20 * s, my - 4 * s), (mx - 8 * s, my + 12 * s), (mx + 8 * s, my + 12 * s), (mx + 20 * s, my - 4 * s)],
                   fill="#7a1f2a", w=5 * s, close=True)
         elif face == "smug":
-            curve(ctx, [(mx - 16 * s, my + 2 * s), (mx + 4 * s, my + 8 * s), (mx + 20 * s, my - 6 * s)], line=rgb(COL["lips"]), w=7 * s)
+            curve(ctx, [(mx - 16 * s, my + 2 * s), (mx + 4 * s, my + 8 * s), (mx + 20 * s, my - 6 * s)], line=rgb(self.L["lips"]), w=7 * s)
         elif face in ("annoyed", "sad"):
-            curve(ctx, [(mx - 16 * s, my + 6 * s), (mx, my + 1 * s), (mx + 16 * s, my + 6 * s)], line=rgb(COL["lips"]), w=7 * s)
+            curve(ctx, [(mx - 16 * s, my + 6 * s), (mx, my + 1 * s), (mx + 16 * s, my + 6 * s)], line=rgb(self.L["lips"]), w=7 * s)
         else:
-            curve(ctx, [(mx - 16 * s, my), (mx, my + 7 * s), (mx + 16 * s, my)], line=rgb(COL["lips"]), w=7 * s)
+            curve(ctx, [(mx - 16 * s, my), (mx, my + 7 * s), (mx + 16 * s, my)], line=rgb(self.L["lips"]), w=7 * s)
