@@ -35,7 +35,8 @@ def _path(shape, colour, holes=()):
     return f'<path d="{" ".join(smooth(q, True) for q in [shape] + inner)}" fill="{colour}" fill-rule="evenodd"/>'
 
 
-def hand(name, mirror=False, squash=True):
+def hand(name, mirror=False, squash=True, prop=None):
+    """prop: (behind, in_front) SVG drawn in this hand's frame (e.g. a mug in the C grip; chibi_props.py)."""
     h = H["hands"][name]
     holes = h.get("holes", [])
     g = [_path(s, COL["outline"], holes) for s in h["silhouette"]]
@@ -47,4 +48,6 @@ def hand(name, mirror=False, squash=True):
     body = "".join(g)
     if squash and name in SQUASH:
         body = f'<g transform="scale(1,{SQUASH[name]})">{body}</g>'
+    if prop:
+        body = prop[0] + body + prop[1]
     return f'<g transform="scale(-1,1)">{body}</g>' if mirror else body

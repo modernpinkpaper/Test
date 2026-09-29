@@ -252,7 +252,7 @@ def _ring(c, r):
 HAND_INSET = 4.0     # a swapped-in hand's wrist cut sits this far inside the end of the forearm (hidden joint)
 
 
-def swapped_hand(side, name, J, d_lower):
+def swapped_hand(side, name, J, d_lower, prop=None):
     """A hand from the hands sheet at the wrist: scaled to her wrist, fingers along the forearm, flipped for the other
     side when the sheet shows the opposite hand."""
     import chibi_hands as CHd
@@ -263,12 +263,13 @@ def swapped_hand(side, name, J, d_lower):
     ang = np.degrees(np.arctan2(d[1], d[0]) - np.arctan2(-1, 0))
     mirror = (h["which"] == "L") == (side == "right")
     return (f'<g id="{side}_hand_{name}" transform="translate({at[0]:.2f},{at[1]:.2f}) rotate({ang:.2f}) '
-            f'scale({scale:.4f})">{CHd.hand(name, mirror)}</g>')
+            f'scale({scale:.4f})">{CHd.hand(name, mirror, prop=prop)}</g>')
 
 
-def arm(side, shoulder=0.0, elbow=0.0, wrist=0.0, hand=None):
+def arm(side, shoulder=0.0, elbow=0.0, wrist=0.0, hand=None, prop=None):
     """One arm as nested groups; angles in degrees (positive = clockwise on screen). hand: None = her own relaxed
-    hand, or a hand from the hands sheet ("open", "flat", "point", "fist", "peace", "thumbs_up")."""
+    hand, or a hand from the hands sheet ("open", "flat", "point", "fist", "peace", "thumbs_up", ...).
+    prop: (behind, in_front) SVG in the hand's own frame, held by a sheet hand (chibi_props.py)."""
     J = arm_joints(side)
     drawing = part(f"{side}_arm")[:-4] + finger_lines(side) + "</g>"
     d_upper = np.subtract(J["elbow"], J["top"])
@@ -293,7 +294,7 @@ def arm(side, shoulder=0.0, elbow=0.0, wrist=0.0, hand=None):
                   f'<g opacity="{1 - mix:.3f}">{own}</g><g opacity="{mix:.3f}">{swapped_hand(side, name, J, d_lower)}</g></g>')
         fore = f'<g id="{side}_forearm"{_rot(elbow, J["elbow"])}>{forearm}{hand_g}</g>'
     elif hand:        # the sheet hand goes over the end of the forearm (its open wrist cut hides inside the forearm)
-        hand_g = f'<g id="{side}_hand"{_rot(wrist, J["wrist"])}>{swapped_hand(side, hand, J, d_lower)}</g>'
+        hand_g = f'<g id="{side}_hand"{_rot(wrist, J["wrist"])}>{swapped_hand(side, hand, J, d_lower, prop)}</g>'
         fore = f'<g id="{side}_forearm"{_rot(elbow, J["elbow"])}>{forearm}{hand_g}</g>'
     else:
         hand_g = f'<g id="{side}_hand"{_rot(wrist, J["wrist"])}>{_clipped(cid + "_hand", drawing)}</g>'
