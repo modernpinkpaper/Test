@@ -140,9 +140,11 @@ def card(canvas, box, radius=46, fill=(255, 255, 255, 235), outline=ACCENT, widt
 
 
 def text_c(canvas, xy, s, size, fill=INK, weight=800, stroke=0, stroke_fill=(255, 255, 255)):
+    if size < 4:                    # (still popping in)
+        return
     d = ImageDraw.Draw(canvas)
     f = font(size, weight)
-    d.text(xy, s, font=f, fill=fill, anchor="mm", stroke_width=stroke, stroke_fill=stroke_fill)
+    d.text(xy, s, font=f, fill=fill, anchor="mm", stroke_width=min(stroke, size // 8), stroke_fill=stroke_fill)
 
 
 # ------------------------------------------------------------------ graphics per beat (top area, y 130-760)
@@ -215,34 +217,34 @@ def graphic(canvas, kind, t, dur):
         paste(canvas, emoji("fire", 110), 200 + 6 * 113, 690 - 300 - 70, pop(t - 1.9))
 
 
-def captions(canvas, words, t, hot):
-    """Word-by-word captions: the words said so far in the current line, 3-4 per row, key words in the accent colour."""
-    shown = [(w, st) for w, st in words if st <= t]
-    if not shown:
+def captions(canvas, words, t, hot, per=3, y=800, max_w=980):
+    """Word-by-word captions: the chunk of up to `per` words being said, each word appearing as it is spoken; key
+    words in the accent colour. One row, shrunk to fit the width."""
+    said = [i for i, (_, st) in enumerate(words) if st <= t]
+    if not said:
         return
-    rows, row = [], []
-    for w, _ in shown[-8:]:
-        row.append(w)
-        if len(row) == 4:
-            rows.append(row)
-            row = []
-    if row:
-        rows.append(row)
-    rows = rows[-2:]
-    f = font(78)
-    for ri, r in enumerate(rows):
-        y = 850 + ri * 100
-        widths = [f.getlength(w + " ") for w in r]
-        x = W / 2 - sum(widths) / 2
-        for w, wd in zip(r, widths):
-            col = ACCENT if w.lower() in hot else (255, 255, 255)
-            ImageDraw.Draw(canvas).text((x, y), w.upper(), font=f, fill=col, anchor="lm", stroke_width=9,
-                                        stroke_fill=INK)
-            x += wd
+    c0 = said[-1] // per * per
+    chunk = [w.upper() for w, _ in words[c0:c0 + per]]
+    n_shown = said[-1] - c0 + 1
+    size, gap = 84, 24
+    while True:
+        f = font(size)
+        widths = [f.getlength(w) for w in chunk]
+        total = sum(widths) + gap * (len(chunk) - 1) + 2 * 10
+        if total <= max_w or size <= 40:
+            break
+        size -= 4
+    x = W / 2 - total / 2 + 10
+    d = ImageDraw.Draw(canvas)
+    for i, (w, wd) in enumerate(zip(chunk, widths)):
+        if i < n_shown:
+            col = ACCENT if words[c0 + i][0].lower() in hot else (255, 255, 255)
+            d.text((x, y), w, font=f, fill=col, anchor="lm", stroke_width=10, stroke_fill=INK)
+        x += wd + gap
 
 
 # ------------------------------------------------------------------ character
-def character_png(expr, pose, tilt, bob, height=1060):
+def character_png(expr, pose, tilt, bob, height=1160):
     vx, vy, vw, vh = -40, 150, 450, 860
     inner = CH.head_svg_v2(**expr, pose=pose, tilt=tilt)
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{int(vw * height / vh)}" height="{height}" '
