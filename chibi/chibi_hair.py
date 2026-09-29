@@ -237,7 +237,7 @@ def hair_cel():
             f'</clipPath>' + not_eyes_clip() +
             f'<clipPath id="clip_hair_top"><rect x="-100" y="-100" width="600" height="{HAIR_SPLIT_Y + HAIR_FADE + 100}"/></clipPath>'
             f'<g id="hair" clip-path="url(#clip_hair_not_face)"><g clip-path="url(#clip_hair_not_eyes)"><g clip-path="url(#clip_hair_top)">'
-            + "".join(parts) + "</g></g></g>" + hair_body_lower())
+            + "".join(parts) + "</g></g></g>")
 
 
 HB_GROW = 3
@@ -515,11 +515,24 @@ def ear_left_clean():
             f'</g>' + ear_traced("left"))
 
 
+HEAD_S, HEAD_DX, HEAD_DY = 0.915, -6.25, -0.75   # head size / shift fitted to the full-body picture (head region overlap)
+HEAD_PIVOT = (188.1, 469.5)                    # middle of the chin: the head scales around this point
+
+
+def head_tf(svg):
+    """The parts drawn from the head picture, scaled to the head size of the full-body picture."""
+    px, py = HEAD_PIVOT
+    return (f'<g transform="translate({f(px + HEAD_DX)},{f(py + HEAD_DY)}) scale({HEAD_S}) '
+            f'translate({f(-px)},{f(-py)})">' + svg + "</g>")
+
+
 def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
     backing = "".join(f'<ellipse cx="{f(x)}" cy="{f(y)}" rx="9" ry="9" fill="{H2["colours"]["outline"]}"/>'
                       for x, y in from_new([(686, 684), (262, 684)]))   # dark behind the ear bottoms (no white specks)
+    hb_under = ("".join(path(p, fill=HB["colours"]["outline"]) for p in HB["silhouette"])     # dark behind the head,
+                + path(HB["face_fill"], fill=HB["colours"]["outline"])                          # so no white gaps anywhere
+                + f'<rect x="135" y="490" width="110" height="40" fill="{HB["colours"]["outline"]}"/>') if HB else ""
     under = ("".join(path(p, fill=H2["colours"]["outline"]) for p in H2["silhouette"])     # no gaps at the face edge
-             + ("".join(path(p, fill=HB["colours"]["outline"]) for p in HB["silhouette"]) if HB else "")
              + f'<path d="{smooth(H2["face_fill"], True)}" fill="#f4a47c" stroke="#f4a47c" stroke-width="30" '
                f'stroke-linejoin="round" clip-path="url(#clip_ff_not_eyes2)"/>'
              + not_eyes_clip().replace("clip_hair_not_eyes", "clip_ff_not_eyes2"))
@@ -532,9 +545,15 @@ def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
     eye_skin = "".join(f'<circle cx="{f(c[0])}" cy="{f(c[1])}" r="{f(c[2] + 9)}" fill="{CF.C["skin"]}"/>'
                        for c in (E.master_eye("right")[0], E.master_eye("left")[0]))
     import chibi_body as CB
-    return (CB.neck() + face_fill + hair_cel() + crown_clean() + (CB.body() if body else "") + eye_skin + blush + CF.nose()
-            + CF.mouth(mouth_shape) + E.eye("right", eyes, look) + E.eye("left", eyes, look) + E.brow("right")
-            + E.brow("left") + ears_cel())
+    # the lower hair and the body come from the full-body picture (already the right size): not scaled
+    neck_hole = smooth([(x, 495 if y < 508 else y) for x, y in CB.B["parts"]["neck"]["layers"]["skin"][0]], True)
+    no_neck = (f'<clipPath id="clip_hair_not_neck"><path d="M-500,-500 H1000 V1500 H-500 Z {neck_hole}" '
+               f'clip-rule="evenodd"/></clipPath>')   # the head picture's hair behind the neck: the body picture's neck wins
+    return (hb_under + head_tf(face_fill) + CB.neck() + no_neck + '<g clip-path="url(#clip_hair_not_neck)">'
+            + head_tf(hair_cel()) + "</g>" + hair_body_lower() + head_tf(crown_clean())
+            + (CB.body() if body else "")
+            + '<g id="face">' + head_tf(eye_skin + blush + CF.nose() + CF.mouth(mouth_shape) + E.eye("right", eyes, look)
+                                        + E.eye("left", eyes, look) + E.brow("right") + E.brow("left") + ears_cel()) + "</g>")
 
 
 def compare_v2(out, new_ref):
