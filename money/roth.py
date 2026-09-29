@@ -37,13 +37,13 @@ TRIGGERS = {
     "trad": ["break", "cute", "retire", "hand"],
     "roth": ["now", "later", "growth"],
     "secret": ["same", "exactly"],
-    "math": ["ten", "grows", "tax", "later", "keep", "either"],
+    "math": ["10", "grows", "tax", "later", "keep", "either"],
     "question": ["higher", "later"],
     "roth_win": ["young", "starting", "big", "roth", "lowest"],
     "trad_win": ["most", "less", "traditional", "bracket"],
     "perks": ["take", "penalty", "growth", "forces"],
-    "catch": ["earn", "hundred", "straight"],
-    "limit": ["seven", "total"],
+    "catch": ["earn", "150", "straight"],
+    "limit": ["7500", "total"],
     "outro": ["split", "follow"],
 }
 CHIBI = {"hook", "secret", "outro"}
