@@ -146,6 +146,7 @@ def finger_lines(side):
 SLEEVE_CREASE = {"right": [(137.5, 530), (137, 552), (135.5, 566), (135, 580), (135.5, 610)]}   # measured
 SLEEVE_CREASE["left"] = [(2 * 188.1 - x, y) for x, y in SLEEVE_CREASE["right"]]
 SHOULDER_R, OVERLAP = 14, 3
+SHOULDER_PIVOT = (3, 549)      # the arm turns around this point: units out from the sleeve crease, y
 
 
 def arm_joints(side):
@@ -168,7 +169,7 @@ def arm_joints(side):
     w = lambda y: (rows[y][1] - rows[y][0]) / 2
     crease = SLEEVE_CREASE[side]
     sgn = -1 if side == "right" else 1
-    shoulder = (crease[2][0] + sgn * 9, 563)
+    shoulder = (crease[2][0] + sgn * SHOULDER_PIVOT[0], SHOULDER_PIVOT[1])
     return {"shoulder": shoulder, "elbow": c(elbow_y), "wrist": c(wrist_y), "elbow_r": w(elbow_y) + 3,
             "wrist_r": w(wrist_y) + 3, "top": c(top)}
 
@@ -221,10 +222,24 @@ def torso():
     band = ([(x - OVERLAP, y) for x, y in SLEEVE_CREASE["right"]]
             + [(x + OVERLAP, y) for x, y in SLEEVE_CREASE["left"]][::-1])
     y0, y1 = SLEEVE_CREASE["right"][0][1] + 4, SLEEVE_CREASE["right"][-1][1] - 4
-    top = [(-20, 0), (420, 0), (420, y0), (-20, y0)]                  # above / below the creases: all shirt stays
+    xr, xl = SLEEVE_CREASE["right"][0][0] - OVERLAP, SLEEVE_CREASE["left"][0][0] + OVERLAP
+    top = [(xr, 0), (xl, 0), (xl, y0), (xr, y0)]              # above the creases, between them (not the sleeve tops)
     below = [(-20, y1), (420, y1), (420, 1000), (-20, 1000)]
-    discs = [_disc(arm_joints(s)["shoulder"], SHOULDER_R) for s in ("right", "left")]
-    return _clip("clip_torso", [band, top, below] + discs) + _clipped("clip_torso", part("torso"))
+    # a round, outlined shoulder under the shirt: when the sleeve turns away it fills in (no notch, no raw cut)
+    caps = shoulder_cap("right") + shoulder_cap("left")
+    return caps + _clip("clip_torso", [band, top, below]) + _clipped("clip_torso", part("torso"))
+
+
+SHOULDER_CAP = (1.5, -3.0, 14.5)    # round shoulder under each sleeve: shift inwards / down from the pivot, radius
+
+
+def shoulder_cap(side):
+    """A round, outlined shirt shoulder at the shoulder pivot: when the sleeve turns away, this shows instead of a gap."""
+    x, y = arm_joints(side)["shoulder"]
+    dx, dy, r = SHOULDER_CAP
+    x += dx if side == "right" else -dx
+    return (f'<circle cx="{x:.2f}" cy="{y + dy:.2f}" r="{r}" fill="{COL["shirt"]}" stroke="{OUTLINE}" '
+            f'stroke-width="{JOINT_LINE}"/>')
 
 
 JOINT_LINE = 3.5     # outline width around a bent joint's round knob
