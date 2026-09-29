@@ -654,6 +654,10 @@ def render(out):
     with tempfile.TemporaryDirectory() as d:
         wav = os.path.join(d, "a.wav")
         sf.write(wav, audio, SR)
+        # frames go straight into ffmpeg (no thousands of PNGs on disk)
+        enc = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
+                                "-framerate", str(FPS), "-i", "-", "-i", wav, "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                                "-crf", "19", "-c:a", "aac", "-b:a", "192k", "-shortest", out], stdin=subprocess.PIPE)
         for fi in range(int(total * FPS)):
             T = fi / FPS
             s = max((x for x in S if x["t0"] <= T), key=lambda x: x["t0"], default=S[0])
@@ -685,10 +689,10 @@ def render(out):
                 dd.rounded_rectangle((150, 1560, W - 150, 1780), 40, fill=PINK)
                 dd.text((W / 2, 1635), "follow for part 2", font=font(60 * kk + 1), fill=(255, 255, 255), anchor="mm")
                 dd.text((W / 2, 1715), "what should she do next?", font=font(38 * kk + 1), fill=(255, 255, 255), anchor="mm")
-            frame.convert("RGB").save(os.path.join(d, f"f{fi:04d}.png"))
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS), "-i", os.path.join(d, "f%04d.png"),
-                        "-i", wav, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-c:a", "aac", "-b:a", "192k",
-                        "-shortest", out], check=True)
+            enc.stdin.write(frame.convert("RGB").tobytes())
+        enc.stdin.close()
+        if enc.wait():
+            raise RuntimeError("ffmpeg failed")
     print("wrote", out, f"({total:.1f} s)")
 
 
