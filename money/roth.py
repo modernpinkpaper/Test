@@ -32,7 +32,7 @@ font, pop, ease = T.font, T.pop, T.ease
 
 # words in each line that trigger a reveal (first spoken word starting with this text, after the previous trigger)
 TRIGGERS = {
-    "hook": ["roth", "traditional", "tipping", "thirty"],
+    "hook": ["roth", "traditional", "tipping", "30"],
     "one": ["now", "later"],
     "trad": ["break", "cute", "retire", "hand"],
     "roth": ["now", "later", "growth"],
@@ -43,7 +43,7 @@ TRIGGERS = {
     "trad_win": ["most", "less", "traditional", "bracket"],
     "perks": ["take", "penalty", "growth", "forces"],
     "catch": ["earn", "150", "straight"],
-    "limit": ["7500", "total"],
+    "limit": ["7", "total"],
     "outro": ["split", "follow"],
 }
 CHIBI = {"hook", "secret", "outro"}
@@ -78,6 +78,17 @@ def words_of(path):
     return json.load(open(cache))
 
 
+def join_words(ws, t):
+    """Whisper splits numbers ("$7", ",500"): glue pieces that start with punctuation back on."""
+    out = []
+    for w, s, _ in ws:
+        if out and w[:1] in ",.%":
+            out[-1] = (out[-1][0] + w, out[-1][1])
+        else:
+            out.append((w, t + s))
+    return out
+
+
 def clean(w):
     return "".join(ch for ch in w.lower() if ch.isalnum())
 
@@ -105,7 +116,7 @@ def build():
                 i = j + 1
         voice[int(t * SR):int(t * SR) + len(a)] += a
         plan.append(dict(key=key, tone=tone, text=text, t0=t, t1=t + dur, cues=cues, trig=trig,
-                         words=[(w, t + s) for w, s, _ in ws]))
+                         words=join_words(ws, t)))
         t += dur + 0.18
     total = t + 2.2
     voice = voices.clarity(voice[:int(total * SR)])
@@ -265,7 +276,7 @@ def s_trad(d, t, p, im):
 
 def s_roth(d, t, p, im):
     timeline(d, t, p, "ROTH IRA", GREEN, [("TODAY", "you pay the tax", False), ("RETIREMENT", "100% tax-free", True)], 0)
-    popt(d, (W / 2, 1210), "(the growth too!)", 50, GREEN, pop(since(p, 2, t)))
+    popt(d, (W / 2, 1110), "(the growth too!)", 44, GREEN, pop(since(p, 2, t)))
 
 
 def s_secret(d, t, p, im):
@@ -279,8 +290,8 @@ def s_secret(d, t, p, im):
 
 def s_math(d, t, p, im):
     popt(d, (W / 2, 350), "$10,000 · 22% tax rate · grows 8x", 44, GREY, pop(t - p["t0"] + .3), False)
-    cols = ((290, BLUE, "TRADITIONAL", ["$10,000", "x8  →  $80,000", "tax 22%", "$62,400"]),
-            (790, GREEN, "ROTH", ["$10,000", "tax 22%  →  $7,800", "x8", "$62,400"]))
+    cols = ((290, BLUE, "TRADITIONAL", ["$10,000", "x8 = $80,000", "-22% tax", "$62,400"]),
+            (790, GREEN, "ROTH", ["$10,000", "-22% tax = $7,800", "x8", "$62,400"]))
     steps = [0, 1, 2, 4]                                # which trigger shows each step
     for x, col, name, rows in cols:
         card(d, (x - 235, 420, x + 235, 1060), (255, 255, 255), 1, outline=col)
@@ -295,7 +306,7 @@ def s_math(d, t, p, im):
                 f = fit(txt, (64 if last else 44) * k + 1, 420)
                 d.text((x, y), txt, font=f, fill=CREAM if last else INK, anchor="mm")
             if n < len(rows) - 1 and pop(since(p, steps[n + 1], t)) > .02:
-                d.text((x, y + 62), "↓", font=font(34, False), fill=MUTED, anchor="mm")
+                d.polygon([(x - 11, y + 54), (x + 11, y + 54), (x, y + 70)], fill=MUTED)   # down arrow
     k = pop(since(p, 5, t), .4)
     if k > .02:
         d.ellipse((W / 2 - 70 * k, 960 - 70 * k, W / 2 + 70 * k, 960 + 70 * k), fill=GOLD, outline=INK, width=6)
@@ -330,7 +341,8 @@ def checklist(d, t, p, head, col, items, result):
             d.text((240, y), txt, font=fit(txt, 52, 720), fill=INK, anchor="lm")
     k = pop(since(p, len(items), t) if result[1] is None else since(p, result[1], t))
     card(d, (90, 960, W - 90, 1110), col, k)
-    popt(d, (W / 2, 1035), result[0], 50, CREAM, k)
+    if k > .02:
+        d.text((W / 2, 1035), result[0], font=fit(result[0], 50 * k + 1, (W - 240) * k), fill=CREAM, anchor="mm")
 
 
 def s_roth_win(d, t, p, im):
@@ -487,7 +499,7 @@ def render(out):
                 k = pop(t - plan[-1]["t1"] - .2)
                 dd.rounded_rectangle((110, 1140, W - 110, 1330), 30, fill=PINK)
                 dd.text((W / 2, 1200), "Roth or Traditional?", font=font(62 * k + 1), fill=CREAM, anchor="mm")
-                dd.text((W / 2, 1275), "tell me which one you picked ↓", font=font(40 * k + 1, False), fill=CREAM,
+                dd.text((W / 2, 1275), "tell me which one you picked", font=font(40 * k + 1, False), fill=CREAM,
                         anchor="mm")
             frame.save(os.path.join(d, f"f{fi:04d}.png"))
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS), "-i", os.path.join(d, "f%04d.png"),
