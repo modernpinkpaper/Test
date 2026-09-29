@@ -167,6 +167,13 @@ def main(path):
     paper = cv2.dilate((C["paper"] | C["white"]).astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool)
     behind = smooth_mask(behind & ~paper, 9)               # (the white gap between hand and hip stays white)
     backing_sil &= ~(arms_zone & ~region)                  # nothing dark left behind where an arm leaves the hair
+    # the outline ring around the white gap between hand and hip, where the arm's own outline covers it at rest
+    # (it would show as a dark loop when the arm lifts)
+    gap = (C["paper"] | C["white"]) & ~background & cv2.dilate(arms.astype(np.uint8), np.ones((41, 41), np.uint8)).astype(bool) & (yy > shirt_bottom)
+    gap_ring = cv2.dilate(gap.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3 * RING, 3 * RING))).astype(bool)
+    under_arm = cv2.dilate(arms.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (RING, RING))).astype(bool)
+    backing_sil &= ~(gap_ring & under_arm)
+    behind &= ~(gap_ring & under_arm)
     parts["hair_behind_arms"] = {"hair_hidden": behind}
     out = {"colours": {n: "#%02x%02x%02x" % PALETTE[n] for n in NAMES}, "parts": {}}
     ring = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (RING, RING))
@@ -178,6 +185,9 @@ def main(path):
         r_ = ring if "shoe" not in name else cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (SHOE_OUT, SHOE_OUT))
         sil = cv2.dilate(allm.astype(np.uint8), r_).astype(bool) & (outline | allm | C["shirt"])
         sil = cv2.morphologyEx(sil.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+        if not name.endswith("_arm") and name not in ("backing", "hair_behind", "hair_behind_arms"):
+            # an arm's outline belongs to the arm (it moves): not to the shirt / jeans silhouette next to it
+            sil &= ~(under_arm & ~cv2.dilate(allm.astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)).astype(np.uint8)
         if name.endswith("_leg"):                     # the outline must not poke out above / below the overlap
             sil &= (yy > split_y - LEG_OVERLAP + 4).astype(np.uint8)
         if name == "hips":

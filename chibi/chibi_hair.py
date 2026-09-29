@@ -548,7 +548,11 @@ def hair_edge(svg):
     return smooth([(x / k, y / k) for x, y in pts], True)
 
 
-def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True, pose=None):
+NECK_PIVOT = (188.1, 505.0)     # the head (with all its hair) tilts around this point
+
+
+def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True, pose=None, tilt=0.0):
+    """The whole character. pose: arm angles (chibi_body.body); tilt: head tilt in degrees (+ = clockwise)."""
     backing = "".join(f'<ellipse cx="{f(x)}" cy="{f(y)}" rx="9" ry="9" fill="{H2["colours"]["outline"]}"/>'
                       for x, y in from_new([(686, 684), (262, 684)]))   # dark behind the ear bottoms (no white specks)
     hb_under = ("".join(path(p, fill=HB["colours"]["outline"]) for p in HB["silhouette"])     # dark behind the head,
@@ -574,12 +578,15 @@ def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True, pose=N
     hair = head_tf(hair_cel())
     edge = hair_edge(hb_under + head_tf(face_fill) + hair + hair_body_lower() + head_tf(crown_clean()))
     clip = lambda svg: f'<g clip-path="url(#clip_hair_edge)">{svg}</g>'
-    return (f'<clipPath id="clip_hair_edge"><path d="{edge}"/></clipPath><path d="{edge}" fill="{H2["colours"]["outline"]}"/>'
-            + clip(hb_under + head_tf(face_fill)) + CB.neck() + no_neck
-            + clip('<g clip-path="url(#clip_hair_not_neck)">' + hair + "</g>" + hair_body_lower() + head_tf(crown_clean()))
+    rot = (lambda svg: f'<g transform="rotate({tilt:.2f} {NECK_PIVOT[0]} {NECK_PIVOT[1]})">{svg}</g>') if tilt else (lambda svg: svg)
+    return (rot(f'<clipPath id="clip_hair_edge"><path d="{edge}"/></clipPath><path d="{edge}" fill="{H2["colours"]["outline"]}"/>'
+                + clip(hb_under + head_tf(face_fill)))
+            + CB.neck()
+            + rot(no_neck + clip('<g clip-path="url(#clip_hair_not_neck)">' + hair + "</g>" + hair_body_lower()
+                                 + head_tf(crown_clean())))
             + (CB.body(pose, arms=False) if body else "")
-            + '<g id="face">' + head_tf(eye_skin + blush + CF.nose() + CF.mouth(mouth_shape) + E.eye("right", eyes, look)
-                                        + E.eye("left", eyes, look) + E.brow("right") + E.brow("left") + ears_cel()) + "</g>"
+            + rot('<g id="face">' + head_tf(eye_skin + blush + CF.nose() + CF.mouth(mouth_shape) + E.eye("right", eyes, look)
+                                            + E.eye("left", eyes, look) + E.brow("right") + E.brow("left") + ears_cel()) + "</g>")
             + (CB.arms_front(pose) if body else ""))       # arms last: a raised hand goes in front of the face
 
 

@@ -13,7 +13,7 @@ import chibi_eyes as E
 HERE = os.path.dirname(os.path.abspath(__file__))
 B = json.load(open(os.path.join(HERE, "ref", "measured_body.json")))
 smooth, f = E.smooth, E.f
-COL = dict(B["colours"], shoe=B["colours"]["shirt"], white="#ffffff", sole="#dadada", hair_dark=B["colours"]["outline2"], seam=B["colours"]["outline"], shade=B["colours"]["outline"], hair_hidden="#2a170e")
+COL = dict(B["colours"], shoe=B["colours"]["shirt"], white="#ffffff", sole="#dadada", hair_dark=B["colours"]["outline2"], seam=B["colours"]["outline"], shade=B["colours"]["outline"], hair_hidden="#3d261a")
 LAYER_ORDER = ["hair_hidden", "hair_dark", "hair", "hair_light", "shirt", "skin", "skin_shade", "jeans", "seam", "stitch", "shoe", "shade", "white", "sole"]
 OUTLINE = COL["outline"]
 
@@ -32,7 +32,26 @@ def neck():
     the arms, painted in a shadow tone so a raised arm shows hair, not a hole; then the neck."""
     hidden = "".join(f'<path d="{smooth(s, True)}" fill="{COL["hair_hidden"]}"/>'
                      for s in B["parts"].get("hair_behind_arms", {}).get("layers", {}).get("hair_hidden", []))
-    return part("backing") + f'<g id="hair_hidden">{hidden}</g>' + part("neck")
+    return part("backing") + f'<g id="hair_hidden">{hidden}{hidden_locks()}</g>' + part("neck")
+
+
+def hidden_locks(step=10.0):
+    """Dark lines between locks across the hidden hair (it would otherwise be one flat patch when an arm lifts):
+    gently tapered, falling outwards like the visible locks next to them."""
+    shapes = B["parts"].get("hair_behind_arms", {}).get("layers", {}).get("hair_hidden", [])
+    if not shapes:
+        return ""
+    clip = "".join(f'<path d="{smooth(s, True)}"/>' for s in shapes)
+    g = []
+    for s in shapes:
+        P = np.array(s)
+        x0, y0, x1, y1 = P[:, 0].min(), P[:, 1].min(), P[:, 0].max(), P[:, 1].max()
+        out = -1 if P[:, 0].mean() < 188.1 else 1               # which way the hair falls (away from the body)
+        for i, x in enumerate(np.arange(x0 - 20, x1 + 20, step)):
+            top, bot = y0 - 5, y1 + 5
+            pts = [(x, top), (x + out * 4, (top * 2 + bot) / 3), (x + out * 10, (top + 2 * bot) / 3), (x + out * 18, bot)]
+            g.append(taper_line(pts, 2.6 if i % 2 else 1.8, COL["hair_dark"]))
+    return f'<clipPath id="clip_hidden_hair">{clip}</clipPath><g clip-path="url(#clip_hidden_hair)">{"".join(g)}</g>'
 
 
 def taper_line(pts, w, colour):
@@ -252,7 +271,13 @@ def arm(side, shoulder=0.0, elbow=0.0, wrist=0.0, hand=None):
              + _clip(cid + "_sleeve", [sleeve_region(side)]))
     # (hard cuts: a soft cut through the stacked layers of a drawing leaves a faint seam line)
     forearm = _clipped(cid + "_fore", _clipped(cid + "_fore2", drawing))
-    if hand:        # the sheet hand goes over the end of the forearm (its open wrist cut hides inside the forearm)
+    if isinstance(hand, (tuple, list)):     # (name, mix): cross-fade from her own hand to a sheet hand (no pop)
+        name, mix = hand
+        own = _clipped(cid + "_hand", drawing)
+        hand_g = (f'<g id="{side}_hand"{_rot(wrist, J["wrist"])}>'
+                  f'<g opacity="{1 - mix:.3f}">{own}</g><g opacity="{mix:.3f}">{swapped_hand(side, name, J, d_lower)}</g></g>')
+        fore = f'<g id="{side}_forearm"{_rot(elbow, J["elbow"])}>{forearm}{hand_g}</g>'
+    elif hand:        # the sheet hand goes over the end of the forearm (its open wrist cut hides inside the forearm)
         hand_g = f'<g id="{side}_hand"{_rot(wrist, J["wrist"])}>{swapped_hand(side, hand, J, d_lower)}</g>'
         fore = f'<g id="{side}_forearm"{_rot(elbow, J["elbow"])}>{forearm}{hand_g}</g>'
     else:
