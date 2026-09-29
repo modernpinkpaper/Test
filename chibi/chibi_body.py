@@ -13,8 +13,8 @@ import chibi_eyes as E
 HERE = os.path.dirname(os.path.abspath(__file__))
 B = json.load(open(os.path.join(HERE, "ref", "measured_body.json")))
 smooth, f = E.smooth, E.f
-COL = dict(B["colours"], shoe=B["colours"]["shirt"], white="#ffffff", sole="#dadada", hair_dark=B["colours"]["outline2"], seam=B["colours"]["outline"], shade=B["colours"]["outline"])
-LAYER_ORDER = ["hair_dark", "hair", "hair_light", "shirt", "skin", "skin_shade", "jeans", "seam", "stitch", "shoe", "shade", "white", "sole"]
+COL = dict(B["colours"], shoe=B["colours"]["shirt"], white="#ffffff", sole="#dadada", hair_dark=B["colours"]["outline2"], seam=B["colours"]["outline"], shade=B["colours"]["outline"], hair_hidden="#2a170e")
+LAYER_ORDER = ["hair_hidden", "hair_dark", "hair", "hair_light", "shirt", "skin", "skin_shade", "jeans", "seam", "stitch", "shoe", "shade", "white", "sole"]
 OUTLINE = COL["outline"]
 
 
@@ -28,7 +28,11 @@ def part(name):
 
 
 def neck():
-    return part("backing") + part("neck")        # backing: dark fill of the whole figure, behind everything
+    """backing: dark fill of the figure behind everything (not behind the arms: they move); the hair hidden behind
+    the arms, painted in a shadow tone so a raised arm shows hair, not a hole; then the neck."""
+    hidden = "".join(f'<path d="{smooth(s, True)}" fill="{COL["hair_hidden"]}"/>'
+                     for s in B["parts"].get("hair_behind_arms", {}).get("layers", {}).get("hair_hidden", []))
+    return part("backing") + f'<g id="hair_hidden">{hidden}</g>' + part("neck")
 
 
 def taper_line(pts, w, colour):
@@ -116,11 +120,118 @@ def finger_lines(side):
     return f'<clipPath id="clip_skin_{side}">{skin}</clipPath><g clip-path="url(#clip_skin_{side})">{g}</g>'
 
 
-def arm(side):
-    return part(f"{side}_arm")[:-4] + finger_lines(side) + "</g>"
+# ---------------------------------------------------------------- arm rig: shoulder -> elbow -> wrist
+# Each arm is cut into sleeve + upper arm, forearm and hand. A segment is the whole arm drawing clipped to its
+# region; the regions overlap a little (no seams) and every joint has a round disc, so a bent joint shows a round
+# knob instead of a gap. The segments are nested groups: turning the shoulder carries the forearm and hand along.
+SLEEVE_CREASE = {"right": [(137.5, 530), (137, 552), (135.5, 566), (135, 580), (135.5, 610)]}   # measured
+SLEEVE_CREASE["left"] = [(2 * 188.1 - x, y) for x, y in SLEEVE_CREASE["right"]]
+SHOULDER_R, OVERLAP = 14, 3
 
 
-def body():
-    """Everything below the neck, back to front."""
-    parts = part("right_shoe") + part("left_shoe") + jeans() + part("torso") + arm("right") + arm("left")
+def arm_joints(side):
+    """Shoulder, elbow and wrist of one arm, measured from the arm's skin shape (drawing units) + joint radii.
+    wrist = narrowest row of the lower arm; elbow = halfway between the top of the arm and the wrist."""
+    import cv2
+    k = 4
+    m = np.zeros((1000 * k, 400 * k), np.uint8)
+    for sh in B["parts"][f"{side}_arm"]["layers"]["skin"]:
+        cv2.fillPoly(m, [np.round(np.array(sh) * k).astype(np.int32)], 1)
+    rows = {}
+    for y in range(560, 760):
+        xs = np.where(m[y * k])[0]
+        if len(xs):
+            rows[y] = (xs.min() / k, xs.max() / k)
+    top = min(y for y, (a, b) in rows.items() if b - a > 20)
+    wrist_y = min((y for y in rows if 670 <= y <= 700), key=lambda y: rows[y][1] - rows[y][0])
+    elbow_y = round((top + wrist_y) / 2)
+    c = lambda y: ((rows[y][0] + rows[y][1]) / 2, y)
+    w = lambda y: (rows[y][1] - rows[y][0]) / 2
+    crease = SLEEVE_CREASE[side]
+    sgn = -1 if side == "right" else 1
+    shoulder = (crease[2][0] + sgn * 9, 563)
+    return {"shoulder": shoulder, "elbow": c(elbow_y), "wrist": c(wrist_y), "elbow_r": w(elbow_y) + 3,
+            "wrist_r": w(wrist_y) + 3, "top": c(top)}
+
+
+def _halfplane(p, d, keep_before, shift=0.0, L=400):
+    """Polygon covering the side of the line through p (perpendicular to direction d) before or after it."""
+    d = np.array(d, float) / np.linalg.norm(d)
+    n = np.array([-d[1], d[0]])
+    p = np.array(p, float) + d * (shift if keep_before else -shift)
+    far = -d * L if keep_before else d * L
+    return [p + n * L, p - n * L, p - n * L + far, p + n * L + far]
+
+
+def _disc(c, r, n=48):
+    t = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    return list(zip(c[0] + r * np.cos(t), c[1] + r * np.sin(t)))
+
+
+def _clip(cid, polys):
+    """clipPath = union of polygons. All are wound the same way: overlapping shapes add up instead of cancelling."""
+    out = []
+    for P in polys:
+        P = np.array(P, float)
+        area = np.sum(P[:, 0] * np.roll(P[:, 1], -1) - np.roll(P[:, 0], -1) * P[:, 1])
+        if area < 0:
+            P = P[::-1]
+        out.append("M" + " L".join(f"{x:.2f},{y:.2f}" for x, y in P) + " Z")
+    return f'<clipPath id="{cid}"><path d="{" ".join(out)}"/></clipPath>'
+
+
+def _clipped(cid, content):
+    """content clipped by clip path cid with a hard cut (cairo takes the clip's anti-aliasing from the parent)."""
+    return f'<g shape-rendering="crispEdges"><g clip-path="url(#{cid})" shape-rendering="auto">{content}</g></g>'
+
+
+def _rot(angle, c):
+    return f' transform="rotate({angle:.2f} {c[0]:.2f} {c[1]:.2f})"' if angle else ""
+
+
+def sleeve_region(side, outward=0.0):
+    """Everything on the arm's side of the sleeve crease (moved `outward` units further out)."""
+    sgn = -1 if side == "right" else 1
+    cr = [(x + sgn * outward, y) for x, y in SLEEVE_CREASE[side]]
+    edge = 400 if side == "left" else -20
+    return cr + [(edge, cr[-1][1]), (edge, cr[0][1])]
+
+
+def torso():
+    """The shirt without its sleeves (they move with the upper arms), + a round shoulder under each sleeve."""
+    band = ([(x - OVERLAP, y) for x, y in SLEEVE_CREASE["right"]]
+            + [(x + OVERLAP, y) for x, y in SLEEVE_CREASE["left"]][::-1])
+    y0, y1 = SLEEVE_CREASE["right"][0][1] + 4, SLEEVE_CREASE["right"][-1][1] - 4
+    top = [(-20, 0), (420, 0), (420, y0), (-20, y0)]                  # above / below the creases: all shirt stays
+    below = [(-20, y1), (420, y1), (420, 1000), (-20, 1000)]
+    discs = [_disc(arm_joints(s)["shoulder"], SHOULDER_R) for s in ("right", "left")]
+    return _clip("clip_torso", [band, top, below] + discs) + _clipped("clip_torso", part("torso"))
+
+
+def arm(side, shoulder=0.0, elbow=0.0, wrist=0.0):
+    """One arm as nested groups; angles in degrees (positive = clockwise on screen)."""
+    J = arm_joints(side)
+    drawing = part(f"{side}_arm")[:-4] + finger_lines(side) + "</g>"
+    d_upper = np.subtract(J["elbow"], J["top"])
+    d_lower = np.subtract(J["wrist"], J["elbow"])
+    cid = f"clip_{side}"
+    clips = (_clip(cid + "_upper", [_halfplane(J["elbow"], d_upper, True), _disc(J["elbow"], J["elbow_r"])])
+             + _clip(cid + "_fore", [_halfplane(J["elbow"], d_upper, False, OVERLAP), _disc(J["elbow"], J["elbow_r"])])
+             + _clip(cid + "_fore2", [_halfplane(J["wrist"], d_lower, True), _disc(J["wrist"], J["wrist_r"])])
+             + _clip(cid + "_hand", [_halfplane(J["wrist"], d_lower, False, OVERLAP), _disc(J["wrist"], J["wrist_r"])])
+             + _clip(cid + "_sleeve", [sleeve_region(side)]))
+    # (hard cuts: a soft cut through the stacked layers of a drawing leaves a faint seam line)
+    hand = f'<g id="{side}_hand"{_rot(wrist, J["wrist"])}>{_clipped(cid + "_hand", drawing)}</g>'
+    fore = (f'<g id="{side}_forearm"{_rot(elbow, J["elbow"])}>{hand}'
+            + _clipped(cid + "_fore", _clipped(cid + "_fore2", drawing)) + "</g>")
+    upper = _clipped(cid + "_upper", drawing)
+    sleeve = _clipped(cid + "_sleeve", part("torso"))
+    return clips + f'<g id="{side}_arm"{_rot(shoulder, J["shoulder"])}>{fore}{upper}{sleeve}</g>'
+
+
+def body(pose=None):
+    """Everything below the neck, back to front. pose: {"right": (shoulder, elbow, wrist), "left": (...)} degrees."""
+    pose = pose or {}
+    parts = (part("right_shoe") + part("left_shoe") + jeans() + torso()
+             + arm("right", *pose.get("right", ())) + arm("left", *pose.get("left", ())))
     return '<g id="body">' + parts + "</g>"

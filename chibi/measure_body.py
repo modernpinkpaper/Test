@@ -133,13 +133,41 @@ def main(path):
     parts["backing"] = {"_": np.zeros_like(figure, bool)}
     body_union = np.zeros(figure.shape, np.uint8)
     for nm, lay in parts.items():
-        if nm in ("backing", "hair_behind"):
+        if nm in ("backing", "hair_behind", "hair_behind_arms"):
             continue
         for m in lay.values():
             body_union |= m.astype(np.uint8)
     body_union = cv2.morphologyEx(body_union, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (61, 61)))
     body_union = cv2.dilate(body_union, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (55, 55)))
     backing_sil = figure.astype(bool) & body_union.astype(bool) & (yy > shirt_top - 10)   # gaps between / around the parts
+    # the arms move: nothing dark may stay behind them, except inside the hair, where the hidden hair is painted in
+    arms = parts["right_arm"]["skin"] | parts["left_arm"]["skin"]
+    arms_zone = cv2.dilate(arms.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (RING + 8, RING + 8))).astype(bool)
+    hair_px = (C["hair"] | C["hair_light"] | C["outline2"]) & ~background & (yy > shirt_top - 20) & ~arms_zone
+    hair_px = cv2.morphologyEx(hair_px.astype(np.uint8), cv2.MORPH_OPEN, np.ones((5, 5), np.uint8)).astype(bool)
+    # (for the hair's bottom edge: hair pixels right up to the arms' outline, which is ~9 px thick)
+    hair_low = (C["hair"] | C["hair_light"] | C["outline2"]) & ~background & ~cv2.dilate(arms.astype(np.uint8), np.ones((19, 19), np.uint8)).astype(bool)
+    hair_low = cv2.morphologyEx(hair_low.astype(np.uint8), cv2.MORPH_OPEN, np.ones((5, 5), np.uint8)).astype(bool)
+    behind = np.zeros_like(arms)
+    for sgn in (-1, 1):                                   # per side: inside the hair's outer edge and above its bottom
+        side_hair = hair_px & (sgn * (xx - mid) > 60)
+        rows = side_hair.any(1)
+        out_x = np.where(rows, np.where(side_hair, sgn * xx, -10 ** 6).max(1) * sgn, 0)
+        low = hair_low & (sgn * (xx - mid) > 60) & (yy > shirt_top + 40)   # hair bottom per column (below the shoulders) ...
+        bottom = np.where(low.any(0), np.where(low, yy, -1).max(0), -1).astype(float)
+        # ... as the lowest hair among the nearby columns (the arm hides the hair in the columns it covers)
+        bottom = cv2.dilate(bottom.astype(np.float32)[None, :], np.ones((1, 81), np.uint8))[0]
+        inside_row = rows[:, None] & (sgn * (xx - out_x[:, None]) <= 0) & (sgn * (xx - mid) > 0)
+        behind |= inside_row & (yy <= bottom[None, :])
+    # inside the hair (hidden or not): + every dark hair / shadow pixel of the reference not part of an arm's outline
+    region = behind | (hbo & ~cv2.dilate(arms.astype(np.uint8), np.ones((13, 13), np.uint8)).astype(bool))
+    region = cv2.dilate(region.astype(np.uint8), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))).astype(bool)
+    behind = region.copy()
+    behind &= arms_zone
+    paper = cv2.dilate((C["paper"] | C["white"]).astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool)
+    behind = smooth_mask(behind & ~paper, 9)               # (the white gap between hand and hip stays white)
+    backing_sil &= ~(arms_zone & ~region)                  # nothing dark left behind where an arm leaves the hair
+    parts["hair_behind_arms"] = {"hair_hidden": behind}
     out = {"colours": {n: "#%02x%02x%02x" % PALETTE[n] for n in NAMES}, "parts": {}}
     ring = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (RING, RING))
     for name, layers in parts.items():
