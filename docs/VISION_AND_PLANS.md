@@ -234,3 +234,18 @@ the box, so a prompt may be captured partially, not always the final full wordin
   and chat title (e.g. she asked Claude about a "JSON parsing error" opening the MPP orders JSON), but
   NOT the exact error text/line or what the fix changed (those live in the file + the AI reply, which
   MT Log does not read). Prompts are captured on focus-leave, so they can be partial.
+
+## Rollout approach (Dalia, 2026-09-29): collect real data first, design later
+- Install MT Log on the team PCs and let it run ~1-2 weeks, then review the real logs to decide the
+  categories, grades, identifiers, and report format from actual work patterns (rather than guessing).
+- Intent is patterns/help, NOT policing: Dalia does NOT care about personal Googling, short breaks,
+  or minor things. Reports should surface only MEANINGFUL patterns — a problem, or a chance to help
+  someone optimize (e.g. "jumps between many projects -> suggest focusing on one at a time + give tools").
+  Reports should NOT nitpick benign personal activity or normal breaks.
+- Disclosure timing is Dalia's decision (company-owned PCs at her workplace). Low-risk: activity
+  metadata. Higher-risk: message/chat CONTENT capture -> the standard cover is a one-line
+  "we may monitor activity on company devices" acceptable-use / handbook clause, added if/when she
+  discloses. Not a blocker to collecting data now.
+- Setup check: all team PCs run Google Drive for desktop. Confirm whether each is signed into Dalia's
+  own Google account (logs reach her, but employees could open her whole Drive) vs a shared folder /
+  dedicated logging account (safer). This decides where logs land.
