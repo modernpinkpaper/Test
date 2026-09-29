@@ -23,8 +23,8 @@ TONES = ["outline", "shadow", "base", "light", "highlight"]     # darkest to lig
 TONE_MEDIAN, TRACE_SIGMA, TRACE_EPS, MIN_AREA = 1, 0.8, 0.5, 15     # tuned by the hair overlap score
 
 
-def main(path):
-    T = json.load(open(os.path.join(HERE, "ref", "new_to_old.json")))
+def main(path, tfile="new_to_old.json", face_seed=(470, 640), out_name="measured_hair2.json"):
+    T = json.load(open(os.path.join(HERE, "ref", tfile)))
     s, (nx, ny), (ox, oy) = T["scale"], T["new_mid"], T["old_mid"]
     to_old = lambda pts: [[round((x - nx) / s + ox, 2), round((y - ny) / s + oy, 2)] for x, y in pts]
 
@@ -34,7 +34,7 @@ def main(path):
     # face (skin with the eyes etc. inside): excluded, so iris / brow browns never count as hair
     skin = ((R > 225) & (G > 160) & (B > 120) & ((R - G) < 75)).astype(np.uint8)
     n, lab, st, _ = cv2.connectedComponentsWithStats(skin)
-    face_k = lab[640, 470]
+    face_k = lab[face_seed[1], face_seed[0]]
     cnts, _ = cv2.findContours((lab == face_k).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     face = np.zeros_like(skin)
     cv2.drawContours(face, [max(cnts, key=cv2.contourArea)], -1, 1, -1)
@@ -81,7 +81,7 @@ def main(path):
         out["tones"][t] = [to_old(p) for p in blobs(mt, TRACE_SIGMA, TRACE_EPS, MIN_AREA)]
     # face-shaped skin area (so the face under the hair is always covered with skin)
     out["face_fill"] = to_old(traced(face.astype(bool), (0, 0), 2.0, 1.0))
-    path_json = os.path.join(HERE, "ref", "measured_hair2.json")
+    path_json = os.path.join(HERE, "ref", out_name)
     if os.path.exists(path_json):                       # keep other measurements stored in the same file
         prev = json.load(open(path_json))
         for k, v in prev.items():

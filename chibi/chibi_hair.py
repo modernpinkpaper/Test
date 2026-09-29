@@ -35,7 +35,7 @@ def _median(v, k=5):
     return np.array([np.median(v[max(0, i - k // 2):i + k // 2 + 1]) for i in range(len(v))])
 
 
-HAIR_SPLIT_Y = 2000   # below this y the hair comes from the full-body picture (chibi_body hair_behind)
+HAIR_SPLIT_Y = 490   # below this y the hair comes from the full-body picture (chibi_body hair_behind)
 COVER_BOTTOM = 480
 TIP_START = 640         # below this the two locks are rebuilt as smooth tapered tips      # the front hair frames the face down to here; below, the jaw sits over the back hair
 
@@ -235,9 +235,33 @@ def hair_cel():
     # the hair never covers the face (the trace also caught one eye's browns as "hair")
     return (f'<clipPath id="clip_hair_not_face"><path d="M-500,-500 H1000 V1500 H-500 Z {face_d}" clip-rule="evenodd"/>'
             f'</clipPath>' + not_eyes_clip() +
-            f'<clipPath id="clip_hair_top"><rect x="-100" y="-100" width="600" height="{HAIR_SPLIT_Y + 100}"/></clipPath>'
+            f'<clipPath id="clip_hair_top"><rect x="-100" y="-100" width="600" height="{HAIR_SPLIT_Y + HAIR_FADE + 100}"/></clipPath>'
             f'<g id="hair" clip-path="url(#clip_hair_not_face)"><g clip-path="url(#clip_hair_not_eyes)"><g clip-path="url(#clip_hair_top)">'
-            + "".join(parts) + "</g></g></g>")
+            + "".join(parts) + "</g></g></g>" + hair_body_lower())
+
+
+HB_GROW = 3
+HAIR_FADE = 45       # the two hair tracings cross-fade over this distance around HAIR_SPLIT_Y
+HB_PATH = os.path.join(HERE, "ref", "measured_hair_body.json")
+HB = json.load(open(HB_PATH)) if os.path.exists(HB_PATH) else None
+
+
+def hair_body_lower():
+    """Hair below HAIR_SPLIT_Y, traced tone by tone from the full-body picture (it matches the body there)."""
+    if HB is None or HAIR_SPLIT_Y >= 1000:
+        return ""
+    col = HB["colours"]
+    parts = [path(p, fill=col["outline"], stroke=col["outline"], stroke_width=HB_GROW, stroke_linejoin="round")
+             for p in HB["silhouette"]]
+    for tone in ("base", "shadow", "light", "highlight"):
+        parts += [path(p, fill=col[tone]) for p in HB["tones"][tone]]
+    parts += [path(p, fill=col["outline"]) for p in HB["tones"].get("lines", [])]
+    y0, y1 = HAIR_SPLIT_Y - HAIR_FADE, HAIR_SPLIT_Y + HAIR_FADE
+    return (f'<linearGradient id="hairFade" gradientUnits="userSpaceOnUse" x1="0" y1="{y0}" x2="0" y2="{y1}">'
+            f'<stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>'
+            f'<mask id="mask_hair_low" maskUnits="userSpaceOnUse" x="-100" y="-100" width="700" height="2200">'
+            f'<rect x="-100" y="{y0}" width="700" height="2200" fill="url(#hairFade)"/></mask>'
+            f'<g id="hair_lower" mask="url(#mask_hair_low)">' + "".join(parts) + "</g>")
 
 
 def not_eyes_clip():
@@ -245,7 +269,7 @@ def not_eyes_clip():
     holes = ""
     for side in ("right", "left"):
         (cx, cy, r), _, _ = E.master_eye(side)
-        R = r + 12
+        R = r + 9          # same size as the skin disc drawn under each eye (no ring between them)
         holes += f" M{f(cx - R)},{f(cy)} a{f(R)},{f(R)} 0 1,0 {f(2 * R)},0 a{f(R)},{f(R)} 0 1,0 {f(-2 * R)},0 Z"
     return (f'<clipPath id="clip_hair_not_eyes"><path d="M-500,-500 H1000 V1500 H-500 Z{holes}" clip-rule="evenodd"/>'
             f'</clipPath>')
@@ -495,6 +519,7 @@ def head_svg_v2(mouth_shape="smile", look=(0, 0), eyes="open", body=True):
     backing = "".join(f'<ellipse cx="{f(x)}" cy="{f(y)}" rx="9" ry="9" fill="{H2["colours"]["outline"]}"/>'
                       for x, y in from_new([(686, 684), (262, 684)]))   # dark behind the ear bottoms (no white specks)
     under = ("".join(path(p, fill=H2["colours"]["outline"]) for p in H2["silhouette"])     # no gaps at the face edge
+             + ("".join(path(p, fill=HB["colours"]["outline"]) for p in HB["silhouette"]) if HB else "")
              + f'<path d="{smooth(H2["face_fill"], True)}" fill="#f4a47c" stroke="#f4a47c" stroke-width="30" '
                f'stroke-linejoin="round" clip-path="url(#clip_ff_not_eyes2)"/>'
              + not_eyes_clip().replace("clip_hair_not_eyes", "clip_ff_not_eyes2"))

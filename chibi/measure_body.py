@@ -25,7 +25,7 @@ PALETTE = {   # sampled from the reference (k-means)
 }
 NAMES = list(PALETTE)
 SIGMA, EPS, RING = 1.2, 0.7, 15
-SHOE_RIM = 19
+SHOE_RIM = 15
 SHOE_OUT = 15
 
 
@@ -77,6 +77,8 @@ def main(path):
         parts[f"{side}_arm"] = {"skin": arm & C["skin"], "skin_shade": arm & C["skin_shade"]}
     crotch = int(np.where((jeans & (abs(xx - mid) < 6)).any(1))[0][0]) + 20       # first row where the legs part
     crotch = max(crotch, shirt_bottom + 60)
+    near_legs = abs(xx - mid) < 125                                   # (dark hair pixels can look like denim)
+    jeans = jeans & near_legs
     hips = jeans & (yy <= crotch + 10)
     # details inside the jeans: light stitching / button (lighter than the denim) and dark seam lines
     hip_box = (yy >= shirt_bottom - 6) & (yy <= crotch + 10) & (abs(xx - mid) < 125)
@@ -84,7 +86,8 @@ def main(path):
     light = hip_box & ~background & ((C["stitch"] | C["white"] | C["paper"]) | (grey > 330)) & ~C["skin"] & ~C["skin_shade"] & (np.abs(im[..., 2].astype(int) - im[..., 0].astype(int)) < 90)
     light &= cv2.erode((jeans | light).astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool)
     inner_dark = hip_box & outline & cv2.erode(cv2.morphologyEx((jeans | outline).astype(np.uint8), cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8)), np.ones((9, 9), np.uint8)).astype(bool)
-    solid = cv2.morphologyEx((hips | light | inner_dark).astype(np.uint8), cv2.MORPH_CLOSE, np.ones((11, 11), np.uint8))
+    hull = cv2.morphologyEx(hips.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((25, 25), np.uint8)).astype(bool)
+    solid = cv2.morphologyEx((hips | ((light | inner_dark) & hull)).astype(np.uint8), cv2.MORPH_CLOSE, np.ones((11, 11), np.uint8))
     cnts, _ = cv2.findContours(solid, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     solid = np.zeros_like(solid)
     cv2.drawContours(solid, cnts, -1, 1, -1)                     # one solid denim shape, no holes
@@ -106,10 +109,22 @@ def main(path):
         parts[f"{side}_shoe"] = {"shoe": inner,           # solid black upper
                                  "white": open_(cv2.morphologyEx((inner & (C["paper"] | C["white"])).astype(np.uint8),
                                                                  cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8)).astype(bool) & inner),
-                                 "sole": open_(inner & C["white"])}
+                                 "sole": open_(inner & C["white"]),
+                                 "shade": open_(inner & outline)}                  # the darker patches on the upper
     hb = (C["hair"] | C["hair_light"] | outline) & (yy > shirt_top) & ~background
     hbo = cv2.morphologyEx(hb.astype(np.uint8), cv2.MORPH_OPEN, np.ones((5, 5), np.uint8)).astype(bool)
     parts["hair_behind"] = {"hair_dark": hbo & C["outline2"], "hair": hbo & C["hair"], "hair_light": hbo & C["hair_light"]}
+    figure = cv2.morphologyEx((~background).astype(np.uint8), cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    parts["backing"] = {"_": np.zeros_like(figure, bool)}
+    body_union = np.zeros(figure.shape, np.uint8)
+    for nm, lay in parts.items():
+        if nm in ("backing", "hair_behind"):
+            continue
+        for m in lay.values():
+            body_union |= m.astype(np.uint8)
+    body_union = cv2.morphologyEx(body_union, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (61, 61)))
+    body_union = cv2.dilate(body_union, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (55, 55)))
+    backing_sil = figure.astype(bool) & body_union.astype(bool) & (yy > shirt_top - 10)   # gaps between / around the parts
     out = {"colours": {n: "#%02x%02x%02x" % PALETTE[n] for n in NAMES}, "parts": {}}
     ring = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (RING, RING))
     for name, layers in parts.items():
@@ -123,6 +138,8 @@ def main(path):
         entry = {"silhouette": blobs(sil, 300, to_old, only_biggest=True), "layers": {}}
         for lname, m in layers.items():
             entry["layers"][lname] = blobs(m, 12 if lname in ("stitch", "seam") else 40, to_old)
+        if name == "backing":
+            entry = {"silhouette": blobs(backing_sil, 300, to_old, only_biggest=True), "layers": {}}
         out["parts"][name] = entry
     # joints (for animation): measured in the reference, in drawing coordinates
     def c(pt):

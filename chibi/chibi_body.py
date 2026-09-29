@@ -11,8 +11,8 @@ import chibi_eyes as E
 HERE = os.path.dirname(os.path.abspath(__file__))
 B = json.load(open(os.path.join(HERE, "ref", "measured_body.json")))
 smooth, f = E.smooth, E.f
-COL = dict(B["colours"], shoe=B["colours"]["shirt"], white="#ffffff", sole="#dadada", hair_dark=B["colours"]["outline2"], seam=B["colours"]["outline"])
-LAYER_ORDER = ["hair_dark", "hair", "hair_light", "shirt", "skin", "skin_shade", "jeans", "seam", "stitch", "shoe", "white", "sole"]
+COL = dict(B["colours"], shoe=B["colours"]["shirt"], white="#ffffff", sole="#dadada", hair_dark=B["colours"]["outline2"], seam=B["colours"]["outline"], shade=B["colours"]["outline"])
+LAYER_ORDER = ["hair_dark", "hair", "hair_light", "shirt", "skin", "skin_shade", "jeans", "seam", "stitch", "shoe", "shade", "white", "sole"]
 OUTLINE = COL["outline"]
 
 
@@ -26,7 +26,7 @@ def part(name):
 
 
 def neck():
-    return part("hair_behind") + part("neck")
+    return part("backing") + part("neck")        # backing: dark fill of the whole figure, behind everything
 
 
 def taper_line(pts, w, colour):
