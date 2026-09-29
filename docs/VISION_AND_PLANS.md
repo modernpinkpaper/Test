@@ -272,3 +272,13 @@ OPEN DECISION (reverses the original no-screenshot rule):
 - (b) Optional screenshots ONLY while an SOP recording is on (off the rest of the time): makes
   picture-perfect SOPs but means the tool can screen-capture during those deliberate recordings.
 Dalia to choose (a) or (b). Claude's suggestion: (b) strictly scoped to SOP recordings only.
+
+## Handling interruptions during an SOP/Task recording (Dalia, 2026-09-29)
+Concern: while recording an SOP she might answer employee chats or quickly check something online.
+Handling (do BOTH):
+1. Auto-clean: every step is tagged with app/site + time, so the AI building the SOP drops off-task
+   detours (BeeBEEP/Teams messages, unrelated Google searches) and keeps only the task's real steps.
+2. Pause/Resume button in the tray: pause -> handle the interruption (no steps, no screenshots captured)
+   -> resume for clean recording.
+Safety net: the SOP is a DRAFT Dalia reviews; stray steps can be removed on review or a second AI pass.
+Net: a few chats or a quick lookup mid-recording will NOT ruin the SOP; she can record naturally.
