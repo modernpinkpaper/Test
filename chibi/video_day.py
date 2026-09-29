@@ -508,9 +508,11 @@ def fx(name, n=1.0):
     return np.zeros(len(t), np.float32)
 
 
-def build():
-    S = shots()
-    lines = {k: (who, line) for k, who, line in LINES}
+def build(S=None, script=None, voice_name=None):
+    """Voice + sound for a shot list (default: this video's). script: [(key, who, line)]; who "her" = voice_name."""
+    S = S or shots()
+    VOICE_ = voice_name or VOICE
+    lines = {k: (who, line) for k, who, line in (script or LINES)}
     t = 0.2
     voice = np.zeros(int(160 * SR), np.float32)
     caller = np.zeros_like(voice)
@@ -519,7 +521,7 @@ def build():
         s["t0"] = t
         if s["key"]:
             who, line = lines[s["key"]]
-            spk = VOICE if who == "her" else who
+            spk = VOICE_ if who == "her" else who
             a = voices.say(spk, line)
             tone, txt = voices.split_tag(line)
             at = t + s["lead"]
@@ -660,8 +662,20 @@ def header(frame):
     d.text((W / 2, 176), "(as a cartoon)", font=font(30), fill=(90, 80, 90), anchor="mm")
 
 
-def render(out):
-    S, audio, total = build()
+def day_overlay(frame, S, s, t, T):
+    header(frame)
+    captions(frame, s, T)
+    if s is S[-1] and t > s["le"] + .1:
+        dd = ImageDraw.Draw(frame)
+        kk = min(1, (t - s["le"] - .1) / .3)
+        dd.rounded_rectangle((150, 1560, W - 150, 1780), 40, fill=PINK)
+        dd.text((W / 2, 1635), "follow for part 2", font=font(60 * kk + 1), fill=(255, 255, 255), anchor="mm")
+        dd.text((W / 2, 1715), "what should she do next?", font=font(38 * kk + 1), fill=(255, 255, 255), anchor="mm")
+
+
+def render(out, S=None, script=None, voice_name=None, overlay=day_overlay):
+    """Draw every frame (scene, her, foreground, then overlay(frame, S, shot, t, T): titles, cards, captions)."""
+    S, audio, total = build(S, script, voice_name)
     bg = cairo.ImageSurface(cairo.FORMAT_RGB24, W, H)
     fg = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     with tempfile.TemporaryDirectory() as d:
@@ -694,14 +708,7 @@ def render(out):
                 s["fg"](ctx, t)
                 fg.flush()
                 frame.alpha_composite(surface_rgba(fg))
-            header(frame)
-            captions(frame, s, T)
-            if s is S[-1] and t > s["le"] + .1:
-                dd = ImageDraw.Draw(frame)
-                kk = min(1, (t - s["le"] - .1) / .3)
-                dd.rounded_rectangle((150, 1560, W - 150, 1780), 40, fill=PINK)
-                dd.text((W / 2, 1635), "follow for part 2", font=font(60 * kk + 1), fill=(255, 255, 255), anchor="mm")
-                dd.text((W / 2, 1715), "what should she do next?", font=font(38 * kk + 1), fill=(255, 255, 255), anchor="mm")
+            overlay(frame, S, s, t, T)
             enc.stdin.write(frame.convert("RGB").tobytes())
         enc.stdin.close()
         if enc.wait():

@@ -58,3 +58,26 @@ def toothbrush(foam=False):
         s += "".join(f'<circle cx="{x}" cy="{y}" r="20" fill="#ffffff" stroke="#dfe8f0" stroke-width="4"/>'
                      for x, y in ((200, -196), (262, -200), (232, -214)))
     return s, ""
+
+
+_covers = {}
+
+
+def book(cover_path, open_=False):
+    """A book held by its left edge in the C grip, cover facing us (any cover image: a JPEG/PNG path)."""
+    import base64
+    if cover_path not in _covers:
+        from PIL import Image
+        w, h = Image.open(cover_path).size
+        _covers[cover_path] = (base64.b64encode(open(cover_path, "rb").read()).decode(), h / w)
+    b64, ratio = _covers[cover_path]
+    bw = 340
+    bh = bw * ratio
+    x0, y0 = 25, -150 - bh / 2
+    mime = "png" if cover_path.lower().endswith(".png") else "jpeg"
+    return (f'<rect x="{x0 + 14}" y="{y0 + 12}" width="{bw}" height="{bh}" rx="10" fill="#f4efe6" stroke="{OUT}" '
+            f'stroke-width="{LW}"/>'                                                          # pages peeking out
+            f'<image x="{x0}" y="{y0}" width="{bw}" height="{bh}" preserveAspectRatio="none" '
+            f'href="data:image/{mime};base64,{b64}"/>'
+            f'<rect x="{x0}" y="{y0}" width="{bw}" height="{bh}" rx="6" fill="none" stroke="{OUT}" stroke-width="{LW}"/>'
+            f'<rect x="{x0}" y="{y0}" width="26" height="{bh}" fill="#000000" opacity="0.12"/>', "")   # spine shade
