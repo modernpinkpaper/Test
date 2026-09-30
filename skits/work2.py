@@ -516,7 +516,7 @@ def render(out):
             if fz and at(p["m"], fz[0]) <= t < at(p["m"], fz[1]):
                 frame = B.freeze_tint(frame, 1.0)
             # overlays: title, captions, end card (drawn on a fresh surface over the frame)
-            ov = cairo.ImageSurface.create_for_data(memoryview(frame), cairo.FORMAT_ARGB32, W, H)
+            ov = cairo.ImageSurface.create_for_data(memoryview(frame.reshape(-1)), cairo.FORMAT_ARGB32, W, H)
             o = cairo.Context(ov)
             rrect(o, 110, 80, W - 220, 120, 34, fill=(1, 1, 1), w=6)
             text(o, "things to say at work", W / 2, 140, 48, FONT, col="#e0457b")
