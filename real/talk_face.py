@@ -77,7 +77,7 @@ def load_tiles():
     files = sorted(glob.glob(os.path.join(VIS, "v??_*.png")))
     tiles = [cv2.cvtColor(cv2.imread(f), cv2.COLOR_BGR2RGB).astype(np.float32) for f in files]
     h, w = tiles[0].shape[:2]
-    return [t[:h - 100, 12:w - 12] for t in tiles]
+    return [t[:h - 100, 30:w - 30] for t in tiles]
 
 
 def lower_face_versions(tiles):
@@ -106,6 +106,18 @@ def on_backdrop(img):
     return img * a + bg * (1 - a)
 
 
+_FADE = {}
+
+
+def edge_fade(h, w, f=90):
+    """1 inside the tile, fading to 0 over f px at the sides and bottom (hides the tile's cut edges)."""
+    if (h, w) not in _FADE:
+        x = np.minimum(np.arange(w), np.arange(w)[::-1]) / f
+        y = (np.arange(h)[::-1]) / f
+        _FADE[(h, w)] = np.clip(np.minimum(x[None, :], y[:, None]), 0, 1).astype(np.float32)
+    return _FADE[(h, w)]
+
+
 def panel(face, t, ph, pw, label=None):
     """The face in a ph x pw panel: framed from the top of her hair to her collarbones, gentle sway + breathing."""
     h, w = face.shape[:2]
@@ -114,7 +126,11 @@ def panel(face, t, ph, pw, label=None):
     M = cv2.getRotationMatrix2D((w / 2, h * .62), ang, scale)
     M[0, 2] += pw / 2 - w / 2
     M[1, 2] += ph * .52 - h * .45
-    out = cv2.warpAffine(face, M, (pw, ph), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
+    out = cv2.warpAffine(face, M, (pw, ph), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT)
+    a = cv2.warpAffine(edge_fade(h, w), M, (pw, ph), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)[..., None]
+    g = np.linspace(0, 1, ph)[:, None, None]
+    bg = (np.array(BG_TOP) * (1 - g) + np.array(BG_BOT) * g) * np.ones((1, pw, 1))
+    out = np.clip(out * a + bg * (1 - a), 0, 255).astype(np.uint8)
     if label:
         cv2.rectangle(out, (20, 20), (20 + 16 * len(label) + 30, 78), (255, 255, 255), -1)
         cv2.putText(out, label, (35, 60), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (224, 69, 123), 2, cv2.LINE_AA)
