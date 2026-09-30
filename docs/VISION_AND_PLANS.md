@@ -282,3 +282,19 @@ Handling (do BOTH):
    -> resume for clean recording.
 Safety net: the SOP is a DRAFT Dalia reviews; stray steps can be removed on review or a second AI pass.
 Net: a few chats or a quick lookup mid-recording will NOT ruin the SOP; she can record naturally.
+
+## Report types from ORDINARY logs (no SOP/Decision recording needed) (Dalia, 2026-09-30)
+All read by the central brain over a batch of everyday logs:
+
+1. Evergreen / ongoing-work finder: spot recurring low-value or filler tasks people repeat, suggest an
+   "evergreen sheet" of work to do when there's nothing to print. Caveat: "listings that don't sell"
+   needs sales data (pair with Amazon/Etsy numbers or Dalia judges); the log shows the repeated edits.
+2. Reconstruct project steps for the MPP tracker from past logs (rough draft to confirm). Works via
+   SKU/order/file matching; less polished than a deliberate SOP recording, good enough to auto-fill and
+   tidy.
+3. Automation-opportunity finder: detect repetitive mechanical sequences and rank easy->hard to
+   automate ("top 5 automatable tasks, with why"), then build scripts. Strong fit.
+4. Staff-friction / file-issue finder: mainly via recurring CHAT messages (e.g. "file missing clipart
+   links, Erika please update") plus rework/handoff loops; flag recurring friction to fix or script.
+   Limit: the log does not inspect a file's internal state (e.g. broken links) — it sees the messages
+   about it and the activity pattern.
