@@ -1,5 +1,5 @@
 """'Things to say at work (from the comments)' - 10 short office scenes (each under 10 s): something happens -> the
-line from the comments -> a deadpan reaction (no laughing). Stylized stick people, props, and a different camera
+line -> a deadpan reaction (no laughing). Stylized stick people, props, and a different camera
 angle for each beat (wide, close-ups, inserts, low angle, dutch tilt, push-ins). ~65 s, 1080x1920.
 
     python skits/work_comments.py out.mp4          # script: work_lines.py
@@ -20,7 +20,7 @@ import voices                                                        # noqa: E40
 from five_min import ogg, synth                                      # noqa: E402
 from stick_people import LOOKS, StickPerson                          # noqa: E402
 from toon import OUT, curve, ellipse, lin, poly, rad, rgb, rrect, text   # noqa: E402
-from work_lines import BOSS, COWORKER, CREDIT, LINES, WORKER         # noqa: E402
+from work_lines import BOSS, COWORKER, LINES, WORKER                 # noqa: E402
 
 W, H, FPS, SR = 1080, 1920, 24, voices.SR
 FONT = os.path.join(HERE, "assets", "poppins-800.ttf")
@@ -30,8 +30,6 @@ WX, CX, BX = 560, 210, 900                 # worker (at her desk), coworker (his
 REST_D = ((10, -60), (10, -60))            # forearms on the desk
 REST = ((10, 8), (10, 8))                  # arms hanging
 TXT = {k: l.split("] ", 1)[1] for k, _, l in LINES}
-LIKES = {"friday": "876", "fanmail": "19.4K", "sign_a": "18.8K", "trip": "12.6K", "sneeze_a": "4,660",
-         "secrets": "2,034", "bucks": "28.7K", "allow": "23.8K", "fun": "41.5K", "thanks": "757"}
 
 
 def ease(t):
@@ -345,6 +343,82 @@ def sc_thanks(ctx, t, m, talk):
         ctx.paint()
 
 
+def cooler(ctx, t, x=930, glug=0.0):
+    rrect(ctx, x - 70, 1215, 140, 345, 12, fill="#dfe4ee", w=7)                       # base
+    ctx.save()
+    ctx.rectangle(x - 60, 960, 120, 255)
+    ctx.clip()
+    ellipse(ctx, x, 1090, 62, 125, fill="#bfe6ff", w=7)                               # the big bottle
+    for k in range(int(glug * 4)):                                                    # bubbles going up
+        ellipse(ctx, x - 10 + 14 * math.sin(k * 2 + t * 6), 1190 - ((t * 200 + k * 60) % 180), 10, 10, fill=(1, 1, 1), w=3)
+    ctx.restore()
+    rrect(ctx, x - 55, 1262, 30, 22, 5, fill="#4a7bd0", w=4)                          # taps
+    rrect(ctx, x + 25, 1262, 30, 22, 5, fill="#e0457b", w=4)
+
+
+def tumbler(ctx, hands, i=1, level=1.0, grip_top=False):
+    """Pink tumbler with lid + straw; grip_top: held by the rim (cup hangs below the hand, e.g. under a tap)."""
+    x, y = hands[i]
+    if grip_top:
+        y += 105
+    poly(ctx, [(x - 28, y - 100), (x + 28, y - 100), (x + 22, y + 10), (x - 22, y + 10)], fill="#f7b6cb", w=5)
+    if level > 0:
+        poly(ctx, [(x - 25, y - 100 + 100 * (1 - level)), (x + 25, y - 100 + 100 * (1 - level)), (x + 21, y + 6), (x - 21, y + 6)],
+             fill="#bfe6ff", line=None)
+    if not grip_top:                                                                  # lid + straw once it's full
+        rrect(ctx, x - 32, y - 116, 64, 20, 6, fill="#e0457b", w=5)
+        poly(ctx, [(x + 10, y - 116), (x + 22, y - 160)], line="#2a2b2c", w=7, close=False)
+
+
+def sc_water(ctx, t, m, talk):
+    office(ctx, t)
+    w0, w1 = m["water"]
+    filling = t < 1.7
+    fill = min(1.0, t / 1.6)
+    cooler(ctx, t, x=950, glug=1.0 if filling else 0.0)                               # behind her
+    if filling:                                                                       # water running into her cup
+        poly(ctx, [(975, 1284), (975, 1300)], line="#7ec8ff", w=8, close=False)
+    draw_people(ctx, t, m, talk, [
+        (person("coworker", 330, facing=.5), COWORKER, dict(arms=((12, 8), (40, -110)), face="neutral" if t < w1 else "annoyed",
+                                                             look=(1, 0), hold=lambda c, h: tumbler(c, h, 1, 0.0))),
+        (person("worker", 800, facing=.5 if filling else -.3), WORKER,
+         dict(arms=((12, 8), (65, 0) if filling else (30, -110)), face="calm" if filling else "smug",
+              look=(1, .6) if filling else (0, 0), hold=lambda c, h: tumbler(c, h, 1, fill, grip_top=filling))),
+    ])
+
+
+def sc_first(ctx, t, m, talk):
+    office(ctx, t)
+    f0, f1 = m["first"]
+    spill = ease((t - .5) / .5)
+    draw_people(ctx, t, m, talk, [
+        (person("boss", BX - 60, facing=-.5), BOSS, dict(arms=((40, -100), (40, -100)), face="shock" if t < f0 else "annoyed",
+                                                        look=(-1, 0) if t < f1 + .6 or t > f1 + 1.6 else (-1, 1.2),
+                                                        hold=lambda c, h: report(c, h, spill))),
+        (person("worker", WX, facing=.3), WORKER, dict(arms=((10, -60), (lerp(30, 80, spill), lerp(-100, -60, spill))),
+                                                       face="sad" if t > .9 else "neutral", look=(1, 0),
+                                                       hold=lambda c, h: mug(c, h, 1, sipping=False))),
+    ])
+    desks(ctx, t, mug=False)
+    plaque(ctx)
+
+
+def report(ctx, hands, spill):
+    x, y = (hands[0][0] + hands[1][0]) / 2, (hands[0][1] + hands[1][1]) / 2
+    rrect(ctx, x - 80, y - 100, 160, 120, 4, fill=(1, 1, 1), w=4)
+    text(ctx, "Q3 REPORT", x, y - 70, 24, FONT, col="#2a2b2c")
+    if spill > 0:
+        ellipse(ctx, x - 10, y - 20, 60 * spill, 40 * spill, fill="#8a5a3a", line=None)
+        ellipse(ctx, x + 30, y + 5, 25 * spill, 18 * spill, fill="#8a5a3a", line=None)
+
+
+def plaque(ctx):
+    rrect(ctx, 380, 1225, 110, 85, 8, fill="#e7ac27", w=6)
+    rrect(ctx, 392, 1237, 86, 61, 4, fill="#fff2c9", w=3)
+    text(ctx, "5", 435, 1258, 30, FONT, col="#2a2b2c")
+    text(ctx, "YEARS", 435, 1285, 18, FONT, col="#2a2b2c")
+
+
 # scenes: (draw, beats, camera cuts, sfx). beats: ("act", s) | ("line", key, pause after). cameras: (time or
 # "key" / "key+" (after the line), (zoom, fx, fy, rot)) - each holds until the next; zoom drifts in slowly.
 WIDE = (1.15, 540, 1060, 0)
@@ -353,6 +427,9 @@ SCENES = [
      [(0, (2.4, 905, 480, 0)), (.8, WIDE), ("friday+", (1.9, CX, 980, 0))], [("tick", 0)]),
     (sc_fanmail, [("act", 1.4), ("line", "fanmail", .9)],
      [(0, (1.0, 540, 740, 0)), ("fanmail", (1.8, WX, 980, 3))], [("keys", 0)]),
+    (sc_water, [("act", 1.9), ("line", "water", 1.2)],
+     [(0, (1.8, 900, 1220, 0)), (1.0, (1.2, 640, 1060, 0)), ("water", (1.9, 800, 990, 0)), ("water+", (1.9, 330, 990, 0))],
+     [("glug", 0)]),
     (sc_sign, [("act", 1.3), ("line", "sign_q", .6), ("line", "sign_a", 1.2)],
      [(0, WIDE), ("sign_q", (1.5, 380, 1000, 0)), ("sign_a", (1.9, WX, 980, 0)), ("sign_a+", (2.0, WX - 250, 960, -3))],
      [("steps", 0), ("scribble", "sign_a-")]),
@@ -371,6 +448,9 @@ SCENES = [
      [("sting", "deadline+")]),
     (sc_fun, [("act", 1.4), ("line", "fun", 1.6)],
      [(0, (1.1, 540, 1060, -8)), ("fun", (1.9, WX, 990, 0)), ("fun+", (1.05, 540, 1060, 0))], [("alarm", 0), ("scratch", "fun+")]),
+    (sc_first, [("act", 1.0), ("line", "first", 2.2)],
+     [(0, (1.3, 740, 1060, 0)), ("first", (1.9, WX, 990, 0)), ("first+", (2.8, 435, 1260, 0)), ("first+1.1", (1.9, BX - 60, 960, 0))],
+     [("splash", .6)]),
     (sc_thanks, [("act", .5), ("line", "thanks", 2.0)],
      [(0, WIDE), ("thanks", (1.6, WX, 1000, 0)), ("thanks+", WIDE)], [("switch", "thanks+")]),
 ]
@@ -449,6 +529,11 @@ def build():
                 add(np.sin(2 * np.pi * (900 - 2400 * d) * d) * .14, T0)
             elif name == "sting":
                 add(synth("sting", .8), T0)
+            elif name == "glug":
+                d = tt(1.6)
+                add(np.sin(2 * np.pi * (200 + 120 * np.sin(2 * np.pi * 5 * d)) * d) * (np.sin(2 * np.pi * 5 * d) > 0) * .06, T0)
+            elif name == "splash":
+                add(synth("brush", .4) * 1.6, T0)
             elif name == "switch":
                 add(ogg("tick_001", 1.2), T0 + .4)
     mix = voice + fx
@@ -458,9 +543,9 @@ def build():
 def cam_at(p, t):
     cuts = []
     for when, cam in p["cams"]:
-        if isinstance(when, str):
-            key = when.rstrip("+")
-            when = p["m"][key][1] + .05 if when.endswith("+") else p["m"][key][0] - .15
+        if isinstance(when, str):                                          # "key" start, "key+" end, "key+1.1" end + 1.1 s
+            key, plus, off = when.partition("+")
+            when = p["m"][key][1] + .05 + float(off or 0) if plus else p["m"][key][0] - .15
         cuts.append((when, cam))
     cuts.sort(key=lambda c: c[0])
     i = max(j for j, (w, _) in enumerate(cuts) if w <= t) if any(w <= t for w, _ in cuts) else 0
@@ -469,30 +554,6 @@ def cam_at(p, t):
     k = (t - w0) / max(w1 - w0, .3)
     z, x, y, r = cam
     return z * (1 + .05 * k), x, y, r                                    # slow push-in within each shot
-
-
-def comment_card(ctx, key, k):
-    """The line as a TikTok-style comment bubble, with the real like count."""
-    if key not in LIKES or k <= 0:
-        return
-    s = TXT[key]
-    size = 38 if len(s) < 34 else 32
-    y = 250 - 30 * (1 - k)
-    ctx.save()
-    ctx.push_group()
-    rrect(ctx, 70, y, W - 140, 150, 30, fill=(1, 1, 1), w=5)
-    ellipse(ctx, 130, y + 55, 30, 30, fill="#c9a4ff", line=None)
-    text(ctx, "from the comments", 180, y + 40, 26, FONT2, col="#8a8f9c", anchor="lm")
-    text(ctx, s, 180, y + 95, size, FONT, col="#2a2b2c", anchor="lm")
-    ctx.move_to(W - 130, y + 70)                                         # heart + likes
-    ctx.curve_to(W - 160, y + 40, W - 175, y + 80, W - 130, y + 105)
-    ctx.curve_to(W - 85, y + 80, W - 100, y + 40, W - 130, y + 70)
-    ctx.set_source_rgb(*rgb("#e0457b"))
-    ctx.fill()
-    text(ctx, LIKES[key], W - 130, y + 128, 22, FONT2, col="#8a8f9c")
-    ctx.pop_group_to_source()
-    ctx.paint_with_alpha(k)
-    ctx.restore()
 
 
 def render(out):
@@ -522,14 +583,11 @@ def render(out):
                 return float(e[min(fi, len(e) - 1)]) * .9
             p["draw"](ctx, t, p["m"], talk)
             ctx.identity_matrix()
-            rrect(ctx, 110, 70, W - 220, 140, 34, fill=(1, 1, 1), w=6)                    # title
-            text(ctx, "things to say at work", W / 2, 122, 44, FONT, col="#e0457b")
-            text(ctx, "(from the comments)", W / 2, 172, 30, FONT2, col="#4b5563")
+            rrect(ctx, 110, 80, W - 220, 120, 34, fill=(1, 1, 1), w=6)                    # title
+            text(ctx, "things to say at work", W / 2, 140, 48, FONT, col="#e0457b")
             line_keys = [k for k in p["m"] if k != "end"]
             for key in line_keys:
                 s0, s1 = p["m"][key]
-                if key in LIKES and s0 - .1 <= t:
-                    comment_card(ctx, key, ease((t - s0 + .1) / .25))
                 if s0 <= t <= s1 + .25:                                                    # spoken captions
                     words = TXT[key].split()
                     n = max(1, min(len(words), int(len(words) * (t - s0) / max(s1 - s0, .3)) + 1))
@@ -542,7 +600,6 @@ def render(out):
                 rrect(ctx, 110, 760, W - 220, 300, 40, fill="#e0457b", w=6)
                 text(ctx, "which one are you", W / 2, 860, 56 * kk + 1, FONT, col=(1, 1, 1))
                 text(ctx, "using on Monday?", W / 2, 940, 56 * kk + 1, FONT, col=(1, 1, 1))
-                text(ctx, CREDIT, W / 2, 1010, 26, FONT2, col=(1, 1, 1))
             surf.flush()
             enc.stdin.write(bytes(surf.get_data()))
         enc.stdin.close()

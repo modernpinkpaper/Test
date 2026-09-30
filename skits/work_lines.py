@@ -11,6 +11,8 @@ LINES = [
     ("friday", WORKER, "[excited] Morning, everyone! Nearly Friday!"),
     # 2. 347 unread emails
     ("fanmail", WORKER, "[sassy] Just gonna check my fan mail."),
+    # 2b. water cooler
+    ("water", WORKER, "[sassy] I make a mean cup of water."),
     # 3. sign this form
     ("sign_q", COWORKER, "[neutral] Can you sign this real quick?"),
     ("sign_a", WORKER, "[sassy] Anything for a fan."),
@@ -29,6 +31,8 @@ LINES = [
     ("allow", WORKER, "[calm] Hmm. I'll allow it."),
     # 9. total chaos
     ("fun", WORKER, "[calm] The important thing is, we're having fun."),
+    # 9b. spills coffee on the boss's report
+    ("first", WORKER, "[sheepish] Oops. Sorry, it's my first day."),
     # 10. end of the day
     ("thanks", WORKER, "[fake] Thank you all for coming!"),
 ]
