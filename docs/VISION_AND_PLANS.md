@@ -311,3 +311,36 @@ clipart -> InDesign). Nobody has to turn anything on.
   ~10 people x month < 1 GB). Screenshots are the only real cost and stay OFF everyday; they occur only
   during a deliberate SOP-with-screenshots recording (+~5-9 MB per recording).
 - SOP-with-screenshots stays as the one deliberate toggle, for picture-perfect how-tos only.
+
+## Printing team: timing, out-of-paper, speed analysis, animated SOP (Dalia, 2026-09-30)
+
+Print job facts already captured (WMI, PrintJobCollector): print_job (queued) + print_job_finished
+(left the queue) with printer, document_name, SKU candidates, total_pages, pages_printed, size,
+job Status/JobStatus, and seconds_in_queue. So we can derive:
+- Per-SKU print duration (some SKUs take longer — more ink) and the gap before the next job starts
+  (how fast she lines up the next print). "Finished" = left the Windows queue (spooler done sending);
+  a very good proxy, within a second or two of physical finish.
+
+Print-tracker auto-fill (build later, central brain): first/last COUNTED print per shift -> start/end
+times; exclude notepads and other non-counted jobs by rules Dalia defines (document name/folder/printer);
+count PAGES not just jobs; write prints-per-hour into the print log tracker sheet. Caveat: notepad
+exclusion needs the jobs to be distinguishable (confirm with real data).
+
+TO BUILD (approved): read printer error/DetectedErrorState via WMI (Win32_Printer) so "out of paper /
+low paper / jam" is captured reliably even when no job is moving. Enables: "Kayla rarely runs out;
+Employee B runs out 15x/week costing ~Nmin -> recommend proactive restocking."
+
+Kayla speed analysis (central brain): compare her COMPUTER workflow to others (batching, sequencing,
+tool use, waiting, click counts, job-to-job gaps) and rank improvements high->low impact. Limit: only
+the computer half; physical technique (hands, station layout) is not captured. The AI can INFER likely
+physical causes from timing (e.g. short job gaps -> paper pre-stacked; no stalls -> restocks early) as
+HYPOTHESES for Dalia to confirm by observing.
+
+Training doc/video pipeline (downstream of MT Log, not an app feature):
+- Computer steps: from MT Log (SOP recording or ordinary logs) - real.
+- Physical steps: Dalia WRITES them out (she knows them; no filming needed).
+- AI turns both into one SOP script with two tracks: narration + scene directions.
+- AI voice reads the narration; AI animation builds clip-art/chibi scenes from the directions.
+- Result: narrated animated training video. Seams: stylized/generated (not her real office unless she
+  supplies photos), scene consistency needs care, and this is a separate creative pipeline (script ->
+  TTS -> AI video), with MT Log only supplying the accurate computer half + timing.
