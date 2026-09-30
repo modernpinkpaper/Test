@@ -298,3 +298,16 @@ All read by the central brain over a batch of everyday logs:
    links, Erika please update") plus rework/handoff loops; flag recurring friction to fix or script.
    Limit: the log does not inspect a file's internal state (e.g. broken links) — it sees the messages
    about it and the activity pattern.
+
+## Project-step reconstruction is always-on (Dalia, 2026-09-30) — no toggle, no bloat
+Decision: do NOT add a "Record a project" toggle. Project work is ongoing/always happening, so the
+high-level steps ("what to do", not "how to click") should come from the regular ALWAYS-ON logs, which
+already capture the step arc (tools, sites, files, order — e.g. Keepa -> Amazon best sellers -> ChatGPT
+clipart -> InDesign). Nobody has to turn anything on.
+- A labeled recording only improved GROUPING (which events belong to which project). For always-on
+  project people that grouping is handled instead by SKU/file/collection-name matching (a bit rougher,
+  acceptable).
+- Bloat: essentially none beyond today — it's the SAME everyday logging (~4 MB/person/8h day measured;
+  ~10 people x month < 1 GB). Screenshots are the only real cost and stay OFF everyday; they occur only
+  during a deliberate SOP-with-screenshots recording (+~5-9 MB per recording).
+- SOP-with-screenshots stays as the one deliberate toggle, for picture-perfect how-tos only.
