@@ -344,3 +344,25 @@ Training doc/video pipeline (downstream of MT Log, not an app feature):
 - Result: narrated animated training video. Seams: stylized/generated (not her real office unless she
   supplies photos), scene consistency needs care, and this is a separate creative pipeline (script ->
   TTS -> AI video), with MT Log only supplying the accurate computer half + timing.
+
+## "Watch me do a task once -> ranked automation roadmap" (Dalia, 2026-09-30)
+General, high-value use of MT Log beyond MPP: record a full process (e.g. bookkeeping) and have AI
+propose how to automate it.
+
+- Capture: ordinary logs work, but for AUTOMATION a deliberate LABELED recording is better because the
+  AI needs exact, repeatable detail (which fields, order, values, screens). Use Record-a-task (SOP mode);
+  screenshots OPTIONAL here (helpful for the human to verify, not needed to build scripts) — can record
+  with screenshots off for a smaller, complete step trail.
+- Output (central brain): a ranked roadmap with TWO axes plus impact and the path:
+  effort to build (easy/medium/hard) x automation level (full/partial/low) x time saved x
+  what it takes (script only, or human sets up / stays in the loop). So Dalia can pick just the easy
+  wins or go all-in on hard/full-automation.
+- Caveats the AI must flag: estimates not guarantees; some steps can't be automated (no API, 2FA/captcha
+  logins, judgment calls) -> mark "human in the loop" / "not automatable"; full end-to-end automation is
+  rarer than partial.
+
+Applies to ANY PC/any apps (generic capture; SiteProfiles not required). Example: a friend doing car-
+dealership finances could install MT Log, record his workflow, and get the same roadmap. Extra caveats
+for finance/other businesses: sensitive data (record with screenshots OFF; passwords never captured but
+on-screen numbers/fields are), the person's consent + their employer's data-handling/compliance rules,
+and finance automation typically needs secure credential handling + human supervision.
