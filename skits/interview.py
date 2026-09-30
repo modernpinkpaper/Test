@@ -108,11 +108,11 @@ def desk(ctx, t):
     ctx.paint()
 
 
-HOLD, SIP = (25, -115), (-10, -150)          # candidate's coffee arm: holding it up, cup at her mouth
+HOLD, SIP = (25, -115), (22, -118)          # candidate's coffee arm: holding it up, cup at her mouth
 
 
-def iced_coffee(ctx, hands, i=1):
-    """A big clear cup: coffee, ice, dome lid, straw."""
+def iced_coffee(ctx, hands, i=1, sipping=False):
+    """A big clear cup: coffee, ice, dome lid, straw (short and at her lips when she sips)."""
     x, y = hands[i]
     top, bot = y - 105, y + 18
     poly(ctx, [(x - 30, top), (x + 30, top), (x + 22, bot), (x - 22, bot)], fill="#eaf6ff", w=5)       # the cup
@@ -127,7 +127,8 @@ def iced_coffee(ctx, hands, i=1):
     ctx.set_source_rgb(0.1, 0.08, 0.1)
     ctx.set_line_width(5)
     ctx.stroke()
-    poly(ctx, [(x + 4, top - 18), (x + 16, top - 70)], line="#3fae6a", w=9, close=False)                  # straw
+    tip = (x - 2, top - 36) if sipping else (x + 16, top - 70)
+    poly(ctx, [(x + 4, top - 18), tip], line="#3fae6a", w=9, close=False)                                 # straw
     poly(ctx, [(x - 30, top + 60), (x - 22, bot - 10)], line=(1, 1, 1), w=4, close=False)               # shine
 
 
@@ -243,11 +244,13 @@ def render(out):
                 blink = (T + (0.9 if who == GIRL else 0)) % 3.6 < 0.1
                 look = (0.8, 0) if who == BOSS else (-0.8, 0)
                 bob = 3 * math.sin(T * 2.2 + (1 if who == GIRL else 0))
+                sip = abs(arms[GIRL][1][0] - SIP[0]) < 3 and abs(arms[GIRL][1][1] - SIP[1]) < 3
                 if who == BOSS and p["key"] in ("q1", "q3b", "q9"):
                     look = (0.9, 0.6)                                    # staring at the coffee
                 person.draw(ctx, arms=arms[who], legs=((4, 0), (4, 0)), face=face, mouth=min(1, m * 0.9), look=look,
                             tilt=(4 if who == BOSS else -4) * (1 if speaking else 0.3), bob=bob, blink=blink,
-                            hold=iced_coffee if who == GIRL else None)
+                            hold=(lambda c, h: iced_coffee(c, h, sipping=sip)) if who == GIRL else None,
+                            hold_on_top=who == GIRL and sip)                          # cup at her mouth: in front
             desk(ctx, T)
             ctx.identity_matrix()
             # title + captions

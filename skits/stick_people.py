@@ -72,6 +72,12 @@ LOOKS = {
     "candidate": dict(hairdo="bob", hair="#e8b04a", hair_dark="#b9822a", hair_hi="#ffd98a", hair_light="#f3c569", skin="#f6c7a4",
                       shirt="#ffffff", jacket="#f27ca8", pants="#2f3a55", shoes="#1f1a1a", lashes=True, cheeks=True,
                       build="f", glasses=False, tie=None, brow="#8a5a2a", iris="#2f6fb0", iris_dark="#1d3f6a"),
+    "worker": dict(hairdo="bob", hair="#3b2320", hair_dark="#24140f", hair_hi="#7a4a3a", hair_light="#5a342a",
+                   skin="#f3c09c", shirt="#ffffff", jacket="#4fa384", pants="#2f3a55", shoes="#1f1a1a", lashes=True,
+                   cheeks=True, build="f", glasses=False, tie=None, brow="#3b2320", iris="#5a3a22", iris_dark="#2a180c"),
+    "coworker": dict(hairdo="short", hair="#1f1a1a", hair_dark="#111111", hair_hi="#4a4a4a", hair_light="#333333",
+                     skin="#c98e6a", shirt="#4a7bd0", jacket=None, pants="#b89a6e", shoes="#3a2a20", lashes=False,
+                     cheeks=False, build="m", glasses=False, tie=None, brow="#1f1a1a", iris="#3a2414", iris_dark="#1a0f08"),
     "boss": dict(hairdo="bald", hair="#6b6b6b", hair_dark="#4a4a4a", hair_hi="#9a9a9a", hair_light="#8a8a8a", skin="#e9b28f",
                  shirt="#e9eef6", jacket="#4b5563", pants="#3b4250", shoes="#1f1a1a", lashes=False, cheeks=False,
                  build="m", glasses=True, tie="#c0392b", brow="#4a4a4a", iris="#5a3a22", iris_dark="#2a180c",
@@ -88,7 +94,7 @@ class StickPerson:
 
     # ---------------------------------------------------------------- body
     def draw(self, ctx, arms=((12, 10), (12, 10)), legs=((4, 0), (4, 0)), face="neutral", mouth=0.0, look=(0, 0),
-             tilt=0.0, bob=0.0, blink=False, hold=None, hair_sway=0.0):
+             tilt=0.0, bob=0.0, blink=False, hold=None, hair_sway=0.0, hold_on_top=False):
         s = self.s
         leg = 138 * s
         hip = (self.x, self.floor - 2 * leg * 0.97 - 22 * s + bob)
@@ -163,10 +169,12 @@ class StickPerson:
                 ellipse(ctx, sh[0], sh[1], 15 * s, 15 * s, fill=self.L["shirt"], line=None)
             ellipse(ctx, hd[0], hd[1], 15 * s, 15 * s, fill=self.L["skin"], w=5 * s)
             hands.append(hd)
-        if hold:
+        if hold and not hold_on_top:
             hold(ctx, hands)
         self._head(ctx, hc, R, face, mouth, look, blink)
         self._hair_front(ctx, hc, R)
+        if hold and hold_on_top:                       # a cup at her mouth goes in front of the face (straw and all)
+            hold(ctx, hands)
         self.head_c, self.head_r, self.hands = hc, R, hands
         return hc, hands
 
