@@ -520,8 +520,11 @@ def render(out):
             o = cairo.Context(ov)
             rrect(o, 110, 80, W - 220, 120, 34, fill=(1, 1, 1), w=6)
             text(o, "things to say at work", W / 2, 140, 48, FONT, col="#e0457b")
-            for key, (s0, s1) in p["m"].items():
-                if key in TXT and s0 <= t <= s1 + .2:
+            for key, se in p["m"].items():
+                if key not in TXT:
+                    continue
+                s0, s1 = se
+                if s0 <= t <= s1 + .2:
                     words = TXT[key].split()
                     k = max(1, min(len(words), int(len(words) * (t - s0) / max(s1 - s0, .3)) + 1))
                     c0 = (k - 1) // 3 * 3
