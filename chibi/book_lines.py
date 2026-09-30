@@ -16,7 +16,6 @@ LINES = [
     ("l4", "her", "[annoyed] Four. Enough is a real number. If you keep moving the goalpost, you never get to win."),
     ("l5", "her", "[excited] Five. Save for no reason at all. Savings is your freedom fund, for the stuff nobody can predict."),
     ("verdict", "her", "[sassy] My rating? Ten out of ten. Read it before you buy another car."),
-    ("bonus", "her", "[calm] Bonus tip? The chapters are short. Read one a night and you're done in two weeks."),
     ("outro", "her", "[sassy] Follow for more books I read so you don't have to. And tell me what I should read next."),
 ]
 CARDS = {   # key: (big label, title, small line)
