@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The Windows pop-up UI for the live assistant (tray + notification cards + buttons).
+       Windows-only; the brain/reader/memory live in the cross-platform MppWatcher.Assistant. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>MppWatcher.Assistant.App</RootNamespace>
+    <AssemblyName>MppAssistantApp</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MppWatcher.Assistant\MppWatcher.Assistant.csproj" />
+  </ItemGroup>
+
+</Project>

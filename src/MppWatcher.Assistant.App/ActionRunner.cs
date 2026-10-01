@@ -1,0 +1,50 @@
+using System.Diagnostics;
+using System.Windows.Forms;
+using MppWatcher.Assistant;
+
+namespace MppWatcher.Assistant.App;
+
+/// <summary>
+/// Runs a button's action on the PC. The account-dependent ones (add_tracker / add_reminder) degrade
+/// gracefully for now — they open the target page or copy the text — until the Google integration
+/// (Step 4) is wired with the user's login. remind / dismiss / not_helpful are handled by the card.
+/// </summary>
+internal static class ActionRunner
+{
+    public static void Run(SuggestedButton b, Recommendation rec)
+    {
+        switch (b.Kind)
+        {
+            case "open_url":
+            case "open_file":
+                OpenTarget(b.Target);
+                break;
+
+            case "copy":
+            case "draft_message":
+                Copy(string.IsNullOrWhiteSpace(b.Target) ? rec.Title : b.Target!);
+                break;
+
+            case "add_tracker":
+            case "add_reminder":
+                // Until the Google login is connected: open the link if it's a URL, else copy the text.
+                if (!string.IsNullOrWhiteSpace(b.Target) && b.Target!.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    OpenTarget(b.Target);
+                else
+                    Copy(string.IsNullOrWhiteSpace(b.Target) ? rec.Title : b.Target!);
+                break;
+        }
+    }
+
+    private static void OpenTarget(string? target)
+    {
+        if (string.IsNullOrWhiteSpace(target)) return;
+        Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+    }
+
+    private static void Copy(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        Clipboard.SetText(text);
+    }
+}

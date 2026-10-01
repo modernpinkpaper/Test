@@ -148,6 +148,28 @@ public class AssistantTests
     public void ParseRecommendations_returns_empty_when_nothing(string reply) =>
         Assert.Empty(ClaudeLlmProvider.ParseRecommendations(reply));
 
+    [Fact]
+    public void AppendAction_writes_a_feedback_line()
+    {
+        var dir = TempDir();
+        var log = new RecommendationLog(dir);
+        var at = DateTimeOffset.Parse("2026-10-01T15:00:00Z");
+        log.AppendAction("rec123", "add_tracker", at);
+
+        var file = log.ActionFileFor(at);
+        Assert.True(File.Exists(file));
+        var text = File.ReadAllText(file);
+        Assert.Contains("rec123", text);
+        Assert.Contains("add_tracker", text);
+    }
+
+    [Fact]
+    public void ProviderFactory_falls_back_to_heuristic_without_a_key()
+    {
+        // CI has no ANTHROPIC_API_KEY, and forceHeuristic guarantees the stand-in regardless.
+        Assert.IsType<HeuristicLlmProvider>(ProviderFactory.Create(forceHeuristic: true));
+    }
+
     private static AssistantContext Ctx(params WatchEvent[] events) =>
         new(events, new AssistantMemory(), "Dalia", DateTimeOffset.UtcNow);
 }
