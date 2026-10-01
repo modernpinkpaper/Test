@@ -35,12 +35,34 @@ My reply keeps the tag (`Re: … [BB#7fa2]`), so the exe routes my answer to the
 2. **Protocol client** — because BeeBEEP is open-source, a small helper can speak its network
    protocol and send directly. More work up front, sturdier after.
 
-## Trade-offs vs Telegram
+## Which channel to the phone? (email vs Telegram vs WhatsApp)
 
-- ✅ No new app; uses the email I already have.
-- ⏳ Slower than Telegram — email is checked every ~30–60 s (not instant). Fine for normal
-  replies, not for rapid back-and-forth.
-- 🔧 One-time setup: an email **app password** so the exe can read the inbox and send.
+All three can do two-way (get the message + reply back into BeeBEEP). Pick one:
+
+| Channel | Two-way | Allowed & safe | Setup | Speed |
+|---|---|---|---|---|
+| **Email** (default) | yes | yes | easy (app password) | ~30–60 s |
+| **Telegram** (free bot) | yes | yes | easy | instant |
+| **WhatsApp — official** (Business Cloud API) | yes | yes | heavier | instant |
+| **WhatsApp — web automation** | yes | ⚠️ against ToS, ban risk | medium | instant |
+
+**Email** — no new app, uses the email I already have; just a bit slower (polled ~30–60 s)
+and needs an app password.
+
+**Telegram** — a free bot; instant and easiest to match replies; it's "another app".
+
+**WhatsApp (official, Business Cloud API)** — arrives on WhatsApp and I reply there. Catches:
+needs a **separate business phone number** (not my personal WhatsApp on the same number), a
+Meta app + webhook, and the **24-hour window rule** (after a quiet spell it must re-open with
+an approved template); small per-message fees are possible.
+
+**WhatsApp (web automation, e.g. whatsapp-web.js/Baileys)** — free and uses my real account,
+but it's **against WhatsApp's terms and the number can get banned**; fragile. Not recommended
+for a work number.
+
+**Decision:** start with **email** (simplest, safe). WhatsApp is possible but only worth the
+extra setup if WhatsApp specifically is a must — and then via the official Business API, not
+the web hack.
 
 ## Build order (when picked up)
 
