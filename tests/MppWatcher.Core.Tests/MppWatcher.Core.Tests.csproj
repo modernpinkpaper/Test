@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MppWatcher.Core\MppWatcher.Core.csproj" />
+    <ProjectReference Include="..\..\src\MppWatcher.Assistant\MppWatcher.Assistant.csproj" />
   </ItemGroup>
 
   <ItemGroup>

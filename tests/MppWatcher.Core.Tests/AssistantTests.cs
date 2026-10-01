@@ -1,0 +1,126 @@
+using System.Text.Json.Nodes;
+using MppWatcher.Assistant;
+using MppWatcher.Core.Events;
+
+namespace MppWatcher.Core.Tests;
+
+public class AssistantTests
+{
+    private static readonly DateTimeOffset T0 = DateTimeOffset.Parse("2026-10-01T10:00:00Z");
+
+    private static WatchEvent Ev(string type, DateTimeOffset ts, string id, long seq = 0, JsonObject? meta = null) =>
+        new() { EventType = type, TimestampUtc = ts, EventId = id, Sequence = seq, Metadata = meta ?? new JsonObject() };
+
+    private static string TempDir()
+    {
+        var d = Path.Combine(Path.GetTempPath(), "mpp-assistant-test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(d);
+        return d;
+    }
+
+    [Fact]
+    public void SelectNew_returns_all_first_then_only_newer()
+    {
+        var evs = new[] { Ev("a", T0, "1"), Ev("b", T0.AddSeconds(1), "2"), Ev("c", T0.AddSeconds(2), "3") };
+
+        var r1 = ActivityReader.SelectNew(evs, new ActivityCursor());
+        Assert.Equal(3, r1.Events.Count);
+
+        Assert.Empty(ActivityReader.SelectNew(evs, r1.NewCursor).Events); // nothing new the second time
+
+        var withNewer = evs.Append(Ev("d", T0.AddSeconds(3), "4")).ToArray();
+        var r3 = ActivityReader.SelectNew(withNewer, r1.NewCursor);
+        Assert.Single(r3.Events);
+        Assert.Equal("4", r3.Events[0].EventId);
+    }
+
+    [Fact]
+    public void SelectNew_picks_up_a_new_event_at_the_same_last_timestamp()
+    {
+        var evs = new[] { Ev("a", T0, "1"), Ev("c", T0.AddSeconds(2), "3") };
+        var r1 = ActivityReader.SelectNew(evs, new ActivityCursor());
+
+        var sameTs = evs.Append(Ev("c2", T0.AddSeconds(2), "3b")).ToArray();
+        var r2 = ActivityReader.SelectNew(sameTs, r1.NewCursor);
+        Assert.Single(r2.Events);
+        Assert.Equal("3b", r2.Events[0].EventId);
+    }
+
+    [Fact]
+    public void RecommendationLog_round_trips()
+    {
+        var dir = TempDir();
+        var log = new RecommendationLog(dir);
+        var rec = new Recommendation { Title = "t", Why = "w", Urgency = "high", AtUtc = DateTimeOffset.Parse("2026-10-01T15:00:00Z") };
+        rec.Buttons.Add(new SuggestedButton("Dismiss", "dismiss"));
+        log.Append(rec);
+
+        var back = log.Read(rec.AtUtc);
+        Assert.Single(back);
+        Assert.Equal("t", back[0].Title);
+        Assert.Equal("dismiss", back[0].Buttons[0].Kind);
+    }
+
+    [Fact]
+    public void Memory_add_resolve_save_load_prune()
+    {
+        var path = Path.Combine(TempDir(), "mem.json");
+        var m = new AssistantMemory();
+        var item = m.AddOpenItem("Erika said collection ready", "handoff", DateTimeOffset.UtcNow);
+        Assert.NotNull(item);
+        m.Save(path);
+
+        var m2 = AssistantMemory.Load(path);
+        Assert.Single(m2.OpenItems);
+        Assert.True(m2.Resolve(item!.Id));
+        Assert.True(m2.OpenItems[0].Resolved);
+
+        m2.Prune(DateTimeOffset.UtcNow.AddDays(10), TimeSpan.FromDays(7));
+        Assert.Empty(m2.OpenItems); // resolved + older than keep → dropped
+    }
+
+    [Fact]
+    public async Task Heuristic_flags_printer_problem_but_not_a_cleared_one()
+    {
+        var problem = Ev("printer_problem", T0, "p1", meta: new JsonObject { ["printer"] = "MPP Test", ["reason"] = "Out of paper", ["resolved"] = false });
+        var recs = await new HeuristicLlmProvider().SuggestAsync(Ctx(problem));
+        Assert.Single(recs);
+        Assert.Contains("Out of paper", recs[0].Title);
+
+        var cleared = Ev("printer_problem", T0, "p2", meta: new JsonObject { ["printer"] = "X", ["reason"] = "cleared", ["resolved"] = true });
+        Assert.Empty(await new HeuristicLlmProvider().SuggestAsync(Ctx(cleared)));
+    }
+
+    [Fact]
+    public async Task Heuristic_suggests_automation_for_repeated_clicks()
+    {
+        var clicks = Enumerable.Range(0, 9)
+            .Select(i => Ev("ui_action", T0.AddSeconds(i), "u" + i, meta: new JsonObject { ["control_name"] = "Paste" }))
+            .ToArray();
+        var recs = await new HeuristicLlmProvider(8).SuggestAsync(Ctx(clicks));
+        Assert.Single(recs);
+        Assert.Contains("Paste", recs[0].Title);
+        Assert.Contains(recs[0].Buttons, b => b.Kind == "add_tracker");
+    }
+
+    [Fact]
+    public async Task Engine_tick_writes_recs_then_nothing_new_second_time()
+    {
+        var dir = TempDir();
+        var e = Ev("printer_problem", DateTimeOffset.UtcNow, "x1",
+            meta: new JsonObject { ["printer"] = "P", ["reason"] = "Paper jam", ["resolved"] = false });
+        File.WriteAllText(Path.Combine(dir, "events_1.jsonl"), EventJson.Serialize(e) + "\n");
+
+        var cfg = new AssistantConfig { ActivityFolder = dir, OutputFolder = dir, Person = "Dalia" };
+        var engine = new AssistantEngine(cfg, new HeuristicLlmProvider());
+
+        var recs = await engine.TickAsync();
+        Assert.Single(recs);
+        Assert.True(File.Exists(new RecommendationLog(dir).FileFor(recs[0].AtUtc)));
+
+        Assert.Empty(await engine.TickAsync()); // cursor advanced; no new events
+    }
+
+    private static AssistantContext Ctx(params WatchEvent[] events) =>
+        new(events, new AssistantMemory(), "Dalia", DateTimeOffset.UtcNow);
+}
