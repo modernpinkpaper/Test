@@ -1,0 +1,12 @@
+# #9 — AVERY - Software for the Mind
+
+**Topic:** About Chase Hughes and the Behavior Ops Manual  
+**Posted:** 2026-07-20  
+**Length:** 70 seconds  
+**Video:** https://www.tiktok.com/@thepsychologydropout/video/7664695687640141070
+
+## Caption
+What if you could install new software into your mind? In the Behavior Ops Manual, Chase Hughes introduces AVERY—a system he describes as: • “A piece of software in the mind with very real hardware components.” • Built over 21 years of development and $33 million in research. • Designed to help install new behavior patterns, confidence, beliefs, and habits through intensive training. • A self-learning, self-updating system that, according to Chase, gives you immediate access to the behaviors you want to develop. This clip explains why CEOs, elite athletes, and high performers are drawn to AVERY—and why it’s one of the most talked-about sections of the Behavior Ops Manual. 📖 AVERY is covered in Section 09 of the Behavior Ops Manual.  #BehaviorOpsManual #ChaseHughes #AVERY #HumanBehavior #PeakPerformance
+
+## Transcript
+AVERY is the most one of a kind system that exists in the world. We've had psychiatrists come through this and psychologists come through this training saying, like, this is utterly and absolutely profound and. And life changing. The way that it's designed, hundreds of years of research. We have all these C E O's, celebrities, P E. Performance athletes. We've got U F C. Champions, E G A. Players who've won the Masters that are now doing AVERY or have done AVERY. Very close to having this wormhole from where I am right now, I can instantly transport into this place where I really need to be. AVERY was designed to remove the limit. AVERY is the thing that allows you to operate outside of whatever your perceived limitations were before. Ability to basically just hit a switch and you become a version of yourself that doesn't possess any of those limitations anymore. Every time they activate this AVERY system, they live this life for a couple of hours while AVERY is turned on. So if they're activating this AVERY on a routine basis for months at a time, they're really just massively developing all these things as a habit, usually around the course of nine or 10 months. They've completely transformed how they see the world, how they walk through life. And we get a lot of C E O's and Fortune 100 senior executives that come in. It is every single approach that could ever be done. To change a person compacted into this little four day process

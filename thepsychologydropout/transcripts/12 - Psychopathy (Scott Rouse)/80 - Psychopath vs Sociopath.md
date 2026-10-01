@@ -1,0 +1,12 @@
+# #80 — Psychopath vs Sociopath
+
+**Topic:** Psychopathy (Scott Rouse)  
+**Posted:** 2026-08-12  
+**Length:** 73 seconds  
+**Video:** https://www.tiktok.com/@thepsychologydropout/video/7673029926739627277
+
+## Caption
+Psychopath vs. sociopath — are they actually the same thing? Scott Rouse breaks down one of the most common misconceptions about psychopathy: not every psychopath is a violent criminal, and some can appear completely ordinary, successful, and even highly productive. In this clip, he explains the classic distinction often made between psychopathy as more innate (“nature”) and sociopathy as more influenced by environment (“nurture”)—and recommends Without Conscience by Robert D. Hare as a must-read for understanding psychopathy and the people who may hide it in plain sight. 📖 Without Conscience — Robert D. Hare Have you read it? #Psychopathy #Psychopath #Sociopath #RobertHare #WithoutConscience
+
+## Transcript
+There are no sociopaths. That's just a word that was. Has been used to soften the term psychopath. They're just hardcore criminals. They don't have the empathy or sympathy for somebody because of the way they were raised. It's nature versus nurture. Sociopath is nurture and psychopath is nature. You're born a psychopath, okay? You either are or you are not. You can't turn into one, you can't cure it. So psychopaths are born, sociopaths are nurtured. They're created. In other words, some psychopaths are normal, normal people because they don't know they're psychopaths and they weren't raised in a violent environment or their parents are really loving and nurturing. Their family was really loving family. And they don't know violence. They don't know what it looks like. They don't know what it looks like being mean to somebody. They don't know what it looks like being mean to little animals. Not all of them are violent. Not all of them are mean. They're not all crazy with, you know, wild looking look in their eye and killing people and doing set things on fire and doing all kinds of wild stuff. Some of them just aren't. They're not like that. They're very productive and they're great people, but they're psychopaths. Their brain isn't functioning properly. So some books you might find interesting. There's one we always talk about on behaviour panel called without conscience by Robert D. Hare. He's the, you know, Michael Jackson of psychopathy. Jonah Barrow has A great book called Dangerous Personalities. Check that book out, you'll love it. Good book. Great book, actually.
