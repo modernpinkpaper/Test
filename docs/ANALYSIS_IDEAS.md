@@ -86,3 +86,26 @@ which links). Needs a listing-ID/ASIN -> SKU lookup (listings are identified by 
 Pick an item, copy its Goal + Data + Caveat, add the specific logs, and tell AI: "using these MT Log
 files, do [Goal]; the data available is [Data]; respect [Caveat]; output as [format]." That is the base
 of the prompt.
+
+## 16. InDesign change detail (LIMITED by MT Log; deeper needs an InDesign script)
+Goal: know which doc, which text box / script label, tool selected, property changed (e.g. ink swatch).
+What MT Log CAN do: document name (window title); SOME panel/menu clicks and field values (font,
+character style, measurements) via accessibility. What it CANNOT do: canvas object identity, script
+labels, which object got a swatch — that lives inside InDesign's canvas, not exposed to Windows.
+Deeper path: a script/plugin INSIDE InDesign (ExtendScript/UXP) that logs its own changes — a separate
+add-on from MT Log (Dalia already writes .jsx scripts).
+
+## 17. Print-team optimization suggestions
+Goal: suggest how the print team can be faster/more accurate.
+Strong on: computer-side workflow (batching, sequence, re-opens, stalls, proactive restock via the
+out-of-paper feature) and timing. Limited on: physical technique (inferred as hypotheses to confirm by
+watching) and print-quality/accuracy (MT Log can't see a misprint; only process suggestions like a
+double-check step, or which SKUs get reprinted most).
+
+## 18. Live LLM assistant (real-time on-screen suggestions) — SEPARATE, opt-in, later
+Goal: an on-PC assistant that reads activity live and pops suggestions (e.g. "Carolina copy-pasting a
+lot -> Tampermonkey script", "Erika said collection ready -> add ad task to calendar").
+Doable but a DIFFERENT product: reverses the "no AI on the watcher" rule, ongoing LLM cost + network,
+streams activity (incl. chat) to an LLM live, and a visible assistant reveals monitoring to employees.
+Recommendation: build the OFFLINE central brain first (batched, cheap, reviewed); only then consider a
+live version, and run it on Dalia's own machine first, not silently on employees' PCs.
