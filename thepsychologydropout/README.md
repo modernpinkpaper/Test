@@ -8,6 +8,12 @@ All 86 videos from [tiktok.com/@thepsychologydropout](https://www.tiktok.com/@th
 |---|---|
 | [Book-Recommendations.md](Book-Recommendations.md) | Every book mentioned, why to read it, and what the video said |
 | [Methods-Frameworks-Theories.md](Methods-Frameworks-Theories.md) | 79 methods, models and theories: name, what it is, and what the videos said |
+| [Exercises-and-Challenges.md](Exercises-and-Challenges.md) | 35 hands-on exercises and challenges, with steps |
+| [Phrases-and-Scripts.md](Phrases-and-Scripts.md) | Exact words to say to others and to yourself |
+| [Best-Quotes.md](Best-Quotes.md) | The most memorable lines, by topic |
+| [Myths-Busted.md](Myths-Busted.md) | Common beliefs the videos say are wrong, and what they say instead |
+| [Stories-and-Examples.md](Stories-and-Examples.md) | Every story, example and case study used to teach |
+| [Glossary.md](Glossary.md) | A–Z definitions, including Chase's own meanings of common words |
 | [All-Transcripts-by-Topic.md](All-Transcripts-by-Topic.md) | Every caption + transcript in one file, grouped by topic |
 | [transcripts/](transcripts) | One file per video, in a folder for each topic |
 | [data/videos.json](data/videos.json) | Raw data (title, topic, date, views, link, caption, transcript) |
