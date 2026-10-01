@@ -1,7 +1,8 @@
 namespace MppWatcher.Core.Ui;
 
 /// <param name="Edited">True when the value was seen changing; false when focus was noticed late and the starting value is unknown.</param>
-public sealed record FieldCommit(UiElementInfo Element, string Trigger, bool Edited);
+/// <param name="PreviousValue">The value before the edit (for before→after), or null when it is unknown or unchanged.</param>
+public sealed record FieldCommit(UiElementInfo Element, string Trigger, bool Edited, string? PreviousValue = null);
 
 /// <summary>
 /// Decides when a text field's value is "finished" — without keystrokes. The Windows layer
@@ -68,6 +69,7 @@ public sealed class FocusedFieldTracker
         if (_field is null) return null;
         if (_last == _initial || _last == _lastCommitted || string.IsNullOrWhiteSpace(_last)) return null;
         _lastCommitted = _last;
-        return new FieldCommit(_field with { Value = _last }, trigger, Edited: _initialKnown);
+        var previous = _initialKnown && _initial != _last ? _initial : null; // before→after, when we know the start
+        return new FieldCommit(_field with { Value = _last }, trigger, Edited: _initialKnown, PreviousValue: previous);
     }
 }

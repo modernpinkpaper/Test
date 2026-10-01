@@ -39,6 +39,8 @@ public sealed class UiAutomationCollector : ICollector
     private readonly MppWatcher.Core.Activity.ActivityContext? _activity;
     private string? _trackedWindowClass;
     private IntPtr _trackedWindow;
+    private string? _trackedLastValue;   // last value seen in the tracked field, to notice changes
+    private string? _fieldInputSource;    // "human" | "likely_automated" for the current field
     private (MppWatcher.Core.Ui.UiElementInfo Field, string Value, IntPtr Dialog)? _pendingDialogChoice;
     private readonly SopScreenshotter? _sop;
 
@@ -189,6 +191,22 @@ public sealed class UiAutomationCollector : ICollector
         _trackedElement = trackable is null ? null : element;
         _trackedWindow = trackable is null ? IntPtr.Zero : NativeMethods.GetForegroundWindow();
         _trackedWindowClass = trackable is null ? null : NativeMethods.GetWindowClass(_trackedWindow);
+        _trackedLastValue = trackable?.Value;   // start fresh for the new field
+        _fieldInputSource = null;
+    }
+
+    /// <summary>
+    /// Notice a change in the tracked field and judge who caused it. If the value changes while there
+    /// was keyboard/mouse input a moment ago it is "human"; if it changes with no input just before
+    /// (a script or AI set it via UI Automation), it is "likely_automated". Once any human change is
+    /// seen the field stays "human" (a person may tidy up an auto-filled value).
+    /// </summary>
+    private void NoteValueChange(string? value)
+    {
+        if (value == _trackedLastValue) return;
+        _trackedLastValue = value;
+        if (NativeMethods.TimeSinceLastInput() <= TimeSpan.FromSeconds(1.5)) _fieldInputSource = "human";
+        else if (_fieldInputSource != "human") _fieldInputSource = "likely_automated";
     }
 
     /// <summary>
@@ -222,6 +240,7 @@ public sealed class UiAutomationCollector : ICollector
             _trackedElement = null;
             return;
         }
+        NoteValueChange(value);
         _tracker.OnValue(value, now);
         Commit(_tracker.OnTick(now));
     }
@@ -230,7 +249,7 @@ public sealed class UiAutomationCollector : ICollector
     {
         if (_trackedElement is null || _tracker?.Current is null) return;
         var value = _uia!.ReadValue(_trackedElement, out var gone);
-        if (!gone) _tracker.OnValue(value, now);
+        if (!gone) { NoteValueChange(value); _tracker.OnValue(value, now); }
     }
 
     private void Commit(FieldCommit? commit)
@@ -242,7 +261,7 @@ public sealed class UiAutomationCollector : ICollector
             if (decision.IsSensitive) _refusedSensitive++;
             return;
         }
-        _ctx!.Sink.Emit(UiEventFactory.FieldValue(commit.Element, decision, commit.Trigger, commit.Edited, _ctx.Clock.Now));
+        _ctx!.Sink.Emit(UiEventFactory.FieldValue(commit.Element, decision, commit.Trigger, commit.Edited, _ctx.Clock.Now, commit.PreviousValue, _fieldInputSource));
         _fieldsLogged++;
         if (decision.IncludeValue) RememberFileDialogChoice(commit.Element, decision.Value!);
     }

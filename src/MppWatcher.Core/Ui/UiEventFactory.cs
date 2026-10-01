@@ -10,12 +10,18 @@ public static class UiEventFactory
     public const string CollectorName = "ui_automation";
     public const string CollectorVersion = "1.0.0";
 
-    public static WatchEvent FieldValue(UiElementInfo e, UiFieldDecision d, string trigger, bool edited, DateTimeOffset at)
+    public static WatchEvent FieldValue(UiElementInfo e, UiFieldDecision d, string trigger, bool edited, DateTimeOffset at,
+        string? previousValue = null, string? inputSource = null)
     {
         var ev = Base(EventTypes.UiFieldValue, e, at);
         var m = ev.Metadata;
         m["label"] = UiCapturePolicy.CleanName(e.LabeledBy) ?? UiCapturePolicy.CleanName(e.Name);
-        if (d.IncludeValue) m["value"] = d.Value;
+        if (d.IncludeValue)
+        {
+            m["value"] = d.Value;
+            // Before→after (e.g. an ads bid changed from 0.75 to 0.90). Only when the value itself is logged.
+            if (previousValue is not null && previousValue != d.Value) m["previous_value"] = previousValue;
+        }
         else
         {
             m["value_omitted"] = true;
@@ -24,6 +30,9 @@ public static class UiEventFactory
         m["value_length"] = d.ValueLength;
         m["trigger"] = trigger;         // focus_left | value_settled
         m["edited"] = edited;
+        // Who filled it: "human" (there was keyboard/mouse input as it changed) vs "likely_automated"
+        // (the value changed with no input just before — e.g. a script/AI filled the field).
+        if (inputSource is not null) m["input_source"] = inputSource;
         if (!edited) m["focus_detected_late"] = true; // Windows did not announce the focus; value may have been there before
         ev.DedupFingerprint = $"{e.ProcessName}|{e.AutomationId}|{e.Name}|{d.Value}";
         return ev;

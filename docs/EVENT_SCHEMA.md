@@ -108,6 +108,8 @@ The **finished** value of a text field or drop-down. Never keystrokes.
 | `value` | the value, e.g. `personalized stationery` (URLs are sanitized) |
 | `value_omitted`, `value_omitted_reason` | value not stored because it is long (> `max_value_length`) or multi-line; only `value_length` is kept |
 | `value_length` | characters |
+| `previous_value` | the value before the edit, when known (before→after — e.g. an ads bid `0.75` → `0.90`); only when `value` itself is stored |
+| `input_source` | `human` (keyboard/mouse input as it changed) or `likely_automated` (the value changed with no input just before — a script/AI filled it); omitted when unknown |
 | `trigger` | `focus_left` (user left the field) or `value_settled` (value unchanged for 4 s while the field kept focus, e.g. search + Enter) |
 | `edited` | `true` — only changed fields are reported |
 
