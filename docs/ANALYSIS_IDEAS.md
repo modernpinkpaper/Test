@@ -102,6 +102,24 @@ out-of-paper feature) and timing. Limited on: physical technique (inferred as hy
 watching) and print-quality/accuracy (MT Log can't see a misprint; only process suggestions like a
 double-check step, or which SKUs get reprinted most).
 
+## 19. Cross-person best-practice diff ("what does A do that B doesn't?")
+Goal: compare two people's logs and surface methods/tools/automations one uses that the other doesn't,
+to level up the slower process. Example found (1 day, Kayla vs Annie): Kayla claims with the
+mpp-CLAIM-BUTTONS script + a "Claim all" and an "Open + Claim" combo; Annie had none of those (plain
+one-by-one Claim clicks). Kayla also does a batch email handoff ("21 Notepads to Dalia") and spreads
+print jobs across 4 printers incl. the XTRA printer; Annie did neither. Data: scripts/extensions by
+name, control names (Claim all, Open+Claim), domains (Gmail handoff), printers used, event counts.
+Caveat: one day is a lead, not proof — roles differ; confirm with the person before changing process.
+
+## 20. "Scripts I use" index → pull the code to see how it's wired
+Goal: MT Log sees WHICH scripts/extensions/codes you use (by name — e.g. mpp-CLAIM-BUTTONS-v3.2,
+MPP OD Order Downloader, the "firestore" order-claimer sheet), but NOT their internals (code, network,
+Firestore sync). So the tool should LIST the scripts/codes it saw you use and prompt: "pull these files
+and feed them to AI to see how they connect (Firestore, Sheets, APIs) for the full wiring answer."
+Data: control names / window titles containing script names; file names like mpp-indesign-orders.json.
+Caveat: the logs give the name + that it's used; the actual connection lives in the script's own code,
+which is a separate source you hand to AI. This bridges the "logs see use, code sees wiring" gap.
+
 ## 18. Live LLM assistant (real-time on-screen suggestions) — SEPARATE, opt-in, later
 Goal: an on-PC assistant that reads activity live and pops suggestions (e.g. "Carolina copy-pasting a
 lot -> Tampermonkey script", "Erika said collection ready -> add ad task to calendar").
