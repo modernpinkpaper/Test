@@ -164,6 +164,13 @@ public class AssistantTests
     }
 
     [Fact]
+    public async Task Heuristic_answer_points_at_the_api_key()
+    {
+        var answer = await new HeuristicLlmProvider().AnswerAsync("when did I claim orders?", Array.Empty<WatchEvent>(), "Dalia");
+        Assert.Contains("ANTHROPIC_API_KEY", answer);
+    }
+
+    [Fact]
     public void ProviderFactory_falls_back_to_heuristic_without_a_key()
     {
         // CI has no ANTHROPIC_API_KEY, and forceHeuristic guarantees the stand-in regardless.

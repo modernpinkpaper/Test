@@ -10,6 +10,9 @@ namespace MppWatcher.Assistant;
 public interface ILlmProvider
 {
     Task<IReadOnlyList<Recommendation>> SuggestAsync(AssistantContext ctx, CancellationToken ct = default);
+
+    /// <summary>Answer a plain-English question about the activity ("when did X happen?"). Returns a short answer.</summary>
+    Task<string> AnswerAsync(string question, IReadOnlyList<WatchEvent> events, string person, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -70,6 +73,9 @@ public sealed class HeuristicLlmProvider : ILlmProvider
 
         return Task.FromResult<IReadOnlyList<Recommendation>>(recs);
     }
+
+    public Task<string> AnswerAsync(string question, IReadOnlyList<WatchEvent> events, string person, CancellationToken ct = default) =>
+        Task.FromResult("Asking questions needs the Claude brain. Set ANTHROPIC_API_KEY, then run the --ask command again.");
 
     private static string? Str(JsonObject m, string key)
     {

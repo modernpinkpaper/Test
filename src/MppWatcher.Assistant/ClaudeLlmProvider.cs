@@ -52,6 +52,63 @@ public sealed class ClaudeLlmProvider : ILlmProvider
         }
     }
 
+    /// <summary>
+    /// Answer a plain-English question about the activity. Keeps it cheap by sending only the events whose
+    /// one-line view matches a word in the question (falling back to the most recent events if none match).
+    /// </summary>
+    public async Task<string> AnswerAsync(string question, IReadOnlyList<WatchEvent> events, string person, CancellationToken ct = default)
+    {
+        try
+        {
+            var lines = Relevant(question, events, 600);
+            var sb = new StringBuilder();
+            sb.AppendLine("Activity events (most recent last). Each line: time | type | app | where | key=value:");
+            foreach (var l in lines) sb.AppendLine(l);
+            sb.AppendLine();
+            sb.AppendLine("Question: " + question);
+
+            var response = await _client.Messages.Create(new MessageCreateParams
+            {
+                Model = _model,
+                MaxTokens = 700,
+                System = AnswerSystemPrompt.Replace("__PERSON__", person),
+                Messages = [new() { Role = Role.User, Content = sb.ToString() }],
+            });
+            var text = new StringBuilder();
+            foreach (var block in response.Content.Select(b => b.Value).OfType<TextBlock>()) text.Append(block.Text);
+            var answer = text.ToString().Trim();
+            return string.IsNullOrWhiteSpace(answer) ? "I couldn't find anything about that in the logs." : answer;
+        }
+        catch (Exception ex)
+        {
+            return "Sorry — I couldn't answer that (" + ex.Message + ").";
+        }
+    }
+
+    /// <summary>Pick events whose compact line mentions a word from the question; fall back to the most recent.</summary>
+    private static List<string> Relevant(string question, IReadOnlyList<WatchEvent> events, int cap)
+    {
+        var compact = events.Select(Compact).ToList();
+        var words = question
+            .Split(new[] { ' ', '\t', '?', '.', ',', '!', ';', ':', '"', '\'', '(', ')' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(w => w.Length >= 3)
+            .Select(w => w.ToLowerInvariant())
+            .Distinct()
+            .ToList();
+        var matched = words.Count == 0
+            ? new List<string>()
+            : compact.Where(l => words.Any(w => l.ToLowerInvariant().Contains(w))).ToList();
+        var chosen = matched.Count > 0 ? matched : compact;
+        return chosen.Count <= cap ? chosen : chosen.Skip(chosen.Count - cap).ToList();
+    }
+
+    private const string AnswerSystemPrompt = """
+        You answer questions for __PERSON__ about their own computer activity at a small e-commerce/print
+        business (MPP). You are given a list of logged activity events. Answer the question using ONLY those
+        events. Be short and specific, and give the time/date when the activity shows it. If the events do
+        not contain the answer, say so plainly — never guess or invent anything.
+        """;
+
     // Plain raw string (no $ interpolation) so the literal JSON braces are safe; person is swapped in.
     private static string SystemPrompt(string person) => BaseSystemPrompt.Replace("__PERSON__", person);
 

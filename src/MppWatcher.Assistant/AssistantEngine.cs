@@ -61,4 +61,18 @@ public sealed class AssistantEngine
     /// every tick. Safe to call on a background thread.
     /// </summary>
     public LearnedMemory Learn() => Learner.Run(_cfg.ActivityFolder, _cfg.LearnedMemoryPath, _cfg.OutputFolder);
+
+    /// <summary>
+    /// Answer a plain-English question about the activity (e.g. "when did I claim order 111-...?").
+    /// Reads the last <paramref name="days"/> days of events and hands them to the brain to answer.
+    /// </summary>
+    public Task<string> AskAsync(string question, int days = 7, CancellationToken ct = default)
+    {
+        var all = ActivityReader.ReadJsonlFolder(_cfg.ActivityFolder);
+        var cutoff = DateTimeOffset.UtcNow.AddDays(-Math.Max(1, days));
+        var recent = all.Where(e => e.TimestampUtc >= cutoff)
+            .OrderBy(e => e.TimestampUtc).ThenBy(e => e.Sequence)
+            .ToList();
+        return _provider.AnswerAsync(question, recent, _cfg.Person, ct);
+    }
 }

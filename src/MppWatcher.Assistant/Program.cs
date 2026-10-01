@@ -21,6 +21,8 @@ internal static class Program
         var repeatThreshold = 8;
         var forceHeuristic = false;
         var learn = false;
+        string? ask = null;
+        var days = 7;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -33,6 +35,8 @@ internal static class Program
                 case "--model": model = Next(); break;
                 case "--heuristic": forceHeuristic = true; break;
                 case "--learn": learn = true; break;
+                case "--ask": ask = Next(); break;
+                case "--days": if (int.TryParse(Next(), out var d)) days = Math.Clamp(d, 1, 120); break;
                 case "--once": watch = false; break;
                 case "--watch": watch = true; break;
                 case "--interval": if (double.TryParse(Next(), out var m)) intervalMinutes = Math.Clamp(m, 0.25, 60); break;
@@ -62,6 +66,15 @@ internal static class Program
             : "Brain: built-in heuristic (set ANTHROPIC_API_KEY for the real Claude brain).");
 
         var engine = new AssistantEngine(cfg, provider);
+
+        if (!string.IsNullOrWhiteSpace(ask))
+        {
+            Console.WriteLine($"Looking through the last {days} day(s) of activity…");
+            var answer = await engine.AskAsync(ask!, days);
+            Console.WriteLine();
+            Console.WriteLine(answer);
+            return 0;
+        }
 
         if (learn)
         {
@@ -101,6 +114,8 @@ internal static class Program
           --person <name>         A label for who this is (e.g. Dalia)
           --model <id>            Claude model (default claude-haiku-4-5); needs ANTHROPIC_API_KEY
           --heuristic             Force the built-in stand-in brain (no API calls)
+          --ask "<question>"      Ask a plain-English question about the logs, print the answer, exit
+          --days <n>              How many days back --ask should look (default 7)
           --learn                 Run the learn pass (mine habits + fold in feedback) then continue
           --once                  One pass then exit (default)
           --watch                 Keep running, checking every --interval minutes
