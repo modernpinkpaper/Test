@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The live on-screen assistant (separate app). Reads the activity logs MT Log already
+       makes, keeps a day memory, and writes recommendations. Platform-independent core so it
+       builds and unit-tests on any OS; see docs/LIVE_ASSISTANT_PLAN.md. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>MppWatcher.Assistant</RootNamespace>
+    <AssemblyName>MppAssistant</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MppWatcher.Core\MppWatcher.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MppWatcher.Core.Tests" />
+  </ItemGroup>
+
+</Project>
