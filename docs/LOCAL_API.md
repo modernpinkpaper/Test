@@ -62,6 +62,14 @@ await mppReport({ event_type: 'automation_run', script_name: 'MPP Etsy Customiza
 
 `mppReport` never throws: if the watcher is not running, your script carries on.
 
+## InDesign
+
+A ready-made InDesign logger lives in [`tools/indesign/mpp-indesign-logger.jsx`](../tools/indesign/mpp-indesign-logger.jsx)
+(see [`tools/indesign/README.md`](../tools/indesign/README.md)). It runs inside InDesign and
+reports document opens/saves, selections (with the object's script label and applied swatch),
+tool changes, and edits. It signs requests the same way, in pure ExtendScript, and also keeps a
+local daily file so you can test it with MT Log switched off.
+
 ## PowerShell / other tools
 
 ```powershell
