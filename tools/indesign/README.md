@@ -88,7 +88,8 @@ In MT Log these arrive as normal events with:
   `indesign_doc_active`, `indesign_selection`, `indesign_tool`, `indesign_edit`,
   `indesign_command`, `indesign_script_run`, `indesign_swatch_added`,
   `indesign_swatch_changed`, `indesign_swatch_renamed`, `indesign_swatch_removed`,
-  `indesign_attr_changed`, `indesign_logger_started`
+  `indesign_moved`, `indesign_resized`, `indesign_rotated`, `indesign_attr_changed`,
+  `indesign_logger_started`
 - all the InDesign details inside `data`.
 
 If MT Log isn't running or the secret is wrong, nothing breaks — the post quietly fails
@@ -105,7 +106,8 @@ and InDesign carries on.
 - the selected **tool**;
 - **swatch edits** — a swatch added, removed, renamed, or **recoloured, and to what**
   (e.g. `PANTONE 185 C: CMYK(0,100,100,0) -> CMYK(0,80,80,0)`);
-- **changes on the selected object** — stroke colour/weight/style, fill, opacity, and for
+- **changes on the selected object** — **position (x/y) and how far it moved (dx/dy)**,
+  **size (width/height)**, **rotation**, stroke colour/weight/style, fill, opacity, and for
   text the font, size, and paragraph/character style — reporting **what changed to what**;
 - **menu commands** you run (Export, Print, Place, …) and **menu-scripts**;
 - when you edit and save.

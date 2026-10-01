@@ -56,8 +56,9 @@ var CONFIG = {
     // Watch for SWATCH edits: a swatch added, removed, renamed, or recoloured (and to what).
     WATCH_SWATCHES: true,
 
-    // Watch the selected object for CHANGES: stroke colour/weight/style, fill, opacity,
-    // and (for text) font, size, paragraph/character style — reporting what changed to what.
+    // Watch the selected object for CHANGES: position (x/y) & how far it moved, size,
+    // rotation, stroke colour/weight/style, fill, opacity, and (for text) font, size,
+    // paragraph/character style — reporting what changed to what.
     WATCH_ATTRS: true,
 
     // Also log menu COMMANDS (Export, Print, Place, …) and menu-scripts you run.
@@ -408,6 +409,20 @@ function diffSwatches(docName, oldMap, newMap) {
     }
 }
 
+// The ruler unit label (in / mm / cm / pt / pc / px) for position & size figures.
+function unitLabel() {
+    try {
+        var u = String(app.activeDocument.viewPreferences.horizontalMeasurementUnits).toLowerCase();
+        if (u.indexOf("inch") >= 0) return "in";
+        if (u.indexOf("millim") >= 0) return "mm";
+        if (u.indexOf("centim") >= 0) return "cm";
+        if (u.indexOf("point") >= 0) return "pt";
+        if (u.indexOf("pica") >= 0) return "pc";
+        if (u.indexOf("pixel") >= 0) return "px";
+    } catch (e) {}
+    return "units";
+}
+
 // --- Selected-object watching: spot stroke/fill/style/font/size changes --------------
 // Grab the watched attributes of the single selected object (or null).
 function snapshotAttrs() {
@@ -421,6 +436,15 @@ function snapshotAttrs() {
         try { a.stroke_weight = Math.round(item.strokeWeight * 100) / 100; } catch (e3) {}
         try { if (item.strokeStyle && item.strokeStyle.name) a.stroke_style = item.strokeStyle.name; } catch (e4) {}
         try { a.opacity = Math.round(item.transparencySettings.blendingSettings.opacity * 10) / 10; } catch (e5) {}
+        // Position & size, from geometricBounds [y1, x1, y2, x2] in the ruler's units.
+        try {
+            var gb = item.geometricBounds;
+            if (gb && gb.length === 4) {
+                a.x = Math.round(gb[1] * 100) / 100; a.y = Math.round(gb[0] * 100) / 100;
+                a.w = Math.round((gb[3] - gb[1]) * 100) / 100; a.h = Math.round((gb[2] - gb[0]) * 100) / 100;
+            }
+        } catch (eg) {}
+        try { a.rotation = Math.round(item.rotationAngle * 100) / 100; } catch (er) {}
         try { if (item.pointSize !== undefined) a.size = item.pointSize; } catch (e6) {}
         try { if (item.appliedFont) a.font = (item.appliedFont.name !== undefined ? item.appliedFont.name : String(item.appliedFont)); } catch (e7) {}
         try { if (item.appliedParagraphStyle) a.para_style = item.appliedParagraphStyle.name; } catch (e8) {}
@@ -526,12 +550,31 @@ function onIdle(ev) {
                 if (snap && snap.id !== null) {
                     var prev = STATE.attrSnap;
                     if (prev && prev.id === snap.id) {
-                        for (var k in snap.attrs) {
-                            if (snap.attrs.hasOwnProperty(k) && prev.attrs[k] !== undefined &&
-                                String(prev.attrs[k]) !== String(snap.attrs[k])) {
+                        var p = prev.attrs, n = snap.attrs, dn = activeDocName(), unit = unitLabel();
+                        // Moved: report before/after x,y and how far (dx,dy).
+                        if (p.x !== undefined && n.x !== undefined && (p.x !== n.x || p.y !== n.y)) {
+                            var dx = Math.round((n.x - p.x) * 100) / 100, dy = Math.round((n.y - p.y) * 100) / 100;
+                            record("indesign_moved", { doc: dn, from: { x: p.x, y: p.y }, to: { x: n.x, y: n.y }, dx: dx, dy: dy, unit: unit },
+                                "Moved " + dx + "," + dy + " " + unit + " -> (" + n.x + "," + n.y + ")");
+                        }
+                        // Resized: report before/after width,height.
+                        if (p.w !== undefined && n.w !== undefined && (p.w !== n.w || p.h !== n.h)) {
+                            record("indesign_resized", { doc: dn, from: { w: p.w, h: p.h }, to: { w: n.w, h: n.h }, unit: unit },
+                                "Resized " + p.w + "x" + p.h + " -> " + n.w + "x" + n.h + " " + unit);
+                        }
+                        // Rotated.
+                        if (p.rotation !== undefined && n.rotation !== undefined && p.rotation !== n.rotation) {
+                            record("indesign_rotated", { doc: dn, from: p.rotation, to: n.rotation },
+                                "Rotated " + p.rotation + " -> " + n.rotation + " deg");
+                        }
+                        // Everything else (stroke/fill/style/font/size/opacity) stays generic.
+                        for (var k in n) {
+                            if (!n.hasOwnProperty(k)) continue;
+                            if (k === "x" || k === "y" || k === "w" || k === "h" || k === "rotation") continue;
+                            if (p[k] !== undefined && String(p[k]) !== String(n[k])) {
                                 record("indesign_attr_changed",
-                                    { doc: activeDocName(), attr: k, from: prev.attrs[k], to: snap.attrs[k] },
-                                    "Changed " + k + ": " + prev.attrs[k] + " -> " + snap.attrs[k]);
+                                    { doc: dn, attr: k, from: p[k], to: n[k] },
+                                    "Changed " + k + ": " + p[k] + " -> " + n[k]);
                             }
                         }
                     }
@@ -603,11 +646,11 @@ function start() {
     $.global.__mppIdLogger = STATE;
 
     record("indesign_logger_started",
-        { doc: activeDocName(), version: "3", mt_log: CONFIG.SEND_TO_MT_LOG, file_logging: CONFIG.LOG_TO_FILE,
+        { doc: activeDocName(), version: "4", mt_log: CONFIG.SEND_TO_MT_LOG, file_logging: CONFIG.LOG_TO_FILE,
           commands: CONFIG.LOG_COMMANDS, swatches: CONFIG.WATCH_SWATCHES, attrs: CONFIG.WATCH_ATTRS },
         "InDesign logger started");
 
-    try { $.writeln("MT Log InDesign logger v3 running. Sending to MT Log: " + CONFIG.SEND_TO_MT_LOG); } catch (e) {}
+    try { $.writeln("MT Log InDesign logger v4 running. Sending to MT Log: " + CONFIG.SEND_TO_MT_LOG); } catch (e) {}
 }
 
 start();
