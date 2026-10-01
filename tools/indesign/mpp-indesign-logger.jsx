@@ -24,37 +24,47 @@
  *     and avoid copying customer text into the log).
  *   - Scripts you DOUBLE-CLICK in the Scripts panel (InDesign fires no event for those;
  *     menu commands and menu-scripts ARE caught — see below).
+ *   - A panel being clicked/opened (Swatches, Stroke, …). InDesign fires no "panel"
+ *     event — BUT v3 watches the RESULT of using those panels: which swatch you edited
+ *     and to what colour, what the stroke/fill/weight/opacity became, which style, font
+ *     or size you applied. That is the useful part.
  */
 
 // ====================================================================================
 //  SETTINGS — the only part most people need to touch
 // ====================================================================================
 var CONFIG = {
-    // Write a local .jsonl backup file (one line per action).
-    LOG_TO_FILE: true,
-
     // Hand each action LIVE to MT Log via its local API (127.0.0.1). MT Log then stamps
     // it with this PC's name + the employee + the date and files it in that person's day.
     SEND_TO_MT_LOG: true,
 
     // MUST match "local_api.shared_secret" in MT Log's config.json. Ask the admin.
-    // If this is wrong/blank, sends are quietly refused (the local backup still works).
+    // If this is wrong/blank, sends are quietly refused.
     SHARED_SECRET: "PUT-THE-SHARED-SECRET-HERE",
     PORT: 47821,
 
-    // How often (ms) to check the current tool / active document / unsaved-changes flag.
+    // Optional local .jsonl copy. Off by default (MT Log is the real destination).
+    // Flip to true only if you want to eyeball the output on this PC while testing.
+    LOG_TO_FILE: false,
+
+    // How often (ms) to check tool / active doc / swatch edits / stroke & style changes.
     POLL_MS: 2000,
 
     // Don't log the same selection more than once per this many ms (stops click spam).
     SELECTION_MIN_GAP_MS: 800,
 
-    // Keep this many days of local backup files; older ones are deleted on startup.
-    KEEP_BACKUP_DAYS: 30,
+    // Watch for SWATCH edits: a swatch added, removed, renamed, or recoloured (and to what).
+    WATCH_SWATCHES: true,
+
+    // Watch the selected object for CHANGES: stroke colour/weight/style, fill, opacity,
+    // and (for text) font, size, paragraph/character style — reporting what changed to what.
+    WATCH_ATTRS: true,
 
     // Also log menu COMMANDS (Export, Print, Place, …) and menu-scripts you run.
     LOG_COMMANDS: true,
 
-    // Leave empty for the default folder (%LOCALAPPDATA%\MT Log\indesign), or set a path.
+    // Only used if LOG_TO_FILE is true.
+    KEEP_BACKUP_DAYS: 30,
     OUTPUT_FOLDER: ""
 };
 
@@ -354,6 +364,71 @@ function selectionSig(info) {
     return [info.doc, info.kind, info.script_label, info.page, info.fill, info.stroke, info.count, info.chars].join("|");
 }
 
+// --- Swatch watching: spot a colour being edited and say what it became -------------
+// A readable colour string for a swatch, e.g. "CMYK(0,100,100,0)" or "RGB(255,0,0)".
+function colorSig(sw) {
+    try {
+        var v = sw.colorValue;                       // throws for gradients / mixed ink / [None]
+        if (!v || v.length === 0) return "";
+        var sp = "";
+        try { sp = String(sw.space); } catch (e) {}
+        if (!sp || /^\d+$/.test(sp)) sp = (v.length === 4 ? "CMYK" : v.length === 3 ? "RGB" : "");
+        var parts = [];
+        for (var i = 0; i < v.length; i++) parts.push(Math.round(v[i] * 10) / 10);
+        return sp + "(" + parts.join(",") + ")";
+    } catch (e) { return ""; }
+}
+// Snapshot the active document's swatches as { id: {name, sig} } (skips gradients/none).
+function snapshotSwatches(doc) {
+    var map = {};
+    try {
+        var sws = doc.swatches, i, sw, sig;
+        for (i = 0; i < sws.length; i++) {
+            sw = sws[i];
+            try {
+                sig = colorSig(sw);
+                if (sig === "") continue;
+                map[sw.id] = { name: sw.name, sig: sig };
+            } catch (e) {}
+        }
+    } catch (e2) {}
+    return map;
+}
+// Compare old vs new swatch snapshots and log any add / remove / rename / recolour.
+function diffSwatches(docName, oldMap, newMap) {
+    var id;
+    for (id in newMap) {
+        if (!newMap.hasOwnProperty(id)) continue;
+        if (!oldMap[id]) { record("indesign_swatch_added", { doc: docName, swatch: newMap[id].name, color: newMap[id].sig }, "Swatch added: " + newMap[id].name + " = " + newMap[id].sig); continue; }
+        if (oldMap[id].name !== newMap[id].name) record("indesign_swatch_renamed", { doc: docName, from: oldMap[id].name, to: newMap[id].name }, "Swatch renamed: " + oldMap[id].name + " -> " + newMap[id].name);
+        if (oldMap[id].sig !== newMap[id].sig) record("indesign_swatch_changed", { doc: docName, swatch: newMap[id].name, from: oldMap[id].sig, to: newMap[id].sig }, "Swatch recoloured: " + newMap[id].name + " " + oldMap[id].sig + " -> " + newMap[id].sig);
+    }
+    for (id in oldMap) {
+        if (oldMap.hasOwnProperty(id) && !newMap[id]) record("indesign_swatch_removed", { doc: docName, swatch: oldMap[id].name }, "Swatch removed: " + oldMap[id].name);
+    }
+}
+
+// --- Selected-object watching: spot stroke/fill/style/font/size changes --------------
+// Grab the watched attributes of the single selected object (or null).
+function snapshotAttrs() {
+    try {
+        var sel = app.selection;
+        if (!sel || sel.length !== 1) return null;
+        var item = sel[0], id = null, a = {};
+        try { id = item.id; } catch (e0) {}
+        try { if (item.fillColor && item.fillColor.name !== undefined) a.fill = item.fillColor.name; } catch (e1) {}
+        try { if (item.strokeColor && item.strokeColor.name !== undefined) a.stroke = item.strokeColor.name; } catch (e2) {}
+        try { a.stroke_weight = Math.round(item.strokeWeight * 100) / 100; } catch (e3) {}
+        try { if (item.strokeStyle && item.strokeStyle.name) a.stroke_style = item.strokeStyle.name; } catch (e4) {}
+        try { a.opacity = Math.round(item.transparencySettings.blendingSettings.opacity * 10) / 10; } catch (e5) {}
+        try { if (item.pointSize !== undefined) a.size = item.pointSize; } catch (e6) {}
+        try { if (item.appliedFont) a.font = (item.appliedFont.name !== undefined ? item.appliedFont.name : String(item.appliedFont)); } catch (e7) {}
+        try { if (item.appliedParagraphStyle) a.para_style = item.appliedParagraphStyle.name; } catch (e8) {}
+        try { if (item.appliedCharacterStyle) a.char_style = item.appliedCharacterStyle.name; } catch (e9) {}
+        return { id: id, attrs: a };
+    } catch (e) { return null; }
+}
+
 // ====================================================================================
 //  Event handlers
 // ====================================================================================
@@ -430,6 +505,40 @@ function onIdle(ev) {
                 STATE.lastModified = mod;
             }
         } catch (e3) {}
+
+        // Swatch edits (checked a little less often — swatch lists can be long).
+        if (CONFIG.WATCH_SWATCHES && app.documents.length > 0) {
+            try {
+                STATE.swatchTick = (STATE.swatchTick + 1) % 3;
+                if (STATE.swatchTick === 0) {
+                    var doc = app.activeDocument, dn = cleanDocName(doc.name);
+                    var fresh = snapshotSwatches(doc);
+                    if (STATE.swatchSnap && STATE.swatchSnapDoc === dn) diffSwatches(dn, STATE.swatchSnap, fresh);
+                    STATE.swatchSnap = fresh; STATE.swatchSnapDoc = dn;
+                }
+            } catch (eS) {}
+        }
+
+        // Stroke / fill / style / font / size changes on the selected object.
+        if (CONFIG.WATCH_ATTRS) {
+            try {
+                var snap = snapshotAttrs();
+                if (snap && snap.id !== null) {
+                    var prev = STATE.attrSnap;
+                    if (prev && prev.id === snap.id) {
+                        for (var k in snap.attrs) {
+                            if (snap.attrs.hasOwnProperty(k) && prev.attrs[k] !== undefined &&
+                                String(prev.attrs[k]) !== String(snap.attrs[k])) {
+                                record("indesign_attr_changed",
+                                    { doc: activeDocName(), attr: k, from: prev.attrs[k], to: snap.attrs[k] },
+                                    "Changed " + k + ": " + prev.attrs[k] + " -> " + snap.attrs[k]);
+                            }
+                        }
+                    }
+                    STATE.attrSnap = snap;
+                } else { STATE.attrSnap = null; }
+            } catch (eA) {}
+        }
     } catch (e) {}
     try { ev.target.sleep = CONFIG.POLL_MS; } catch (e4) {}
 }
@@ -439,7 +548,8 @@ function onIdle(ev) {
 // ====================================================================================
 var STATE = {
     lastSelSig: "", lastSelTime: 0, lastTool: "", lastDoc: "", lastModified: false,
-    lastOpenName: "", lastOpenTime: 0, listeners: [], idleTask: null
+    lastOpenName: "", lastOpenTime: 0, listeners: [], idleTask: null,
+    swatchSnap: null, swatchSnapDoc: "", swatchTick: 0, attrSnap: null
 };
 
 function stopExisting() {
@@ -474,7 +584,7 @@ function wireCommands() {
 
 function start() {
     stopExisting();
-    cleanupOldBackups();
+    if (CONFIG.LOG_TO_FILE) cleanupOldBackups();
 
     var add = function (type, fn) { try { STATE.listeners.push(app.addEventListener(type, fn, false)); } catch (e) {} };
     add("afterOpen", onDocOpen);
@@ -493,10 +603,11 @@ function start() {
     $.global.__mppIdLogger = STATE;
 
     record("indesign_logger_started",
-        { doc: activeDocName(), version: "2", file_logging: CONFIG.LOG_TO_FILE, mt_log: CONFIG.SEND_TO_MT_LOG, commands: CONFIG.LOG_COMMANDS },
+        { doc: activeDocName(), version: "3", mt_log: CONFIG.SEND_TO_MT_LOG, file_logging: CONFIG.LOG_TO_FILE,
+          commands: CONFIG.LOG_COMMANDS, swatches: CONFIG.WATCH_SWATCHES, attrs: CONFIG.WATCH_ATTRS },
         "InDesign logger started");
 
-    try { $.writeln("MT Log InDesign logger v2 running. Backup: " + dayFile().fsName); } catch (e) {}
+    try { $.writeln("MT Log InDesign logger v3 running. Sending to MT Log: " + CONFIG.SEND_TO_MT_LOG); } catch (e) {}
 }
 
 start();
