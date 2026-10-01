@@ -88,7 +88,8 @@ public sealed class ClaudeLlmProvider : ILlmProvider
     /// <summary>Pick events whose compact line mentions a word from the question; fall back to the most recent.</summary>
     private static List<string> Relevant(string question, IReadOnlyList<WatchEvent> events, int cap)
     {
-        var compact = events.Select(Compact).ToList();
+        // Include who (PC/person) on each line so "who did X?" questions can be answered across the team.
+        var compact = events.Select(e => Compact(e, includeWho: true)).ToList();
         var words = question
             .Split(new[] { ' ', '\t', '?', '.', ',', '!', ';', ':', '"', '\'', '(', ')' }, StringSplitOptions.RemoveEmptyEntries)
             .Where(w => w.Length >= 3)
@@ -103,10 +104,13 @@ public sealed class ClaudeLlmProvider : ILlmProvider
     }
 
     private const string AnswerSystemPrompt = """
-        You answer questions for __PERSON__ about their own computer activity at a small e-commerce/print
-        business (MPP). You are given a list of logged activity events. Answer the question using ONLY those
-        events. Be short and specific, and give the time/date when the activity shows it. If the events do
-        not contain the answer, say so plainly — never guess or invent anything.
+        You answer questions for __PERSON__ about computer activity at a small e-commerce/print business
+        (MPP). You are given a list of logged activity events. Each line may include a "who=" tag naming the
+        person/PC the event came from — use it to answer "who did X?" questions (e.g. who claimed or printed
+        an order). Order numbers like 112-1234567-1234567 appear in claim buttons and downloaded file names;
+        printed documents are named by the customer, so you may link an order to a print by the customer name.
+        Answer using ONLY these events. Be short and specific, and give the person and the time/date the
+        activity shows. If the events do not contain the answer, say so plainly — never guess or invent.
         """;
 
     // Plain raw string (no $ interpolation) so the literal JSON braces are safe; person is swapped in.
@@ -180,10 +184,16 @@ public sealed class ClaudeLlmProvider : ILlmProvider
     }
 
     /// <summary>A short one-line view of an event — enough signal, few tokens.</summary>
-    private static string Compact(WatchEvent e)
+    private static string Compact(WatchEvent e, bool includeWho = false)
     {
         var time = string.IsNullOrEmpty(e.TimestampLocal) ? e.TimestampUtc.ToString("HH:mm:ss") : e.TimestampLocal;
         var parts = new List<string> { time, e.EventType };
+        if (includeWho)
+        {
+            var who = !string.IsNullOrWhiteSpace(e.EmployeeId) ? e.EmployeeId
+                : !string.IsNullOrWhiteSpace(e.ComputerId) ? e.ComputerId : null;
+            if (who is not null) parts.Add("who=" + who);
+        }
         if (!string.IsNullOrEmpty(e.Application)) parts.Add(e.Application!);
         var where = e.PageTitle ?? e.WindowTitle;
         if (!string.IsNullOrEmpty(where)) parts.Add(Clip(where!, 80));
