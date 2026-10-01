@@ -85,6 +85,10 @@ is automatic.
 ## The pop-ups and buttons
 
 - **Sticky:** the pop-up **stays open until you click something** — nothing auto-vanishes.
+- **Never steals focus:** the card appears in the corner but does **not** switch your active window —
+  keep typing in Gmail (or wherever), finish, then click it when you're ready.
+- **Super-communicator:** when you finish something a coworker was waiting on, it nudges you to tell
+  them (with a ready draft) — which also leaves a timeline of when things got done.
 - **The AI chooses which buttons to show** for each suggestion, from a **toolbox** of actions the
   app knows how to do. (A "copy-paste 15×" suggestion shows [Copy the script]; a "collection
   ready" one shows [Add reminder].)
@@ -98,6 +102,10 @@ is automatic.
   - **Add a reminder** — **Dalia:** her Google Calendar (personal only). **Team:** NOT her
     calendar — target their **Chrome reminder extension** instead.
   - **Run a saved script / automation** (e.g. a Tampermonkey helper, a .bat).
+  - **Copy build prompt** — for an automation/script idea: copies a complete, ready-to-paste prompt
+    for Claude Code (the main idea + the exact repeated steps/data the assistant observed). The prompt
+    tells Claude Code to **lay out a plan and confirm the approach first (offering options when there
+    are two ways) and wait for your go-ahead before writing any code** — so you steer it.
   - **Draft a message / reply** (put a draft somewhere — never send). Includes a **confirmation
     draft**: after you click "add reminder", it drafts "Got it — added a reminder" into the chat
     with that person so you just hit send.

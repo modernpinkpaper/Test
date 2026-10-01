@@ -71,10 +71,20 @@ public sealed class ClaudeLlmProvider : ILlmProvider
         they just hit send. Keep confirmations specific to what actually happened; never claim an action
         that the activity does not show.
 
+        Be a "super communicator": when the activity shows the person FINISHED something a coworker was
+        waiting on, suggest telling them — offer a "draft_message" with a specific note (this also keeps
+        a record of when things got done).
+
+        For automation / script ideas: give one clear main idea plus a short why/how. Include a
+        "copy_build_prompt" button whose "target" is a COMPLETE, ready-to-paste prompt for Claude Code
+        to build the script. That prompt must include the concrete repeated steps/data you observed, and
+        must instruct Claude Code to FIRST lay out a plan and confirm the approach with the user (offering
+        options when there is more than one way) and wait for their go-ahead BEFORE writing any code.
+
         Reply with ONLY a JSON array (no prose, no code fences). Each item:
         {"title": short line, "why": one sentence of evidence, "urgency": "low"|"normal"|"high",
           "buttons": [{"label": text, "kind": one of
-          ["open_url","copy","open_file","add_tracker","add_reminder","draft_message","run_script","remind","dismiss"],
+          ["open_url","copy","open_file","add_tracker","add_reminder","draft_message","run_script","copy_build_prompt","remind","dismiss","not_helpful"],
           "target": optional string the button acts on}]}
         Always include a "dismiss" button. If nothing is worth suggesting, reply exactly: []
         Keep it to at most 3 items. Never invent facts not supported by the activity.

@@ -14,6 +14,21 @@ internal sealed class NotificationCard : Form
     private readonly RecommendationLog _log;
     private readonly double _remindMinutes;
 
+    // Show the card WITHOUT stealing focus: you can keep typing in Gmail and click it when ready.
+    protected override bool ShowWithoutActivation => true;
+
+    protected override CreateParams CreateParams
+    {
+        get
+        {
+            const int WS_EX_NOACTIVATE = 0x08000000;
+            const int WS_EX_TOPMOST = 0x00000008;
+            var cp = base.CreateParams;
+            cp.ExStyle |= WS_EX_NOACTIVATE | WS_EX_TOPMOST;
+            return cp;
+        }
+    }
+
     public NotificationCard(Recommendation rec, RecommendationLog log, double remindMinutes, int stackIndex)
     {
         _rec = rec;
