@@ -31,7 +31,7 @@ MON = (600, 290, 450, 330)     # wall monitor: x, y, w, h
 ease, lerp, stand, blend, moves = D.ease, D.lerp, D.stand, D.blend, D.moves
 
 D.POSES["press"] = {"right": D._r("right", (150, 690), (0.25, 1), "point")}
-D.POSES["selfie"] = {"right": (60, 20, 0, "c_grip")}
+D.POSES["selfie"] = {"right": (45, -20, 0, "open")}      # arm reaching toward the camera (out of frame)
 D.POSES["hip"] = {"right": D._r("right", (112, 640), (0.12, 1), "hip_flat")}
 
 MESSAGES = ["Where's my order??", "Can you change the font?", "Ship by Friday?", "Wrong name spelling!",
@@ -451,11 +451,11 @@ def shots():
 
     # 1. hook: selfie mode, she's vlogging on her phone (handheld sway; the overlay adds the phone-camera look)
     def selfie(t, d, ls, le):
-        return dict(pos=(stand(600)[0] + 4 * math.sin(t * 2.3), stand(600)[1] + 5 * math.sin(t * 3.1)),
-                    rot=1.2 * math.sin(t * 1.7), face="smug" if t > le else "happy",
-                    arms=blend("selfie", "selfie", 1, {"right": P.phone()}), look=(-0.6, 0), tilt=-4)
+        return dict(pos=(560 + 5 * math.sin(t * 2.3), stand(560)[1] + 6 * math.sin(t * 3.1)),
+                    rot=1.5 * math.sin(t * 1.7), face="smug" if t > le else "neutral",
+                    arms=blend("selfie", "selfie", 1), look=(0, 0), tilt=-3)
     add("hook", 0.1, 0.5, lambda c, t: office(c, t, scr_inbox_zero), None,
-        (1.75, 540, 820), (1.85, 548, 812), selfie, [("whoosh", ("le", 0.35))])
+        (2.25, 536, 815), (2.4, 536, 810), selfie, [("whoosh", ("le", 0.35))])
 
     # 2. "I know how that sounds, let me show you": she waves, her shop on the monitor
     def wave(t, d, ls, le):
