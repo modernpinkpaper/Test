@@ -198,8 +198,9 @@ appears as `file_opened` a moment later.
 ### Printing
 | Type | metadata |
 |---|---|
-| `print_job` | `printer`, `document_name`, `job_id`, `total_pages`, `size_bytes`, `status`, `sku_candidates`, `foreground_application` |
+| `print_job` | `printer`, `document_name`, `job_id`, `total_pages`, `size_bytes`, `status`, `problem`, `sku_candidates`, `foreground_application` |
 | `print_job_finished` | same + `pages_printed`, `seconds_in_queue` |
+| `printer_problem` | `printer`, `reason` (e.g. "Out of paper", "Paper jam", "Offline", "cleared"), `resolved` (true when back to normal), `foreground_application` |
 
 ## Processes (background activity)
 

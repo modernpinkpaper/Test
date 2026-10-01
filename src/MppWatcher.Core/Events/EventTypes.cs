@@ -48,6 +48,7 @@ public static class EventTypes
     public const string UploadFileSelected = "upload_file_selected";
     public const string PrintJob = "print_job";
     public const string PrintJobFinished = "print_job_finished";
+    public const string PrinterProblem = "printer_problem";
 
     // Processes
     public const string ProcessInventory = "process_inventory";

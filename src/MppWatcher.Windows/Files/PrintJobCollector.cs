@@ -18,9 +18,11 @@ public sealed class PrintJobCollector : ICollector
 {
     private readonly ActivityContext _activity;
     private readonly ConcurrentDictionary<string, (DateTimeOffset At, string? Application)> _open = new();
-    private ManagementEventWatcher? _created, _deleted;
+    // Last known error state per printer, so we only emit when it actually changes (WMI repeats).
+    private readonly ConcurrentDictionary<string, int> _printerError = new(StringComparer.OrdinalIgnoreCase);
+    private ManagementEventWatcher? _created, _deleted, _printerChange;
     private CollectorContext? _ctx;
-    private long _jobs;
+    private long _jobs, _problems;
 
     public PrintJobCollector(ActivityContext activity) => _activity = activity;
 
@@ -38,16 +40,30 @@ public sealed class PrintJobCollector : ICollector
         _deleted.EventArrived += (_, e) => Handle(e, finished: true);
         _created.Start();
         _deleted.Start();
+        // Printer problems (out of paper, jam, offline, door open…): watch the printer device itself.
+        // Guarded on its own so that if this query is unavailable, job logging still works.
+        try
+        {
+            _printerChange = new ManagementEventWatcher(scope, new WqlEventQuery("__InstanceModificationEvent", TimeSpan.FromSeconds(5), "TargetInstance ISA 'Win32_Printer'"));
+            _printerChange.EventArrived += (_, e) => HandlePrinterChange(e);
+            _printerChange.Start();
+        }
+        catch (Exception e)
+        {
+            context.Log.Warn(Name, "Printer problem detection unavailable; print jobs still logged", e);
+            _printerChange = null;
+        }
     }
 
     public void Stop(string reason)
     {
-        try { _created?.Stop(); _deleted?.Stop(); } catch { /* WMI already gone at shutdown */ }
+        try { _created?.Stop(); _deleted?.Stop(); _printerChange?.Stop(); } catch { /* WMI already gone at shutdown */ }
         _created?.Dispose();
         _deleted?.Dispose();
+        _printerChange?.Dispose();
     }
 
-    public IReadOnlyDictionary<string, object> GetStats() => new Dictionary<string, object> { ["print_jobs"] = _jobs };
+    public IReadOnlyDictionary<string, object> GetStats() => new Dictionary<string, object> { ["print_jobs"] = _jobs, ["printer_problems"] = _problems };
 
     private void Handle(EventArrivedEventArgs args, bool finished)
     {
@@ -80,6 +96,8 @@ public sealed class PrintJobCollector : ICollector
             AddNumber(m, "size_bytes", job["Size"]);
             if (job["Status"]?.ToString() is { Length: > 0 } status) m["status"] = status;
             if (job["JobStatus"]?.ToString() is { Length: > 0 } jobStatus) m["job_status"] = jobStatus;
+            // Flag a job that is stuck on a problem (paper out, jam, offline, error, paused…).
+            if (JobProblem(job["Status"]?.ToString(), job["JobStatus"]?.ToString()) is { } jobProblem) m["problem"] = jobProblem;
 
             var key = printer + "|" + jobId;
             if (!finished)
@@ -106,6 +124,80 @@ public sealed class PrintJobCollector : ICollector
         {
             ctx.Log.Warn(Name, "Could not read a print job notification", ex);
         }
+    }
+
+    /// <summary>
+    /// A printer's condition changed. Win32_Printer.DetectedErrorState tells us if it is out of paper,
+    /// jammed, offline, etc. We only emit when the state actually changes (WMI repeats modifications),
+    /// and we emit a "cleared" event when it goes back to normal so a report knows how long it was down.
+    /// </summary>
+    private void HandlePrinterChange(EventArrivedEventArgs args)
+    {
+        var ctx = _ctx;
+        if (ctx is null) return;
+        try
+        {
+            if (args.NewEvent["TargetInstance"] is not ManagementBaseObject p) return;
+            var printer = p["Name"]?.ToString();
+            if (string.IsNullOrEmpty(printer)) return;
+            var state = p["DetectedErrorState"] is { } s && int.TryParse(s.ToString(), out var n) ? n : 0;
+
+            var previous = _printerError.TryGetValue(printer, out var prev) ? prev : 2; // 2 = No Error
+            if (state == previous) return; // nothing changed
+            _printerError[printer] = state;
+
+            var reason = DescribePrinterError(state);
+            var ok = state is 0 or 2; // Unknown / No Error
+            if (ok && !IsProblemState(previous)) return;     // was not a real problem, ignore the clear
+
+            var e = this.NewEvent(EventTypes.PrinterProblem, ctx.Clock.Now);
+            var m = e.Metadata;
+            m["printer"] = printer;
+            m["resolved"] = ok;
+            m["reason"] = ok ? "cleared" : reason;
+            if (!ok && _activity.CurrentApp is { } a) { m["foreground_application"] = a.Application; e.SessionId = a.SessionId; }
+            if (!ok) _problems++;
+            ctx.Sink.Emit(e);
+        }
+        catch (Exception ex)
+        {
+            ctx.Log.Warn(Name, "Could not read a printer status change", ex);
+        }
+    }
+
+    private static bool IsProblemState(int state) => state is not (0 or 2);
+
+    /// <summary>Win32_Printer.DetectedErrorState values, in plain words.</summary>
+    private static string DescribePrinterError(int state) => state switch
+    {
+        3 => "Low paper",
+        4 => "Out of paper",
+        5 => "Low toner/ink",
+        6 => "Out of toner/ink",
+        7 => "Door open",
+        8 => "Paper jam",
+        9 => "Offline",
+        10 => "Service requested",
+        11 => "Output bin full",
+        12 => "Paper problem",
+        13 => "Cannot print page",
+        14 => "Needs attention",
+        15 => "Out of memory",
+        16 => "Server unknown",
+        _ => "Problem",
+    };
+
+    /// <summary>Spot a print job that is stuck on a problem from its status text.</summary>
+    private static string? JobProblem(string? status, string? jobStatus)
+    {
+        var text = ((status ?? "") + " " + (jobStatus ?? "")).ToLowerInvariant();
+        if (text.Contains("paper out") || text.Contains("no paper") || text.Contains("out of paper")) return "Out of paper";
+        if (text.Contains("jam")) return "Paper jam";
+        if (text.Contains("offline")) return "Offline";
+        if (text.Contains("error")) return "Error";
+        if (text.Contains("paused")) return "Paused";
+        if (text.Contains("user intervention")) return "Needs attention";
+        return null;
     }
 
     private static void AddNumber(JsonObject m, string key, object? value)
