@@ -168,3 +168,12 @@ jobs:
           name: MTLog-win-x64
           path: package/
           if-no-files-found: error
+      - name: Publish the live assistant (console + tray app, self-contained)
+        run: |
+          dotnet publish src/MppWatcher.Assistant -c Release -r win-x64 --self-contained -o assistant-publish
+          dotnet publish src/MppWatcher.Assistant.App -c Release -r win-x64 --self-contained -o assistant-publish
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MppAssistant
+          path: assistant-publish/
+          if-no-files-found: error

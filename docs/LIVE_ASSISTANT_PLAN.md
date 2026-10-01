@@ -247,6 +247,30 @@ glances at a day of real recommendations after Step 1 — plus clicking the real
 
 ---
 
+## Status (2026-10-01) — built
+
+- ✅ Reader + day memory + recommendations log (cross-platform core, tested)
+- ✅ Real Claude brain (Haiku default; falls back to a built-in stand-in with no key)
+- ✅ On-screen pop-ups + buttons (Windows tray app; cards don't steal focus)
+- ✅ Account buttons: add-to-tracker (sheet) + add-reminder (calendar), degrade without login
+- ✅ Packaged: CI publishes self-contained `MppAssistant.exe` (console) + `MppAssistantApp.exe`
+  (tray) as the downloadable **MppAssistant** artifact
+
+## Install & run
+
+1. Download the **MppAssistant** artifact from the latest green build (GitHub → Actions → newest
+   successful run on this branch → Artifacts → MppAssistant). Unzip to e.g. `C:\MT Log Assistant`.
+2. **Real Claude brain:** set a System environment variable `ANTHROPIC_API_KEY` to your key.
+   Without it, the app runs the basic built-in brain.
+3. **Optional (tracker/calendar buttons):** put a Google service-account `google-credentials.json`
+   in `%LOCALAPPDATA%\MT Log\` (and share the sheet + calendar with that service account's email).
+   Without it, those buttons just open the link / copy the text.
+4. **Run the tray app:**
+   `MppAssistantApp.exe --activity "G:\My Drive\Personal\mpp activity\<your folder>"`
+   It sits in the system tray and pops suggestion cards. Tray menu: Pause/Resume, Check now, Exit.
+5. **Console alternative** (just eyeball the suggestions):
+   `MppAssistant.exe --activity "...\<your folder>" --once` → read `recommendations_<date>.jsonl`.
+
 ## Suggested build order
 
 1. **Reader + memory + recommendations log** (no pop-ups yet) — prove it spots good moments
