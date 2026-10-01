@@ -64,6 +64,21 @@ for a work number.
 extra setup if WhatsApp specifically is a must — and then via the official Business API, not
 the web hack.
 
+## Nice-to-have features (asked about)
+
+- **Voice note → text in BeeBEEP.** Record a voice note on the phone; the bridge receives the
+  audio (Telegram's own voice-to-text is a reader feature, not given to bots), runs
+  speech-to-text itself, and sends the **text** into BeeBEEP. STT options: Whisper (free,
+  local — slower on a no-GPU PC like Intel UHD 630, fine for short notes) or a cheap cloud STT
+  (fractions of a cent per note).
+- **Push notifications.** Telegram gives native, instant phone push when a message is
+  forwarded — a point in Telegram's favour over email (whose push depends on the mail app).
+- **After-hours "leave a message" for a desk that's empty.** Two ways:
+  1. **Queue + auto-deliver** — send anytime; the bridge holds it and drops it into BeeBEEP the
+     moment the coworker's PC is next online (needs a machine on to do the sending).
+  2. **Note popup (most reliable)** — the message is stored and pops up on their PC at next
+     login, even if BeeBEEP is closed/offline. Guaranteed they see it when they're back.
+
 ## Build order (when picked up)
 
 1. **PC → phone** first (easy, reliable): watch BeeBEEP log → email me each message.
