@@ -121,6 +121,33 @@ public class AssistantTests
         Assert.Empty(await engine.TickAsync()); // cursor advanced; no new events
     }
 
+    [Fact]
+    public void ParseRecommendations_reads_a_plain_array()
+    {
+        var json = """[{"title":"T","why":"W","urgency":"high","buttons":[{"label":"Dismiss","kind":"dismiss"}]}]""";
+        var recs = ClaudeLlmProvider.ParseRecommendations(json);
+        Assert.Single(recs);
+        Assert.Equal("T", recs[0].Title);
+        Assert.Equal("high", recs[0].Urgency);
+        Assert.Equal("dismiss", recs[0].Buttons[0].Kind);
+    }
+
+    [Fact]
+    public void ParseRecommendations_tolerates_fences_and_text()
+    {
+        var reply = "Sure! Here you go:\n```json\n[{\"title\":\"Add ads\",\"why\":\"Erika said ready\"}]\n```\nHope that helps.";
+        var recs = ClaudeLlmProvider.ParseRecommendations(reply);
+        Assert.Single(recs);
+        Assert.Equal("Add ads", recs[0].Title);
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("no json here")]
+    [InlineData("")]
+    public void ParseRecommendations_returns_empty_when_nothing(string reply) =>
+        Assert.Empty(ClaudeLlmProvider.ParseRecommendations(reply));
+
     private static AssistantContext Ctx(params WatchEvent[] events) =>
         new(events, new AssistantMemory(), "Dalia", DateTimeOffset.UtcNow);
 }

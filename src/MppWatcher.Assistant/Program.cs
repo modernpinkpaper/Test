@@ -15,10 +15,11 @@ internal static class Program
 {
     private static async Task<int> Main(string[] args)
     {
-        string? activity = null, outFolder = null, person = "";
+        string? activity = null, outFolder = null, person = "", model = null;
         var watch = false;
         var intervalMinutes = 2.0;
         var repeatThreshold = 8;
+        var forceHeuristic = false;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -28,6 +29,8 @@ internal static class Program
                 case "--activity": activity = Next(); break;
                 case "--out": outFolder = Next(); break;
                 case "--person": person = Next() ?? ""; break;
+                case "--model": model = Next(); break;
+                case "--heuristic": forceHeuristic = true; break;
                 case "--once": watch = false; break;
                 case "--watch": watch = true; break;
                 case "--interval": if (double.TryParse(Next(), out var m)) intervalMinutes = Math.Clamp(m, 0.25, 60); break;
@@ -48,7 +51,15 @@ internal static class Program
             OutputFolder = string.IsNullOrWhiteSpace(outFolder) ? activity! : outFolder!,
             Person = person,
         };
-        var engine = new AssistantEngine(cfg, new HeuristicLlmProvider(repeatThreshold));
+        var hasKey = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY"));
+        ILlmProvider provider = !forceHeuristic && hasKey
+            ? new ClaudeLlmProvider(model: string.IsNullOrWhiteSpace(model) ? ClaudeLlmProvider.DefaultModel : model!)
+            : new HeuristicLlmProvider(repeatThreshold);
+        Console.WriteLine(provider is ClaudeLlmProvider
+            ? $"Brain: Claude ({(string.IsNullOrWhiteSpace(model) ? ClaudeLlmProvider.DefaultModel : model)})"
+            : "Brain: built-in heuristic (set ANTHROPIC_API_KEY for the real Claude brain).");
+
+        var engine = new AssistantEngine(cfg, provider);
 
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
@@ -80,9 +91,14 @@ internal static class Program
         Options:
           --out <folder>          Where to write cursor/memory/recommendations (default: --activity)
           --person <name>         A label for who this is (e.g. Dalia)
+          --model <id>            Claude model (default claude-haiku-4-5); needs ANTHROPIC_API_KEY
+          --heuristic             Force the built-in stand-in brain (no API calls)
           --once                  One pass then exit (default)
           --watch                 Keep running, checking every --interval minutes
           --interval <minutes>    Watch interval (default 2)
           --repeat-threshold <n>  Repeated-click count that triggers an "automate it?" idea (default 8)
+
+        The real Claude brain is used when ANTHROPIC_API_KEY is set; otherwise the built-in
+        heuristic runs so the app still works with no key.
         """;
 }
