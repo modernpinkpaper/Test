@@ -115,6 +115,10 @@ Real example — the Kayla vs Annie claim-automation/handoff "gaps" were all the
 Annie isn't trained on; comparing them was apples-to-oranges. So the tool MUST know who is trained on
 what (or compare only within the SAME process, e.g. regular flat orders) before suggesting a change,
 or it will recommend one person adopt another's entirely separate workflow.
+CONFIRMED action item from the Kayla vs Annie run: Annie has no extra/3rd printer. Kayla's extra
+printer ("XTRA RIGHT") carried 152 jobs in parallel; Annie's load funnels through 2 printers and queues.
+Giving Annie an extra printer is a genuine, data-backed throughput win (the one real gap once notepads
+and normal one-by-one regular-order claiming are set aside).
 
 ## 20. "Scripts I use" index → pull the code to see how it's wired
 Goal: MT Log sees WHICH scripts/extensions/codes you use (by name — e.g. mpp-CLAIM-BUTTONS-v3.2,
