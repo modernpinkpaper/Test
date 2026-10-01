@@ -98,15 +98,22 @@ is automatic.
   - **Add a reminder** — **Dalia:** her Google Calendar (personal only). **Team:** NOT her
     calendar — target their **Chrome reminder extension** instead.
   - **Run a saved script / automation** (e.g. a Tampermonkey helper, a .bat).
-  - **Draft a message / reply** (put a draft somewhere — never send).
+  - **Draft a message / reply** (put a draft somewhere — never send). Includes a **confirmation
+    draft**: after you click "add reminder", it drafts "Got it — added a reminder" into the chat
+    with that person so you just hit send.
+  - **Open a file / folder** — only shown when the log already knows the **exact** file/path you
+    were working on (it reads that from the activity log); it opens that one, in the right program.
   - **Remind me in 1 hr** / **Dismiss** / **Not helpful** (the last teaches it).
 - **Two tiers of buttons:**
   - **Instant & free:** open a page, copy text, pre-fill a form — no AI, no cost.
   - **Actually does it for you** (adds the calendar/reminder, writes to the sheet, posts
     something): needs that service connected with permission. Anything **outward-facing stays
     behind a confirm click** — it never sends/posts on its own.
-- **Light "Tab to accept" option** (idea from the Violoop device): for small suggestions, a tiny
-  hint by the cursor you accept with one key, instead of a full pop-up.
+- **Two sizes of pop-up** (idea from Violoop): a tiny one-line **hint by the cursor** (accept with
+  one key) for small/simple suggestions, vs a **full card** (explanation + several buttons) for
+  bigger ones that need a choice. The app picks which based on the suggestion.
+- **Not doing (for now):** driving the mouse/keyboard around apps like Violoop (fragile, complex),
+  and "away mode" (only useful with a cloud box + after-hours notes).
 
 ---
 
@@ -185,6 +192,30 @@ decision is a cheap **A/B test on one real day of logs**.
   👎 logs leave the PC; small monthly rent; needs a way to push pop-ups back.
 - **Suggested:** start on **your PC**; move to a cheap **cloud box** when rolling out to the team.
 
+## How it compares to Violoop (the Kickstarter device)
+
+- **Violoop** is a $399 hardware gadget (HDMI+USB) that watches raw screen pixels and can
+  **control the mouse/keyboard across any app autonomously** (with a physical approval button).
+  Powerful and general, but starts blind and costs hardware per PC.
+- **This app** is software on top of MT Log: it reads **structured business data** (SKUs,
+  listings, ads, files, print, who-typed-it), already **knows MPP's workflow and people**, costs
+  ~$8–12/person/month with no hardware, and is multi-person.
+- **Violoop wins** on raw "do the whole task for me" (full app control). **This app wins** on
+  understanding the actual work, cost, no hardware, and being tailored to MPP. Full app-control
+  is the one area to borrow from Violoop later if ever wanted.
+
+## Performance on the PC
+
+- **Off:** zero extra CPU/RAM (not running).
+- **On:** light — wakes every 1–2 min; the heavy thinking runs on the AI API, not the PC. (A
+  local AI model would be heavy; we are NOT doing that.)
+
+## Build & test process
+
+Build a step → GitHub CI checks it compiles and the automated tests pass → next step. The user
+does NOT test the plumbing. The one human check that matters is **suggestion quality** — the user
+glances at a day of real recommendations after Step 1 — plus clicking the real buttons later.
+
 ## Decisions captured
 
 - **Calendar is personal (Dalia only).** The team will NOT use Dalia's Google Calendar; their
@@ -192,11 +223,13 @@ decision is a cheap **A/B test on one real day of logs**.
 - **Project Tracker button** writes to the **"AI MT LOG RECS"** tab of Dalia's tracker (link above).
 - **AI chooses the buttons** per suggestion from the toolbox.
 
-## Open questions still to settle
+## Decided (2026-10-01)
 
-1. **Where the smart brain runs** — PC first, cloud later? (suggested above — confirm)
-2. **Model roster** — Haiku + Opus-on-call, or Haiku + Sonnet-on-call? (or decide after the A/B test)
-3. **Who gets it first** — just you to start, then Erika/Carolina?
+1. **Runs on the PC** (individual install). Cloud later if the team joins.
+2. **Model roster: Haiku (constant cheap watcher) + Opus on-call** for the rare moments that need
+   real reasoning. Switch to Sonnet-on-call later if we want to trim cost after seeing real usage.
+3. **Just Dalia first.**
+4. Export goes to `…\My Drive\Personal\mpp activity\<person>\<date>\` alongside the activity logs.
 
 ---
 
