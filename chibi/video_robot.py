@@ -31,6 +31,7 @@ MON = (600, 290, 450, 330)     # wall monitor: x, y, w, h
 ease, lerp, stand, blend, moves = D.ease, D.lerp, D.stand, D.blend, D.moves
 
 D.POSES["press"] = {"right": D._r("right", (150, 690), (0.25, 1), "point")}
+D.POSES["selfie"] = {"right": (60, 20, 0, "c_grip")}
 D.POSES["hip"] = {"right": D._r("right", (112, 640), (0.12, 1), "hip_flat")}
 
 MESSAGES = ["Where's my order??", "Can you change the font?", "Ship by Friday?", "Wrong name spelling!",
@@ -184,7 +185,46 @@ def scr_reply(ctx, t, x, y, w, h, typed=None):
         rrect(ctx, x + 32 + 15 * (shown - sum(len(s) for s in REPLY[:i])), y + 82 + i * 52, 4, 36, 2, fill="#2b2440", line=None)
 
 
-def scr_before_after(ctx, t, x, y, w, h):
+def _pop_row(ctx, t, at, x, y, w, label, value, good=False):
+    k = beats.pop(t - at, 0.3)
+    if k <= 0.02:
+        return
+    rrect(ctx, x + 20, y, (w - 40) * k, 50, 10, fill="#e1ffe9" if good else "#f4f0fb", w=3)
+    if k > 0.6:
+        text(ctx, label, x + 40, y + 25, 24, F800, col="#6d6680", anchor="lm")
+        text(ctx, value, x + w - 40, y + 25, 26, F800, col="#1b7a3a" if good else "#2b2440", anchor="rm")
+
+
+def scr_schedule(ctx, t, x, y, w, h):
+    rrect(ctx, x, y, w, 60, 0, fill="#c9a4ff", line=None)
+    text(ctx, "ROBOT RUNS", x + w / 2, y + 30, 28, F800, col=(1, 1, 1))
+    for j, hh in enumerate(("7:30 AM", "12:00 PM", "3:00 PM")):
+        _pop_row(ctx, t, 0.15 + j * 0.25, x, y + 85 + j * 70, w, "every weekday", hh, good=True)
+
+
+def scr_order(ctx, t, x, y, w, h, marks=(0.3, 0.8, 1.3, 1.8)):
+    rrect(ctx, x, y, w, 60, 0, fill="#ff9f43", line=None)
+    text(ctx, "ORDER LOOKUP", x + w / 2, y + 30, 28, F800, col=(1, 1, 1))
+    _pop_row(ctx, t, marks[0], x, y + 75, w, "order", "found", good=True)
+    _pop_row(ctx, t, marks[1], x, y + 135, w, "tracking", "pulled", good=True)
+    _pop_row(ctx, t, marks[2], x, y + 195, w, "shipped", "Tuesday")
+    _pop_row(ctx, t, marks[3], x, y + 255, w, "status", "DELIVERED", good=True)
+
+
+def scr_rule(ctx, t, x, y, w, h, marks=(0.3, 1.0, 1.8)):
+    rrect(ctx, x, y, w, 60, 0, fill="#34a853", line=None)
+    text(ctx, "MY ANSWER BRAIN", x + w / 2, y + 30, 28, F800, col=(1, 1, 1))
+    _pop_row(ctx, t, marks[0], x, y + 75, w, "IF tracking says", "delivered")
+    _pop_row(ctx, t, marks[1], x, y + 135, w, "AND it's only been", "2 days")
+    k = beats.pop(t - marks[2], 0.3)
+    if k > 0.02:
+        rrect(ctx, x + 20, y + 200, (w - 40) * k, 110, 14, fill="#fff3c4", w=4)
+        if k > 0.6:
+            text(ctx, "\"Carrier marks it delivered", x + w / 2, y + 238, 23, F800, col="#2b2440")
+            text(ctx, "early. Check your mailbox!\"", x + w / 2, y + 274, 23, F800, col="#2b2440")
+
+
+def scr_before_after(ctx, t, x, y, w, h, reveal=0.5):
     rrect(ctx, x, y, w / 2, h, 0, fill="#ffe1e1", line=None)
     rrect(ctx, x + w / 2, y, w / 2, h, 0, fill="#e1ffe9", line=None)
     poly(ctx, [(x + w / 2, y), (x + w / 2, y + h)], w=5, close=False)
@@ -196,15 +236,15 @@ def scr_before_after(ctx, t, x, y, w, h):
     a = t * 9
     poly(ctx, [(cx, cy), (cx + 48 * math.sin(a), cy - 48 * math.cos(a))], w=6, close=False)
     poly(ctx, [(cx, cy), (cx + 30 * math.sin(a / 12), cy - 30 * math.cos(a / 12))], w=8, close=False)
-    text(ctx, "hours of", x + w / 4, y + 262, 26, F800, col="#2b2440")
-    text(ctx, "typing", x + w / 4, y + 296, 26, F800, col="#2b2440")
+    text(ctx, "typing", x + w / 4, y + 262, 26, F800, col="#2b2440")
+    text(ctx, "all day", x + w / 4, y + 296, 26, F800, col="#2b2440")
     # now: three clicks
-    k = beats.pop(t - 0.5, 0.3)
+    k = beats.pop(t - reveal, 0.3)
     for i in range(3):
-        kk = beats.pop(t - 0.5 - i * 0.25, 0.25)
+        kk = beats.pop(t - reveal - i * 0.25, 0.25)
         ellipse(ctx, x + w / 2 + 60 + i * 55, y + 165, 20 * kk + 1, 20 * kk + 1, fill="#ff8fb0", w=4)
-    text(ctx, "a few", x + 3 * w / 4, y + 262, 26 * max(k, .05), F800, col="#2b2440")
-    text(ctx, "clicks", x + 3 * w / 4, y + 296, 26 * max(k, .05), F800, col="#2b2440")
+    text(ctx, "checking its", x + 3 * w / 4, y + 262, 24 * max(k, .05), F800, col="#2b2440")
+    text(ctx, "homework", x + 3 * w / 4, y + 296, 24 * max(k, .05), F800, col="#2b2440")
 
 
 def heart(ctx, x, y, s, col):
@@ -397,61 +437,72 @@ def shots():
 
     mug = {"right": P.mug(0.5)}
 
-    # 1. intro: hi to the camera, her shop on the monitor
+    def wt(i, word, default=1.0):
+        """Shot-relative time she starts saying `word` in shot i (from the caption word timings)."""
+        sh = S[i]
+        for w, tt in sh.get("words", []):
+            if word in w.lower():
+                return tt - sh["t0"]
+        return default
+
+    def standing(face, pose="rest", look=None, tilt=0, x=540, eyes=None, mouth=None, dy=0.0):
+        return lambda t, d, ls, le: dict(pos=stand(x, dy=dy), face=face, arms=blend(pose, pose, 1) if pose != "rest" else {},
+                                         look=look, tilt=tilt, eyes=eyes, mouth=mouth)
+
+    # 1. hook: selfie mode, she's vlogging on her phone (handheld sway; the overlay adds the phone-camera look)
+    def selfie(t, d, ls, le):
+        return dict(pos=(stand(600)[0] + 4 * math.sin(t * 2.3), stand(600)[1] + 5 * math.sin(t * 3.1)),
+                    rot=1.2 * math.sin(t * 1.7), face="smug" if t > le else "happy",
+                    arms=blend("selfie", "selfie", 1, {"right": P.phone()}), look=(-0.6, 0), tilt=-4)
+    add("hook", 0.1, 0.5, lambda c, t: office(c, t, scr_inbox_zero), None,
+        (1.75, 540, 820), (1.85, 548, 812), selfie, [("whoosh", ("le", 0.35))])
+
+    # 2. "I know how that sounds, let me show you": she waves, her shop on the monitor
     def wave(t, d, ls, le):
         arms = blend("hip_wave", "hip_wave", 1)
         l = list(arms["left"])
         l[2] += 18 * math.sin(t * 10)
         arms["left"] = tuple(l)
-        return dict(pos=stand(HX, dy=-70), face="happy" if t < ls + 1.5 else "smug", arms=arms, tilt=4 * math.sin(t * 3))
-    add("intro", 0.1, 0.3, lambda c, t: office(c, t, scr_shop), lambda c, t: (desk(c, t), robot(c, RX, RY, t)),
+        return dict(pos=stand(HX, dy=-70), face="happy" if t > ls + 1.6 else "smug", arms=arms, tilt=4 * math.sin(t * 3))
+    add("show", 0.1, 0.3, lambda c, t: office(c, t, scr_shop), lambda c, t: (desk(c, t), robot(c, RX, RY, t)),
         (1.0, 540, 950), (1.08, 540, 930), wave, [("pop", 0.1)])
 
-    # 2. hook: at her desk with coffee, inbox zero on the monitor
-    add("hook", 0.15, 0.25, lambda c, t: office(c, t, scr_inbox_zero), lambda c, t: (desk(c, t), robot(c, RX, RY, t, eyes="happy")),
-        (1.15, 560, 900), (1.45, 470, 800), sit("smug", steps=[(0, "chest"), (0.6, "sip"), (1.3, "chest")], props=mug),
-        [("whoosh", 0), ("sip", 0.7)])
+    # 3. the messages: the inbox avalanche starts on "where's my order"
+    def problem(t, d, ls, le, i=len(S)):
+        k = ease((t - wt(i, "where's")) / 0.4)
+        return dict(pos=stand(540), face="annoyed" if k < 0.5 else "surprised", arms=blend("shrug", "cheeks", k),
+                    tilt=-4 * (1 - k), rot=1.5 * math.sin(t * 40) * max(0, 1 - abs(t - wt(i, "where's") - 0.6) / 0.6))
+    add("problem", 0.15, 0.4, lambda c, t, i=len(S): office(c, t, scr_inbox_full),
+        lambda c, t, i=len(S): pile(c, t - wt(i, "where's") + 0.1),
+        (1.2, 540, 900), (1.0, 540, 960), problem,
+        [("notif", 1.2), ("notif", 1.5), ("notif", 1.8), ("notif", 2.1), ("notif", 2.5), ("notif", 3.0), ("notif", 3.6)])
 
-    # 3. 8 AM: the sales report is already done (she looks over at the monitor, sipping)
-    add("eight", 0.2, 0.5, lambda c, t: office(c, t, scr_report, st=0.1), lambda c, t: desk(c, t),
-        (1.38, 630, 720), (1.48, 650, 700),
-        sit("smug", look=(2.6, -1.0), steps=[(0, "chest"), (2.6, "sip")], props=mug, tilt=-3),
-        [("whoosh", 0), ("ding", 1.55)])
+    # 4. "for the longest time it was me": buried, sweating
+    def me(t, d, ls, le, i=len(S)):
+        right = t > wt(i, "right", 99)
+        return dict(pos=stand(540), face="smug" if right else "annoyed", arms={}, tilt=(8 if right else 6 * math.sin(t * 1.5)))
+    add("me", 0.1, 0.35, lambda c, t: office(c, t, scr_inbox_full),
+        lambda c, t: (pile(c, 9 + t), beats.emote(c, "sweat", (560, 600), 170, 1, t)),
+        (1.35, 540, 760), (1.5, 540, 740), me, [("notif", 2.0), ("notif", 4.0)])
 
-    # 4. the problem: standing in the office, then the inbox avalanche
-    def standing(face, pose="rest", look=None, tilt=0, x=540, eyes=None, mouth=None, dy=0.0):
-        return lambda t, d, ls, le: dict(pos=stand(x, dy=dy), face=face, arms=blend(pose, pose, 1) if pose != "rest" else {},
-                                         look=look, tilt=tilt, eyes=eyes, mouth=mouth)
-    add("problem", 0.15, 0.55, lambda c, t: office(c, t, scr_inbox_full), lambda c, t: pile(c, t - S[3]["le"] - 0.2),
-        (1.2, 540, 900), (1.3, 540, 880), standing("annoyed", "shrug", tilt=-4), [("notif", ("le", 0.2))])
+    # 5. "so I built this thing": the robot pops up; the monitor shows its 3 runs a day
+    def built(t, d, ls, le, i=len(S)):
+        return dict(pos=stand(HX, dy=-70), face="excited", arms=blend("rest", "yay", ease((t - wt(i, "built")) / .3)), tilt=-5,
+                    look=(2.5, -0.5) if t > wt(i, "three", 99) else None)
 
-    def buried(t, d, ls, le):
-        k = ease(t / 0.4)
-        return dict(pos=stand(540), face="surprised", arms=blend("shrug", "cheeks", k), tilt=0,
-                    rot=2 * math.sin(t * 40) * max(0, 1 - t / 1.2))
-    add(None, 0, 1.6, lambda c, t: office(c, t, scr_inbox_full), lambda c, t: pile(c, t + S[3]["tail"] - 0.2),
-        (1.0, 540, 960), (0.95, 540, 980), buried,
-        [("notif", 0.0), ("notif", 0.25), ("notif", 0.45), ("notif", 0.6), ("notif", 0.8), ("notif", 1.0), ("scratch", 1.2)])
-
-    def pain(t, d, ls, le):
-        return dict(pos=stand(540), face="annoyed", arms={}, tilt=6 * math.sin(t * 1.5), look=(0, 0))
-    add("pain", 0.1, 0.4, lambda c, t: office(c, t, scr_inbox_full), lambda c, t: (pile(c, 9 + t), beats.emote(c, "sweat", (560, 600), 170, 1, t)),
-        (1.35, 540, 760), (1.5, 540, 740), pain, [("notif", 1.0), ("notif", 2.2), ("notif", 3.4)])
-
-    # 5. so I built a robot: it pops up on her desk
-    def built(t, d, ls, le):
-        return dict(pos=stand(HX, dy=-70), face="excited", arms=blend("rest", "yay", ease(t / .3)), tilt=-5)
-
-    def robot_pop(c, t):
-        k = beats.pop(t - 0.25, 0.4)
+    def robot_pop(c, t, i=len(S)):
+        k = beats.pop(t - wt(i, "built"), 0.4)
         desk(c, t)
         if k > 0.02:
             robot(c, RX, RY, t, s=k, eyes="happy")
-        sparkles(c, t, [(700, 800), (960, 760), (900, 600)] if t > 0.4 else [])
-    add("built", 0.1, 0.6, lambda c, t: office(c, t, scr_inbox_full), robot_pop, (1.1, 600, 900), (1.18, 620, 880), built, [("boing", 0.25), ("brightsting", 0.35)])
+        sparkles(c, t, [(700, 800), (960, 760), (900, 600)] if t > wt(i, "built") + 0.2 else [])
+    add("built", 0.1, 0.4,
+        lambda c, t, i=len(S): office(c, t, scr_schedule if t > wt(i, "three", 99) else scr_inbox_full, st=wt(i, "three", 99)),
+        robot_pop, (1.1, 600, 900), (1.2, 640, 860), built, [])
+    S[-1]["sfx_words"] = [("boing", "built"), ("brightsting", "built"), ("ding", "times")]
 
-    # 6. it reads every message (scan beam)
-    def reads_fg(c, t):
+    # 6. it pulls up the order and the tracking (scan beam; the order card fills in on the monitor)
+    def order_fg(c, t):
         desk(c, t)
         robot(c, RX, RY, t, eyes="scan", arms=(15, 60))
         k = 0.5 + 0.5 * math.sin(t * 6)
@@ -463,82 +514,104 @@ def shots():
         c.set_source_rgba(0.5, 0.95, 1.0, 0.35)
         c.fill()
         msg_card(c, RX, cy, -0.05, 1.0, "Where's my order??")
-    add("reads", 0.2, 0.5, lambda c, t: office(c, t, scr_inbox_full), reads_fg, (1.45, 700, 860), (1.55, 720, 850), sit("surprised", look=(2.6, -0.8)),
-        [("whoosh", 0), ("tick", 0.4), ("tick", 0.8), ("tick", 1.2)])
+    add("order", 0.15, 0.35,
+        lambda c, t, i=len(S): office(c, t, lambda *a: scr_order(*a, marks=[wt(i, w) for w in ("order", "tracking", "shipped", "delivered")])),
+        order_fg, (1.4, 700, 810), (1.48, 720, 790), sit("surprised", look=(2.6, -0.8)), [("whoosh", 0)])
+    S[-1]["sfx_words"] = [("tick", "order"), ("tick", "tracking"), ("tick", "shipped"), ("ding", "delivered")]
 
-    # 7. checks its brain: the answer sheet on the monitor, a matching row lights up
-    add("brain", 0.2, 0.5, lambda c, t: office(c, t, scr_sheet, st=0.2),
+    # 7. its brain: the answer sheet, the matching row lights up as she says "brain"
+    add("brain", 0.15, 0.35, lambda c, t, i=len(S): office(c, t, scr_sheet, st=wt(i, "brain") - 1.44),
         lambda c, t: (desk(c, t), robot(c, RX, RY, t, screen="sheet", arms=(15, 140 + 10 * math.sin(t * 3)))),
-        (1.22, 680, 820), (1.3, 700, 800), sit("smug", look=(2.6, -1.2), tilt=-3),
-        [("whoosh", 0), ("tick", 0.4), ("tick", 0.6), ("tick", 0.8), ("tick", 1.0), ("ding", 1.65)])
+        (1.22, 680, 820), (1.3, 700, 800), sit("smug", look=(2.6, -1.2), tilt=-3), [("whoosh", 0)])
+    S[-1]["sfx_words"] = [("ding", "brain")]
 
-    # 8. writes the reply
+    # 8. the example rule: delivered but only a couple of days -> "carrier marks it delivered early"
+    add("example", 0.15, 0.4,
+        lambda c, t, i=len(S): office(c, t, lambda *a: scr_rule(*a, marks=[wt(i, w) for w in ("delivered", "couple", "carrier")])),
+        lambda c, t: (desk(c, t), robot(c, RX, RY, t, eyes="happy", arms=(15, 150 + 8 * math.sin(t * 4)))),
+        (1.3, 700, 760), (1.38, 720, 740), sit("smug", look=(2.6, -1.0), tilt=-3), [])
+    S[-1]["sfx_words"] = [("pop", "delivered"), ("pop", "couple"), ("ding", "carrier")]
+
+    # 9. it fills it in and boom, a draft in the reply box
     def typing_robot(c, t):
         desk(c, t)
         robot(c, RX, RY, t, eyes="happy", arms=(40 + 15 * math.sin(t * 22), 40 + 15 * math.sin(t * 22 + 2)))
-    add("writes", 0.2, 0.6, lambda c, t: office(c, t, scr_reply, st=0.25), typing_robot,
-        (1.42, 690, 700), (1.5, 700, 680), sit("happy", look=(2.6, -1.2)), [("typing", 0)])
 
-    # 9. I read it, I hit send, done (big button, the reply flies off as a paper plane)
-    def send(t, d, ls, le):
-        pressing = 1.15 < t < 1.6
-        return dict(pos=stand(HX, dy=-70), face="smug" if t < 1.6 else "happy",
-                    arms=moves(t, [(0, "rest"), (0.9, "rest"), (1.25, "press"), (1.75, "thumbs")]), tilt=3,
-                    look=(0, 1.5) if t < 1.2 else None)
+    def draft_screen(c, t, i):
+        a_, b_ = wt(i, "picks"), wt(i, "boom")
+        office(c, t, lambda *a: scr_reply(*a, typed=min(1.0, max(0.0, (t - a_) / max(b_ - a_, 0.5)))))
+        if t > b_:
+            sparkles(c, t, [(640, 330), (1010, 360), (980, 600)])
+    add("draft", 0.15, 0.45, lambda c, t, i=len(S): draft_screen(c, t, i), typing_robot,
+        (1.42, 690, 700), (1.5, 700, 680), sit("happy", look=(2.6, -1.2)), [])
+    S[-1]["sfx_words"] = [("typing", "picks"), ("brightsting", "boom")]
 
-    def send_fg(c, t):
-        desk(c, t, button=beats.pop(t - 0.75, 0.3) if t < 2.3 else max(0, 1 - (t - 2.3) * 4), pressed=1.25 < t < 1.6)
+    # 10. I read it, I hit send (button, paper plane), if it's off I fix it
+    def send(t, d, ls, le, i=len(S)):
+        p = wt(i, "send")
+        return dict(pos=stand(HX, dy=-70), face="smug" if t < p else "happy",
+                    arms=moves(t, [(0, "rest"), (p - 0.2, "rest"), (p + 0.1, "press"), (p + 0.6, "thumbs")]), tilt=3,
+                    look=(0, 1.5) if t < p else None)
+
+    def send_fg(c, t, i=len(S)):
+        p = wt(i, "send")
+        r = wt(i, "read")
+        desk(c, t, button=beats.pop(t - r, 0.3) if t < p + 1.0 else max(0, 1 - (t - p - 1.0) * 4), pressed=p < t < p + 0.35)
         robot(c, RX, RY, t, eyes="heart")
-        plane(c, t - 1.45, HX + 100, 1050)
-    add("send", 0.15, 0.7, lambda c, t: office(c, t, lambda *a: scr_reply(*a, typed=1.0)), send_fg,
-        (1.25, 470, 880), (1.35, 470, 860), send, [("pop", 0.75), ("click", 1.3), ("whoosh", 1.45), ("ding", 1.7)])
+        plane(c, t - p - 0.15, HX + 100, 1050)
+    add("send", 0.15, 0.5, lambda c, t: office(c, t, lambda *a: scr_reply(*a, typed=1.0)), send_fg,
+        (1.25, 470, 880), (1.35, 470, 860), send, [])
+    S[-1]["sfx_words"] = [("pop", "read"), ("click", "send"), ("whoosh", "send"), ("ding", "off")]
 
-    # 10. it even sounds like me, just nicer before coffee
-    add("nicer", 0.1, 0.5, lambda c, t: office(c, t, lambda *a: scr_reply(*a, typed=1.0)),
-        lambda c, t: (desk(c, t), robot(c, RX, RY, t, eyes="heart")),
-        (1.5, 470, 780), (1.6, 470, 770), sit("smug", steps=[(0, "chest"), (1.6, "sip")], props=mug, eyes=None),
-        [("sip", 1.7)])
+    # 11. it never sends on its own, period: she's the boss, it's the intern
+    def trust(t, d, ls, le, i=len(S)):
+        real = t > wt(i, "mean", 99)
+        return dict(pos=stand(360), face="neutral" if real else "smug", arms=blend("hip", "hip", 1), tilt=0 if real else 5)
 
-    # 11. today's upgrade: a real memory (lightbulb, sent replies fly into its head)
-    def memory_fg(c, t):
-        desk(c, t)
-        g = ease((t - 0.3) / 0.6)
-        robot(c, RX, RY, t, eyes="happy", glow=g, arms=(25, 25))
-        bulb(c, RX, RY - 520, beats.pop(t - 0.4, 0.35), t)
-        for i in range(5):                                                               # replies flying in
-            tt = (t * 0.7 + i / 5) % 1
-            msg_card(c, lerp(150 + i * 60, RX, tt), lerp(400 + i * 50, RY - 280, tt), 0, 0.55 * (1 - tt * .8), "reply sent")
-    add("memory", 0.2, 0.5, lambda c, t: office(c, t, scr_memory, st=0.2), memory_fg, (1.35, 760, 820), (1.5, 790, 800), sit("happy", look=(2.6, -0.5)),
-        [("brightsting", 0.4)])
-
-    # 12. I'm the boss, it's the intern
-    def boss(t, d, ls, le):
-        return dict(pos=stand(360), face="smug", arms=blend("hip", "hip", 1), tilt=5)
-
-    def boss_fg(c, t):
-        robot(c, 800, FLOOR, t, s=1.15, eyes="happy", arms=(15, 150 if t > 2.2 else 15), label="INTERN")
-        k = beats.pop(t - 2.0, 0.3)
+    def trust_fg(c, t, i=len(S)):
+        robot(c, 800, FLOOR, t, s=1.15, eyes="happy", arms=(15, 150 if t > wt(i, "trust", 99) else 15), label="INTERN")
+        k = beats.pop(t - wt(i, "period"), 0.3)
         if k > 0.02:
             rrect(c, 360 - 110 * k, 236, 220 * k, 76 * k, 20, fill="#ffd45e", w=6)
             if k > 0.6:
                 text(c, "BOSS", 360, 274, 48, F800, col="#2b2440")
-    add("boss", 0.1, 0.6, office, boss_fg, (1.0, 560, 940), (1.08, 560, 920), boss, [("pop", 2.0), ("pop", 2.3)])
+    add("trust", 0.1, 0.45, office, trust_fg, (1.0, 560, 940), (1.08, 560, 920), trust, [])
+    S[-1]["sfx_words"] = [("dundun", "period")]
 
-    # 13. result: hours -> a few clicks
-    def result(t, d, ls, le):
-        hop = 260 * math.sin(math.pi * (t - 1.0) / 0.6) if 1.0 <= t <= 1.6 else 0.0
-        return dict(pos=stand(HX, dy=hop), face="excited", arms=blend("rest", "yay", ease((t - 0.8) / .3)),
-                    tilt=4 * math.sin(t * 5))
-    add("result", 0.2, 0.7, lambda c, t: office(c, t, scr_before_after, st=0.2),
-        lambda c, t: (robot(c, 830, FLOOR, t, s=1.0, eyes="heart", arms=(120, 120)), D.confetti(c, t - 1.05, 540, 800)),
-        (1.05, 600, 920), (1.12, 620, 900), result, [("whoosh", 0), ("boing", 1.0), ("pop", 1.1), ("thud", 1.6)])
+    # 12. today's test: giving it a memory
+    def memory_fg(c, t, i=len(S)):
+        desk(c, t)
+        m = wt(i, "memory")
+        robot(c, RX, RY, t, eyes="happy", glow=ease((t - m) / 0.6), arms=(25, 25))
+        bulb(c, RX, RY - 520, beats.pop(t - m, 0.35), t)
+        if t > wt(i, "fix"):
+            for j in range(5):                                                           # fixed replies flying in
+                tt = (t * 0.7 + j / 5) % 1
+                msg_card(c, lerp(150 + j * 60, RX, tt), lerp(400 + j * 50, RY - 280, tt), 0, 0.55 * (1 - tt * .8), "fixed reply")
+    add("memory", 0.15, 0.4, lambda c, t, i=len(S): office(c, t, scr_memory, st=wt(i, "memory")), memory_fg,
+        (1.35, 760, 820), (1.5, 790, 800), sit("happy", look=(2.6, -0.5)), [])
+    S[-1]["sfx_words"] = [("brightsting", "memory")]
 
-    # 14. call to action
-    def outro(t, d, ls, le):
-        return dict(pos=stand(400, dy=10 * abs(math.sin(t * 3))), face="wink", arms=blend("rest", "peace", ease(t / .35)),
-                    tilt=-5)
+    # 13. honest: not 100%, but typing all day -> checking its homework
+    def honest(t, d, ls, le, i=len(S)):
+        c_ = wt(i, "checking")
+        hop = 230 * math.sin(math.pi * (t - c_ - 0.2) / 0.6) if c_ + 0.2 <= t <= c_ + 0.8 else 0.0
+        return dict(pos=stand(HX, dy=hop), face="excited" if t > c_ else "neutral",
+                    arms=blend("shrug", "yay", ease((t - c_) / .3)) if t > wt(i, "hundred") else {}, tilt=4 * math.sin(t * 5))
+    add("honest", 0.15, 0.7,
+        lambda c, t, i=len(S): office(c, t, lambda *a: scr_before_after(*a, reveal=wt(i, "checking"))),
+        lambda c, t, i=len(S): (robot(c, 830, FLOOR, t, s=1.0, eyes="heart", arms=(120, 120)),
+                                D.confetti(c, t - wt(i, "homework"), 540, 800)),
+        (1.05, 600, 920), (1.12, 620, 900), honest, [("whoosh", 0)])
+    S[-1]["sfx_words"] = [("slide_down", "no."), ("boing", "checking"), ("pop", "homework")]
+
+    # 14. anyway... comment the word robot. Okay, bye.
+    def outro(t, d, ls, le, i=len(S)):
+        bye = t > wt(i, "bye", 99)
+        return dict(pos=stand(400, dy=10 * abs(math.sin(t * 3))), face="wink" if bye else "smug",
+                    arms=blend("rest", "peace", ease((t - wt(i, "bye", 99)) / .35)) if bye else blend("hip", "hip", 1), tilt=-5)
     add("cta", 0.2, 2.0, D.outro_bg, lambda c, t: robot(c, 820, FLOOR, t, s=1.0, eyes="happy", arms=(15, 150 + 20 * math.sin(t * 8))),
-        (1.0, 560, 960), (1.12, 560, 900), outro, [("chime", 0.2)])
+        (1.0, 560, 960), (1.12, 560, 900), outro, [("chime", ("le", 0.1))])
     return S
 
 
@@ -547,8 +620,10 @@ _fx = D.fx
 
 
 def fx(name, n=1.0):
-    if name in ("notif", "tick", "scratch", "brightsting", "click"):
+    if name in ("notif", "tick", "scratch", "brightsting", "click", "dundun", "slide_down"):
         return beats.sfx("pop" if name == "click" else name)
+    if name == "typing2":
+        return _fx("typing", 1.6)
     return _fx(name, n)
 
 
@@ -563,7 +638,23 @@ def header(frame):
     d.text((W / 2, 176), "(a day in my business)", font=D.font(30), fill=(90, 80, 90), anchor="mm")
 
 
+def rec_ui(frame, t):
+    """Phone-camera look for the selfie opener: corner brackets, a blinking REC dot and a timer."""
+    d = ImageDraw.Draw(frame)
+    for x, y, dx, dy in ((60, 60, 1, 1), (W - 60, 60, -1, 1), (60, H - 60, 1, -1), (W - 60, H - 60, -1, -1)):
+        d.line((x, y, x + 90 * dx, y), fill=(255, 255, 255), width=8)
+        d.line((x, y, x, y + 90 * dy), fill=(255, 255, 255), width=8)
+    if (t * 1.5) % 1 < 0.65:
+        d.ellipse((110, 110, 150, 150), fill=(235, 50, 60))
+    d.text((170, 130), f"REC  00:{int(t):02d}", font=D.font(44), fill=(255, 255, 255), anchor="lm",
+           stroke_width=5, stroke_fill=(30, 24, 30))
+
+
 def overlay(frame, S, s, t, T):
+    if s["key"] == "hook":
+        rec_ui(frame, t)
+        D.captions(frame, s, T)
+        return
     header(frame)
     D.captions(frame, s, T)
     if s is S[-1] and t > s["le"] + .1:
@@ -574,5 +665,18 @@ def overlay(frame, S, s, t, T):
         d.text((W / 2, 1715), "and I'll show you how it works", font=D.font(36 * k + 1), fill=(255, 255, 255), anchor="mm")
 
 
+def word_sfx(S):
+    """Turn each shot's ("sound", "word") cues into timed effects, now that the word timings are known."""
+    for s in S:
+        for name, word in s.pop("sfx_words", []):
+            for w, tt in s["words"]:
+                if word in w.lower():
+                    s["sfx"].append(("typing2" if name == "typing" else name, tt - s["t0"]))
+                    break
+
+
 if __name__ == "__main__":
-    D.render(sys.argv[1] if len(sys.argv) > 1 else "video_robot.mp4", shots(), LINES, VOICE, overlay)
+    S = shots()
+    D.build(S, LINES, VOICE)            # first pass: voice + word timings (cached voice, so this is quick)
+    word_sfx(S)
+    D.render(sys.argv[1] if len(sys.argv) > 1 else "video_robot.mp4", S, LINES, VOICE, overlay)
