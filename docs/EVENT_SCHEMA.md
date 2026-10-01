@@ -139,11 +139,11 @@ Common fields: `url` (sanitized), `domain` (without `www.`), `page_title` (the p
 |---|---|
 | `browser` | `msedge`, `chrome`, ... |
 | `site` | `amazon`, `seller_central`, `amazon_ads`, `keepa`, `etsy`, `shopify`, `google_sheets`, `google_docs`, `google_slides`, `google_drive`, `gmail`, `chatgpt`, `other` |
-| `page_type` | e.g. `product`, `search`, `listing_editor`, `inventory`, `search_query_performance`, `orders`, `order_detail`, `product_editor`, `product_import`, `listings_manager`, `document` |
-| `module` | readable screen name, e.g. `Search Query Performance`, `Manage All Inventory`, `Edit Listing` |
+| `page_type` | e.g. `product`, `search`, `listing_editor`, `inventory`, `search_query_performance`, `orders`, `order_detail`, `product_editor`, `product_import`, `listings_manager`, `document`; Amazon Ads: `campaigns`, `campaign_detail`, `ad_group`, `targeting`, `search_terms`, `bulk_operations`, `reports` |
+| `module` | readable screen name, e.g. `Search Query Performance`, `Manage All Inventory`, `Edit Listing`, `Campaign (SP)` |
 | `asins`, `skus`, `listing_ids`, `product_ids`, `order_ids` | identifiers found in the URL (and in headings like "Seller SKU: MA023") |
 | `search_term` | e.g. Amazon `k=`, Keepa `#!search/1-term`, Seller Central `searchTerm=`, Shopify `query=` |
-| `filters` | report settings from the URL, e.g. `{"reporting-range": "weekly", "weekly-week": "2026-09-13"}` |
+| `filters` | report settings from the URL, e.g. `{"reporting-range": "weekly", "weekly-week": "2026-09-13"}`; Amazon Ads: `ad_program` (SP/SB/SD), `campaign_id`, `ad_group_id` |
 | `item_title` | product/listing/document title when it can be told from the page title |
 | `document_id` | Google Sheets/Docs/Drive id, ChatGPT conversation id |
 | `headings` | up to 8 page headings — **only on business sites** (`collectors.browser.page_text_domains`) |

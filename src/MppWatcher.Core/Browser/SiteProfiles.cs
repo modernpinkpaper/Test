@@ -60,7 +60,7 @@ public static class SiteProfiles
         if (IsHost(host, "sellercentral.amazon.") || host.StartsWith("sellercentral-europe.amazon.", StringComparison.Ordinal) || IsHost(host, "sellercentral-japan.amazon."))
             info = SellerCentral(path, q);
         else if (IsHost(host, "advertising.amazon."))
-            info = new PageInfo { Site = "amazon_ads", PageType = path.Contains("/campaigns") ? "campaigns" : "ads", Module = "Amazon Advertising" };
+            info = AmazonAds(path, fragment, q);
         else if (IsAmazonRetail(host))
             info = AmazonRetail(path, q);
         else if (IsHost(host, "keepa.com"))
@@ -101,6 +101,54 @@ public static class SiteProfiles
         {
             Site = "seller_central", PageType = type, Module = module, Skus = skus.Distinct().ToList(), Asins = asins.Distinct().ToList(),
             SearchTerm = search, Filters = filters, OrderIds = orderId is null ? Array.Empty<string>() : new[] { orderId },
+        };
+    }
+
+    /// <summary>
+    /// Amazon Ads console (advertising.amazon.com). Tags the campaign program (SP/SB/SD), campaign and
+    /// ad-group ids, and which screen (campaigns, campaign detail, ad group, targeting, search terms,
+    /// bulk, reports). Best-effort from the URL — the console is a single-page app whose URLs shift, so
+    /// refine these against real captured URLs (per the "collect real data first" rollout plan). Pair
+    /// with the ui_field_value before→after (bid old→new) and the downloaded report files for the "why".
+    /// </summary>
+    private static PageInfo AmazonAds(string path, string fragment, System.Collections.Specialized.NameValueCollection q)
+    {
+        var route = (path + "/" + fragment).ToLowerInvariant();
+        var filters = new Dictionary<string, string>();
+
+        string? program = null;
+        if (Regex.IsMatch(route, @"(^|/)(sp|sponsored-products)(/|$)")) program = "SP";
+        else if (Regex.IsMatch(route, @"(^|/)(sb|sponsored-brands|hsa)(/|$)")) program = "SB";
+        else if (Regex.IsMatch(route, @"(^|/)(sd|sponsored-display)(/|$)")) program = "SD";
+        else if (First(q, "entityType", "adProgram", "programType", "campaignType") is { } et)
+        {
+            var e = et.ToLowerInvariant();
+            if (e.Contains("sp") || e.Contains("product")) program = "SP";
+            else if (e.Contains("sb") || e.Contains("brand")) program = "SB";
+            else if (e.Contains("sd") || e.Contains("display")) program = "SD";
+        }
+        if (program is not null) filters["ad_program"] = program;
+
+        var campaign = Segment(path, "campaigns") ?? Segment(path, "campaign") ?? First(q, "campaignId", "entityId", "campaignIdFilter");
+        if (campaign is not null) filters["campaign_id"] = campaign;
+        var adGroup = Segment(path, "ad-groups") ?? Segment(path, "adgroups") ?? First(q, "adGroupId", "adGroupIdFilter");
+        if (adGroup is not null) filters["ad_group_id"] = adGroup;
+
+        var (type, module) =
+            route.Contains("search-term") || route.Contains("/st/") ? ("search_terms", "Search Terms Report")
+            : route.Contains("targeting") || route.Contains("/targets") ? ("targeting", "Targeting")
+            : route.Contains("ad-groups") || route.Contains("adgroups") ? ("ad_group", "Ad Group")
+            : route.Contains("bulk") || route.Contains("/boa") ? ("bulk_operations", "Bulk Operations")
+            : route.Contains("report") ? ("reports", "Reports")
+            : filters.ContainsKey("campaign_id") ? ("campaign_detail", "Campaign")
+            : route.Contains("campaign") ? ("campaigns", "Campaigns")
+            : ("ads", "Amazon Advertising");
+
+        return new PageInfo
+        {
+            Site = "amazon_ads", PageType = type,
+            Module = program is null ? module : $"{module} ({program})",
+            Filters = filters, SearchTerm = First(q, "searchText", "search", "query", "q"),
         };
     }
 

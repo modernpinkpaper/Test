@@ -39,6 +39,25 @@ public class SiteProfileTests
     }
 
     [Fact]
+    public void Amazon_ads_campaign_adgroup_tags_program_and_ids()
+    {
+        var p = A("https://advertising.amazon.com/cm/sp/campaigns/123456789/ad-groups/987654321?entityId=123456789");
+        Assert.Equal("amazon_ads", p.Site);
+        Assert.Equal("ad_group", p.PageType);
+        Assert.Equal("SP", p.Filters["ad_program"]);
+        Assert.Equal("123456789", p.Filters["campaign_id"]);
+        Assert.Equal("987654321", p.Filters["ad_group_id"]);
+    }
+
+    [Fact]
+    public void Amazon_ads_campaigns_list()
+    {
+        var p = A("https://advertising.amazon.com/cm/campaigns");
+        Assert.Equal("amazon_ads", p.Site);
+        Assert.Equal("campaigns", p.PageType);
+    }
+
+    [Fact]
     public void Seller_central_listing_editor_gives_sku_and_asin()
     {
         var p = A("https://sellercentral.amazon.com/abis/listing/edit?marketplaceID=ATVPDKIKX0DER&ref=xx_myiedit_cont_myifba&sku=MA023&asin=B0CXYZ1234&productType=STATIONERY");
