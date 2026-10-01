@@ -1,0 +1,12 @@
+# #5 — The Ellipsis Manual and the Three Skills
+
+**Topic:** About Chase Hughes and the Behavior Ops Manual  
+**Posted:** 2026-08-06  
+**Length:** 79 seconds  
+**Video:** https://www.tiktok.com/@thepsychologydropout/video/7670754164762234126
+
+## Caption
+Before the Behavior Ops Manual (BOM), there was The Ellipsis Manual—the foundation that grew into one of the most comprehensive behavioral profiling systems available today. In this clip, Chase Hughes explains why success in negotiation, leadership, sales, and even jury trials doesn’t come down to knowledge alone. It comes down to mastering three skills: • Observation • Communication • Self-mastery Miss one of those, and your results suffer. Master all three, and you begin seeing people—and influencing outcomes—in a completely different way. #BehaviorOpsManual #BehavioralProfiling #HumanBehavior #Psychology #ChaseHughes
+
+## Transcript
+What was the first book, this first book that just kind of was the breakthrough moment for you? This was called The Ellipsis Manual and it was just kind of a. The precursor, the intro to what would later become the Behaviour Operations Manual, which is kind of the giant. Yeah. Show us the doorstep of a book here. I love this five pound doorstep. And, uh, Joe Rogan said it was the only book he's ever received, or one of the very few books he receives that he's actually taking home. I love it. I love it. I took it as an honour. Yeah. But it's kind of a. It's a reference manual for, and I think all of success, especially when I train attorneys, I say all of your success as an attorney is not gonna really come down to the law every time when it comes down to influencing a jury, it's gonna come down to observation. Like, can you read the room? Can you read the people you're speaking to? Communication. Do you know how to communicate to the people that you're seeing into all those little individual psychologies? And self mastery. If you. If you. If you have observation communication down and you don't have self mastery, you're accidentally sending all the wrong gut feelings and intuitions, uh, into people that feel, you know, something's off. Those three things. So self mastery, observation and communication. And you can go back through any sales call, any Hostage negotiation, any interrogation. And figure out one of those three pieces of the triangle is missing. If there was some failure to get the outcome that they wanted.
