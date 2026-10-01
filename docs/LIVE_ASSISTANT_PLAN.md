@@ -35,6 +35,18 @@ expensive ($50–200/day). Sending only what's new keeps it cheap **and** just a
 
 ---
 
+## Memory — how far back, and where it lives
+
+- **The recommendations LOG** (the written record of suggestions) is **kept forever**, one file
+  per day — look back days/weeks/months.
+- **The working MEMORY** it thinks with is mostly **today**, PLUS **still-open items carried
+  forward** from recent days (e.g. "still waiting on Carolina"), AND it can **look back several
+  days** when a new event connects to an older one. The look-back window is adjustable. It does
+  NOT re-read weeks of history every time (slow + costly).
+- **Where it saves:** same home as MT Log's data (`%LOCALAPPDATA%\MT Log\`), and it rides along
+  in the existing Google Drive export so it's backed up. (If the brain later runs in the cloud,
+  memory can live there instead.)
+
 ## Memory — how it decides what to keep
 
 No list of priorities from you — it works out what matters on its own, using simple rules
@@ -73,19 +85,28 @@ is automatic.
 ## The pop-ups and buttons
 
 - **Sticky:** the pop-up **stays open until you click something** — nothing auto-vanishes.
-- **Buttons** depend on the suggestion. Examples:
-  - **[Add to Google Calendar]** — opens the calendar with the event pre-filled.
-  - **[Copy / install this script]** — e.g. a Tampermonkey script to speed up a task.
-  - **[Open file / folder / Amazon listing]**.
-  - **[Add to task list]**.
-  - **[Remind me in 1 hr]** — hides it, brings it back later.
-  - **[Dismiss]** — closes it.
-  - **[Not helpful]** — closes it *and* teaches the assistant (feedback).
+- **The AI chooses which buttons to show** for each suggestion, from a **toolbox** of actions the
+  app knows how to do. (A "copy-paste 15×" suggestion shows [Copy the script]; a "collection
+  ready" one shows [Add reminder].)
+- **The toolbox of actions:**
+  - **Open a page** (Amazon listing, a doc, a sheet).
+  - **Copy text** (a script, a drafted message) to the clipboard.
+  - **Open a file / folder**.
+  - **Add to my Project Tracker** → appends the recommendation to the **"AI MT LOG RECS"** tab of
+    Dalia's personal tracker, to review later and promote the good ones to real projects.
+    Sheet: https://docs.google.com/spreadsheets/d/1nGa74uHh2yhcNdsSgtldylfhL2d7yxhzzYlwvEGPfvw/edit?gid=1731051855
+  - **Add a reminder** — **Dalia:** her Google Calendar (personal only). **Team:** NOT her
+    calendar — target their **Chrome reminder extension** instead.
+  - **Run a saved script / automation** (e.g. a Tampermonkey helper, a .bat).
+  - **Draft a message / reply** (put a draft somewhere — never send).
+  - **Remind me in 1 hr** / **Dismiss** / **Not helpful** (the last teaches it).
 - **Two tiers of buttons:**
   - **Instant & free:** open a page, copy text, pre-fill a form — no AI, no cost.
-  - **Actually does it for you** (truly creates the calendar event, posts something): needs
-    that service connected with permission. Anything **outward-facing stays behind a confirm
-    click** — it never sends/posts on its own.
+  - **Actually does it for you** (adds the calendar/reminder, writes to the sheet, posts
+    something): needs that service connected with permission. Anything **outward-facing stays
+    behind a confirm click** — it never sends/posts on its own.
+- **Light "Tab to accept" option** (idea from the Violoop device): for small suggestions, a tiny
+  hint by the cursor you accept with one key, instead of a full pop-up.
 
 ---
 
@@ -147,14 +168,35 @@ a day, the real bill sits **close to the Haiku row (~$8–12/person/month)**.
 
 ---
 
-## Open questions to settle before building
+## Which AI provider (Anthropic vs OpenAI)
 
-1. **Where the smart brain runs** — each person's PC, or one cheap always-on cloud machine
-   reading everyone's logs? (Cloud is simpler to manage; PC keeps data local.)
-2. **Which services get the "do it for me" buttons first** (Google Calendar is the obvious
-   first; anything else?).
-3. **Model roster** — start Haiku + Opus-on-call, or Haiku + Sonnet-on-call?
-4. **Who gets it first** — just you to start, then Erika/Carolina?
+Both are capable for this (reading activity, judging what's worth saying), and both have a cheap
+small model + a strong big one — what the cheap-watch/escalate design needs. Lean **Claude** to
+start (strong at the "only speak up when useful" judgment and clean structured output for the
+buttons/sheet; Haiku→Opus tiering fits). Not locked in: the model is **swappable**, and the real
+decision is a cheap **A/B test on one real day of logs**.
+
+## Where it runs — PC vs cloud (open question #1)
+
+- **On the PC:** reads/thinks/shows on your own machine. 👍 data stays local, simplest start.
+  👎 install/update per PC; can't message a PC that's off (no after-hours notes).
+- **In the cloud:** one small always-on machine reads each person's exported logs and sends
+  suggestions back. 👍 one place to manage, always on (after-hours notes work), easier for a team.
+  👎 logs leave the PC; small monthly rent; needs a way to push pop-ups back.
+- **Suggested:** start on **your PC**; move to a cheap **cloud box** when rolling out to the team.
+
+## Decisions captured
+
+- **Calendar is personal (Dalia only).** The team will NOT use Dalia's Google Calendar; their
+  "add reminder" button targets their **Chrome reminder extension** instead.
+- **Project Tracker button** writes to the **"AI MT LOG RECS"** tab of Dalia's tracker (link above).
+- **AI chooses the buttons** per suggestion from the toolbox.
+
+## Open questions still to settle
+
+1. **Where the smart brain runs** — PC first, cloud later? (suggested above — confirm)
+2. **Model roster** — Haiku + Opus-on-call, or Haiku + Sonnet-on-call? (or decide after the A/B test)
+3. **Who gets it first** — just you to start, then Erika/Carolina?
 
 ---
 
