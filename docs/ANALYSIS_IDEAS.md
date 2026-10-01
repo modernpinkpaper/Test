@@ -110,6 +110,11 @@ one-by-one Claim clicks). Kayla also does a batch email handoff ("21 Notepads to
 print jobs across 4 printers incl. the XTRA printer; Annie did neither. Data: scripts/extensions by
 name, control names (Claim all, Open+Claim), domains (Gmail handoff), printers used, event counts.
 Caveat: one day is a lead, not proof — roles differ; confirm with the person before changing process.
+BIG caveat (learned the hard way): a "gap" may just be a DIFFERENT job the person isn't trained on.
+Real example — the Kayla vs Annie claim-automation/handoff "gaps" were all the NOTEPADS process, which
+Annie isn't trained on; comparing them was apples-to-oranges. So the tool MUST know who is trained on
+what (or compare only within the SAME process, e.g. regular flat orders) before suggesting a change,
+or it will recommend one person adopt another's entirely separate workflow.
 
 ## 20. "Scripts I use" index → pull the code to see how it's wired
 Goal: MT Log sees WHICH scripts/extensions/codes you use (by name — e.g. mpp-CLAIM-BUTTONS-v3.2,
