@@ -11,6 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.77.0.4281" />
+    <PackageReference Include="Google.Apis.Calendar.v3" Version="1.75.0.4206" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MppWatcher.Assistant\MppWatcher.Assistant.csproj" />
   </ItemGroup>
 

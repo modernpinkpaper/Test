@@ -26,14 +26,22 @@ internal static class ActionRunner
                 break;
 
             case "add_tracker":
+                // Try the real Google Sheets write; if no login/creds or it fails, fall back.
+                if (!GoogleActions.TryAddToTracker(rec)) FallbackOpenOrCopy(b, rec);
+                break;
+
             case "add_reminder":
-                // Until the Google login is connected: open the link if it's a URL, else copy the text.
-                if (!string.IsNullOrWhiteSpace(b.Target) && b.Target!.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                    OpenTarget(b.Target);
-                else
-                    Copy(string.IsNullOrWhiteSpace(b.Target) ? rec.Title : b.Target!);
+                if (!GoogleActions.TryAddReminder(rec)) FallbackOpenOrCopy(b, rec);
                 break;
         }
+    }
+
+    private static void FallbackOpenOrCopy(SuggestedButton b, Recommendation rec)
+    {
+        if (!string.IsNullOrWhiteSpace(b.Target) && b.Target!.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            OpenTarget(b.Target);
+        else
+            Copy(string.IsNullOrWhiteSpace(b.Target) ? rec.Title : b.Target!);
     }
 
     private static void OpenTarget(string? target)
