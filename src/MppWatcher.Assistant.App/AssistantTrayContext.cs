@@ -36,6 +36,9 @@ internal sealed class AssistantTrayContext : ApplicationContext
         var checkNow = new ToolStripMenuItem("Check now");
         checkNow.Click += async (_, _) => await TickAsync();
         menu.Items.Add(checkNow);
+        var testCard = new ToolStripMenuItem("Show a test card");
+        testCard.Click += (_, _) => ShowCard(SampleCard());
+        menu.Items.Add(testCard);
         menu.Items.Add(new ToolStripSeparator());
         var exit = new ToolStripMenuItem("Exit");
         exit.Click += (_, _) => ExitThread();
@@ -75,6 +78,22 @@ internal sealed class AssistantTrayContext : ApplicationContext
         }
         catch { /* never crash the tray over one tick */ }
         finally { _busy = false; }
+    }
+
+    /// <summary>A fake suggestion for testing: proves the pop-up, the no-focus-steal behaviour, and the buttons.</summary>
+    private static Recommendation SampleCard()
+    {
+        var rec = new Recommendation
+        {
+            Title = "Test card — the assistant is working",
+            Why = "This is a test. Keep typing in Gmail — this card should NOT steal your cursor.",
+            Urgency = "normal",
+        };
+        rec.Buttons.Add(new SuggestedButton("Open Google", "open_url", "https://www.google.com"));
+        rec.Buttons.Add(new SuggestedButton("Copy a note", "copy", "MPP assistant test"));
+        rec.Buttons.Add(new SuggestedButton("Remind me", "remind"));
+        rec.Buttons.Add(new SuggestedButton("Dismiss", "dismiss"));
+        return rec;
     }
 
     private void ShowCard(Recommendation rec)
