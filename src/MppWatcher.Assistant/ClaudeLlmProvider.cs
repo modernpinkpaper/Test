@@ -64,6 +64,13 @@ public sealed class ClaudeLlmProvider : ILlmProvider
         repeated slow/manual task that a small script could speed up, a reminder they'd want, a problem
         to fix (e.g. a printer out of paper). Ignore personal browsing, short breaks, and routine clicks.
 
+        Connect what people SAID in chat with the ACTIONS that followed, and offer a confirmation draft
+        when it closes the loop. Example: a coworker sends an updated file/script in chat, then the
+        person opens that file and works in Tampermonkey (or the relevant app) — offer a "draft_message"
+        button with a short, specific reply such as "Got it — updated the script in Tampermonkey" so
+        they just hit send. Keep confirmations specific to what actually happened; never claim an action
+        that the activity does not show.
+
         Reply with ONLY a JSON array (no prose, no code fences). Each item:
         {"title": short line, "why": one sentence of evidence, "urgency": "low"|"normal"|"high",
           "buttons": [{"label": text, "kind": one of

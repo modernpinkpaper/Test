@@ -101,6 +101,12 @@ is automatic.
   - **Draft a message / reply** (put a draft somewhere — never send). Includes a **confirmation
     draft**: after you click "add reminder", it drafts "Got it — added a reminder" into the chat
     with that person so you just hit send.
+    - **Close-the-loop example (Dalia's idea):** a coworker sends an updated file/script in chat;
+      the person opens it and updates the Tampermonkey script; the assistant connects the chat
+      message with the actions that followed and offers a draft reply like *"Got it — updated the
+      script in Tampermonkey."* One click drafts it, they hit send. (The AI infers "applied it"
+      from: the sent file + the file being opened + being in Tampermonkey — it can't see the actual
+      copy/paste keystrokes, so confirmations stay specific to what the activity actually shows.)
   - **Open a file / folder** — only shown when the log already knows the **exact** file/path you
     were working on (it reads that from the activity log); it opens that one, in the right program.
   - **Remind me in 1 hr** / **Dismiss** / **Not helpful** (the last teaches it).
