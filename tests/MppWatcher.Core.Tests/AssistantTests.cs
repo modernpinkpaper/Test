@@ -170,6 +170,78 @@ public class AssistantTests
         Assert.IsType<HeuristicLlmProvider>(ProviderFactory.Create(forceHeuristic: true));
     }
 
+    [Fact]
+    public void HabitMiner_finds_repeated_A_then_B()
+    {
+        // business email -> personal email, three times, plus some noise.
+        var seq = new[]
+        {
+            "web:mail.business.com", "web:mail.personal.com",
+            "web:amazon.com",
+            "web:mail.business.com", "web:mail.personal.com",
+            "web:keepa.com",
+            "web:mail.business.com", "web:mail.personal.com",
+        };
+        var hits = HabitMiner.Mine(seq, minCount: 3);
+        Assert.Contains(hits, h => h.A == "web:mail.business.com" && h.B == "web:mail.personal.com" && h.Count == 3);
+    }
+
+    [Fact]
+    public void HabitMiner_ignores_rare_transitions()
+    {
+        var hits = HabitMiner.Mine(new[] { "app:A", "app:B", "app:A", "app:C" }, minCount: 3);
+        Assert.Empty(hits);
+    }
+
+    [Fact]
+    public void LearnedMemory_reinforce_suppress_save_load()
+    {
+        var path = Path.Combine(TempDir(), "learned.json");
+        var m = new LearnedMemory();
+        m.Reinforce("web:a", "web:b", 4, DateTimeOffset.UtcNow);
+        m.Suppress("Open personal Gmail");
+        m.Save(path);
+
+        var m2 = LearnedMemory.Load(path);
+        Assert.Single(m2.Patterns);
+        Assert.Equal(4, m2.Patterns[0].Count);
+        Assert.True(m2.IsSuppressed("open personal gmail")); // case-insensitive
+    }
+
+    [Fact]
+    public void Learner_mines_habits_and_suppresses_dismissed()
+    {
+        var dir = TempDir();
+        // Build a few days' worth of browser_page events: business -> personal, 3x.
+        var lines = new List<string>();
+        var t = DateTimeOffset.Parse("2026-09-28T09:00:00Z");
+        for (var i = 0; i < 3; i++)
+        {
+            lines.Add(EventJson.Serialize(Page(t.AddMinutes(i * 10), "biz" + i, "mail.business.com")));
+            lines.Add(EventJson.Serialize(Page(t.AddMinutes(i * 10 + 1), "per" + i, "mail.personal.com")));
+        }
+        File.WriteAllText(Path.Combine(dir, "events_1.jsonl"), string.Join("\n", lines) + "\n");
+
+        // A recommendation the user dismissed -> should be suppressed.
+        var log = new RecommendationLog(dir);
+        var rec = new Recommendation { Title = "Open personal Gmail", AtUtc = DateTimeOffset.Now };
+        log.Append(rec);
+        log.AppendAction(rec.Id, "dismiss", DateTimeOffset.Now);
+
+        var mem = Learner.Run(dir, Path.Combine(dir, "learned.json"), dir, minCount: 3);
+        Assert.Contains(mem.Patterns, p => p.Trigger == "web:mail.business.com" && p.Then == "web:mail.personal.com");
+        Assert.True(mem.IsSuppressed("Open personal Gmail"));
+    }
+
+    private static WatchEvent Page(DateTimeOffset ts, string id, string domain) => new()
+    {
+        EventType = "browser_page",
+        TimestampUtc = ts,
+        EventId = id,
+        Domain = domain,
+        Application = "msedge",
+    };
+
     private static AssistantContext Ctx(params WatchEvent[] events) =>
         new(events, new AssistantMemory(), "Dalia", DateTimeOffset.UtcNow);
 }

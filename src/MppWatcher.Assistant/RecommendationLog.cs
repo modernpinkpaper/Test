@@ -50,6 +50,25 @@ public sealed class RecommendationLog
         catch { /* never let feedback logging break the UI */ }
     }
 
+    /// <summary>Read back a day's recorded button clicks (for the learn pass / tests).</summary>
+    public IReadOnlyList<RecommendationAction> ReadActions(DateTimeOffset localDay)
+    {
+        var file = ActionFileFor(localDay);
+        var list = new List<RecommendationAction>();
+        if (!File.Exists(file)) return list;
+        foreach (var line in File.ReadAllLines(file))
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            try
+            {
+                var a = JsonSerializer.Deserialize<RecommendationAction>(line, AssistantJson.Options);
+                if (a is not null) list.Add(a);
+            }
+            catch { }
+        }
+        return list;
+    }
+
     /// <summary>Read back a day's recommendations (for review / tests).</summary>
     public IReadOnlyList<Recommendation> Read(DateTimeOffset localDay)
     {

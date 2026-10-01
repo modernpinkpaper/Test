@@ -61,12 +61,14 @@ public sealed class AssistantContext
     public AssistantMemory Memory { get; }
     public string Person { get; }
     public DateTimeOffset NowUtc { get; }
+    public LearnedMemory Learned { get; }
 
-    public AssistantContext(IReadOnlyList<WatchEvent> newEvents, AssistantMemory memory, string person, DateTimeOffset nowUtc)
+    public AssistantContext(IReadOnlyList<WatchEvent> newEvents, AssistantMemory memory, string person, DateTimeOffset nowUtc, LearnedMemory? learned = null)
     {
         NewEvents = newEvents;
         Memory = memory;
         Person = person;
         NowUtc = nowUtc;
+        Learned = learned ?? new LearnedMemory();
     }
 }

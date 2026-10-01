@@ -247,12 +247,27 @@ glances at a day of real recommendations after Step 1 — plus clicking the real
 
 ---
 
+## Learning from habits & feedback (Step 5)
+
+The assistant gets better over time:
+
+- **Habit mining:** a background "learn pass" (hourly) scans the activity history for recurring
+  **A → B** sequences (e.g. "after business email, open personal email"). Frequent ones are saved to
+  a learned-patterns file and fed to the brain, so it can **proactively suggest B after you do A** —
+  and say *why* ("you usually do this"). It only learns transitions it can tell apart from the logs;
+  if two things look identical (e.g. two Gmail accounts with no distinguishing detail), it stays quiet.
+- **Feedback that sticks:** when you **Dismiss** or mark **Not helpful**, that's rolled into a
+  "don't suggest this again" list, also fed to the brain — so it stops repeating things you rejected.
+- Both live in small files next to the day memory (`assistant_learned.json`); no extra cost beyond a
+  short list added to each check.
+
 ## Status (2026-10-01) — built
 
 - ✅ Reader + day memory + recommendations log (cross-platform core, tested)
 - ✅ Real Claude brain (Haiku default; falls back to a built-in stand-in with no key)
 - ✅ On-screen pop-ups + buttons (Windows tray app; cards don't steal focus)
 - ✅ Account buttons: add-to-tracker (sheet) + add-reminder (calendar), degrade without login
+- ✅ Learning: mines recurring A→B habits to suggest proactively + learns from Dismiss/Not-helpful
 - ✅ Packaged: CI publishes self-contained `MppAssistant.exe` (console) + `MppAssistantApp.exe`
   (tray) as the downloadable **MppAssistant** artifact
 

@@ -14,6 +14,7 @@ public sealed class AssistantConfig
 
     public string CursorPath => Path.Combine(OutputFolder, "assistant_cursor.json");
     public string MemoryPath => Path.Combine(OutputFolder, "assistant_memory.json");
+    public string LearnedMemoryPath => Path.Combine(OutputFolder, "assistant_learned.json");
 }
 
 /// <summary>
@@ -42,7 +43,8 @@ public sealed class AssistantEngine
         if (result.Events.Count == 0) return Array.Empty<Recommendation>();
 
         var memory = AssistantMemory.Load(_cfg.MemoryPath);
-        var ctx = new AssistantContext(result.Events, memory, _cfg.Person, DateTimeOffset.UtcNow);
+        var learned = LearnedMemory.Load(_cfg.LearnedMemoryPath);
+        var ctx = new AssistantContext(result.Events, memory, _cfg.Person, DateTimeOffset.UtcNow, learned);
 
         var recs = await _provider.SuggestAsync(ctx, ct);
         foreach (var r in recs) _log.Append(r);
@@ -52,4 +54,11 @@ public sealed class AssistantEngine
         result.NewCursor.Save(_cfg.CursorPath);
         return recs;
     }
+
+    /// <summary>
+    /// The learn pass: mine recurring habits from the whole activity history and fold in the person's
+    /// feedback (dismissed / not-helpful) into the "don't suggest again" list. Run occasionally, not
+    /// every tick. Safe to call on a background thread.
+    /// </summary>
+    public LearnedMemory Learn() => Learner.Run(_cfg.ActivityFolder, _cfg.LearnedMemoryPath, _cfg.OutputFolder);
 }

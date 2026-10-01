@@ -101,6 +101,19 @@ public sealed class ClaudeLlmProvider : ILlmProvider
             sb.AppendLine("Open items:");
             foreach (var i in open) sb.AppendLine($"- [{i.Kind}] {i.Text}");
         }
+        var habits = ctx.Learned.Patterns.Where(p => p.Count >= 3).OrderByDescending(p => p.Count).Take(8).ToList();
+        if (habits.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("Learned habits (A is usually followed by B). If the person just did A and hasn't done B, you may proactively suggest B (say it's a usual habit):");
+            foreach (var p in habits) sb.AppendLine($"- {p.Trigger} -> {p.Then} (seen {p.Count}x)");
+        }
+        if (ctx.Learned.Suppressed.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("Do NOT repeat suggestions like these — the person dismissed/marked them not helpful before:");
+            foreach (var s in ctx.Learned.Suppressed.TakeLast(20)) sb.AppendLine($"- {s}");
+        }
         sb.AppendLine();
         sb.AppendLine("New activity since last check (most recent last):");
         foreach (var e in ctx.NewEvents.TakeLast(_maxEventsPerTick)) sb.AppendLine(Compact(e));

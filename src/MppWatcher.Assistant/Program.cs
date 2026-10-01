@@ -20,6 +20,7 @@ internal static class Program
         var intervalMinutes = 2.0;
         var repeatThreshold = 8;
         var forceHeuristic = false;
+        var learn = false;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -31,6 +32,7 @@ internal static class Program
                 case "--person": person = Next() ?? ""; break;
                 case "--model": model = Next(); break;
                 case "--heuristic": forceHeuristic = true; break;
+                case "--learn": learn = true; break;
                 case "--once": watch = false; break;
                 case "--watch": watch = true; break;
                 case "--interval": if (double.TryParse(Next(), out var m)) intervalMinutes = Math.Clamp(m, 0.25, 60); break;
@@ -60,6 +62,12 @@ internal static class Program
             : "Brain: built-in heuristic (set ANTHROPIC_API_KEY for the real Claude brain).");
 
         var engine = new AssistantEngine(cfg, provider);
+
+        if (learn)
+        {
+            var mem = engine.Learn();
+            Console.WriteLine($"Learn pass done: {mem.Patterns.Count} habit(s), {mem.Suppressed.Count} suppressed.");
+        }
 
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
@@ -93,6 +101,7 @@ internal static class Program
           --person <name>         A label for who this is (e.g. Dalia)
           --model <id>            Claude model (default claude-haiku-4-5); needs ANTHROPIC_API_KEY
           --heuristic             Force the built-in stand-in brain (no API calls)
+          --learn                 Run the learn pass (mine habits + fold in feedback) then continue
           --once                  One pass then exit (default)
           --watch                 Keep running, checking every --interval minutes
           --interval <minutes>    Watch interval (default 2)

@@ -15,6 +15,7 @@ internal sealed class AssistantTrayContext : ApplicationContext
     private readonly RecommendationLog _log;
     private readonly NotifyIcon _tray;
     private readonly System.Windows.Forms.Timer _timer;
+    private readonly System.Windows.Forms.Timer _learnTimer;
     private readonly List<NotificationCard> _cards = new();
     private bool _busy;
     private bool _paused;
@@ -51,8 +52,17 @@ internal sealed class AssistantTrayContext : ApplicationContext
         _timer = new System.Windows.Forms.Timer { Interval = Math.Max(15_000, (int)(opts.IntervalMinutes * 60_000)) };
         _timer.Tick += async (_, _) => await TickAsync();
         _timer.Start();
-        _ = TickAsync(); // first pass right away
+
+        // Learn recurring habits + fold in feedback, now and once an hour (off the UI thread).
+        _learnTimer = new System.Windows.Forms.Timer { Interval = 60 * 60_000 };
+        _learnTimer.Tick += (_, _) => RunLearn();
+        _learnTimer.Start();
+        RunLearn();
+
+        _ = TickAsync(); // first suggestion pass right away
     }
+
+    private void RunLearn() => _ = Task.Run(() => { try { _engine.Learn(); } catch { } });
 
     private async Task TickAsync()
     {
@@ -80,6 +90,7 @@ internal sealed class AssistantTrayContext : ApplicationContext
         if (disposing)
         {
             _timer?.Dispose();
+            _learnTimer?.Dispose();
             if (_tray is not null) { _tray.Visible = false; _tray.Dispose(); }
         }
         base.Dispose(disposing);
