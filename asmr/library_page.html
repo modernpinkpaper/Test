@@ -1,0 +1,218 @@
+<title>Cozy Sound Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one calm column; sticky tally bar; each sound type is a row of three clip tiles that stack on phones. */
+:root {
+  --bg: #edf1ea;        /* celadon mist */
+  --surface: #f8faf6;
+  --ink: #22302a;       /* pine ink */
+  --muted: #5f6e66;
+  --line: #d3dcd2;
+  --accent: #356f5f;    /* jade */
+  --keep: #2b7d50;
+  --keep-bg: #e1f1e6;
+  --veto: #a8432f;
+  --veto-bg: #f6e3de;
+  --display: "Zen Old Mincho", "Songti SC", Georgia, serif;
+  --body: "Zen Kaku Gothic New", "Hiragino Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141a17; --surface: #1c2420; --ink: #e3ebe5; --muted: #98a79e; --line: #2d3832;
+    --accent: #7cc0a8; --keep: #74cf9b; --keep-bg: #1e3527; --veto: #e58a78; --veto-bg: #3a221d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141a17; --surface: #1c2420; --ink: #e3ebe5; --muted: #98a79e; --line: #2d3832;
+  --accent: #7cc0a8; --keep: #74cf9b; --keep-bg: #1e3527; --veto: #e58a78; --veto-bg: #3a221d; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1060px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 80px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 6vw, 44px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: .01em; }
+.lede { color: var(--muted); max-width: 62ch; margin: 10px 0 0; }
+.notice { margin-top: 14px; font-size: 13px; color: var(--veto); }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
+  margin-top: 22px; padding-block: 12px; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.tally { display: flex; gap: 16px; font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.tally b { font-weight: 500; }
+.tally .k { color: var(--keep); } .tally .v { color: var(--veto); } .tally .u { color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 13px var(--body); padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.jump { margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; }
+.jump a { color: var(--accent); text-decoration: none; }
+.jump a:hover { text-decoration: underline; }
+
+section { margin-top: 34px; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 24px; margin: 0 0 4px; display: flex; align-items: baseline; gap: 10px; }
+h2 small { font: 400 13px var(--mono); color: var(--muted); }
+.type { padding-block: 16px; border-top: 1px solid var(--line); display: grid; grid-template-columns: 190px 1fr; gap: 14px; }
+.type:first-of-type { border-top: 0; }
+.type h3 { margin: 6px 0 0; font-size: 16px; font-weight: 700; }
+.type .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.clips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 760px) { .type { grid-template-columns: 1fr; } .clips { grid-template-columns: 1fr; } .jump { margin-left: 0; } }
+
+.clip { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 8px; min-width: 0; }
+.clip.keep { background: var(--keep-bg); border-color: var(--keep); }
+.clip.veto { background: var(--veto-bg); border-color: var(--veto); }
+.clip.veto .src { text-decoration: line-through; }
+.top { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.play { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--accent); color: var(--bg); cursor: pointer; display: grid; place-items: center; }
+.play svg { width: 16px; height: 16px; fill: currentColor; }
+.src { min-width: 0; font-size: 13px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.prog { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.prog i { display: block; height: 100%; width: 0; background: var(--accent); }
+.foot { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+.foot .len { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.foot a { color: var(--accent); }
+.votes { margin-left: auto; display: flex; gap: 6px; }
+.votes button { font: 700 12px var(--body); letter-spacing: .04em; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.votes .kb[aria-pressed="true"] { background: var(--keep); border-color: var(--keep); color: var(--bg); }
+.votes .vb[aria-pressed="true"] { background: var(--veto); border-color: var(--veto); color: var(--bg); }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.empty { color: var(--muted); padding: 24px 0; }
+footer { margin-top: 48px; font-size: 12px; color: var(--muted); max-width: 70ch; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <h1>Cozy Sound Library</h1>
+  <p class="lede">Real recordings for the cozy cooking and homestead videos. Every clip is CC0, so it is free to use in any video with no credit needed. Play each one, then keep it or veto it. Only kept sounds go into the videos.</p>
+  <p class="notice" id="notice" hidden></p>
+
+  <div class="bar">
+    <div class="tally" aria-live="polite"><span class="k">Kept <b id="nk">0</b></span><span class="v">Vetoed <b id="nv">0</b></span><span class="u">To review <b id="nu">0</b></span></div>
+    <div class="chips" role="group" aria-label="Show">
+      <button class="chip" id="f-all" data-f="all" aria-pressed="true">All</button>
+      <button class="chip" id="f-todo" data-f="todo" aria-pressed="false">To review</button>
+      <button class="chip" id="f-keep" data-f="keep" aria-pressed="false">Kept</button>
+      <button class="chip" id="f-veto" data-f="veto" aria-pressed="false">Vetoed</button>
+    </div>
+    <nav class="jump" id="jump" aria-label="Jump to"></nav>
+  </div>
+
+  <main id="lib"></main>
+  <footer>Clips are 20-second previews of the original Freesound recordings, trimmed with soft fades and leveled to the same loudness. The full recordings are linked on each clip.</footer>
+</div>
+
+<script>
+const LIB = /*LIBRARY*/[];
+const ICON_PLAY = '<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 16 16"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z"/></svg>';
+let picks = {};            // id -> "keep" | "veto"
+let filter = "all";
+let db = null, local = false;
+
+function fmt(s) { s = Math.round(s); return s >= 60 ? Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0") : s + " s"; }
+
+// ---- build the page once
+const lib = document.getElementById("lib");
+const cats = [...new Set(LIB.map(x => x.cat))];
+const tiles = {};
+const jump = document.getElementById("jump");
+for (const cat of cats) {
+  const a = document.createElement("a"); a.href = "#" + cat.toLowerCase(); a.textContent = cat; jump.append(a);
+  const sec = document.createElement("section"); sec.id = cat.toLowerCase();
+  const items = LIB.filter(x => x.cat === cat);
+  const types = [...new Set(items.map(x => x.type))];
+  sec.innerHTML = `<h2>${cat}<small>${types.length} sound types · ${items.length} clips</small></h2>`;
+  for (const type of types) {
+    const row = document.createElement("div"); row.className = "type";
+    const clips = items.filter(x => x.type === type);
+    row.innerHTML = `<div><h3></h3><div class="meta">${clips.length} recording${clips.length > 1 ? "s" : ""}</div></div><div class="clips"></div>`;
+    row.querySelector("h3").textContent = type;
+    for (const c of clips) {
+      const t = document.createElement("div"); t.className = "clip"; t.dataset.id = c.id;
+      t.innerHTML = `<div class="top"><button class="play" id="p-${c.id}" aria-label="Play">${ICON_PLAY}</button><div class="src"></div></div>
+        <div class="prog"><i></i></div>
+        <div class="foot"><span class="len">${c.clip} s of ${fmt(c.full_length)}</span><span class="by"></span>
+          <a target="_blank" rel="noopener">Freesound</a>
+          <span class="votes"><button class="kb" id="k-${c.id}" aria-pressed="false">Keep</button><button class="vb" id="v-${c.id}" aria-pressed="false">Veto</button></span></div>`;
+      t.querySelector(".src").textContent = c.title;
+      t.querySelector(".src").title = c.title;
+      t.querySelector(".by").textContent = "by " + c.author;
+      t.querySelector("a").href = c.url;
+      t.querySelector(".play").onclick = () => toggle(c.id);
+      t.querySelector(".kb").onclick = () => vote(c.id, "keep");
+      t.querySelector(".vb").onclick = () => vote(c.id, "veto");
+      tiles[c.id] = { el: t, row };
+      row.querySelector(".clips").append(t);
+    }
+    sec.append(row);
+  }
+  lib.append(sec);
+}
+if (!LIB.length) lib.innerHTML = '<p class="empty">The sound list is still loading into this page.</p>';
+
+// ---- one player for the whole page
+const audio = new Audio(); let playing = null;
+function setIcon(id, on) { const b = document.getElementById("p-" + id); if (b) { b.innerHTML = on ? ICON_PAUSE : ICON_PLAY; b.setAttribute("aria-label", on ? "Pause" : "Play"); } }
+function toggle(id) {
+  if (playing === id && !audio.paused) { audio.pause(); return; }
+  if (playing && playing !== id) { setIcon(playing, false); tiles[playing].el.querySelector(".prog i").style.width = "0"; }
+  if (playing !== id) { audio.src = "sounds/" + id + ".mp3"; playing = id; }
+  audio.play().catch(() => {});
+}
+audio.addEventListener("play", () => setIcon(playing, true));
+audio.addEventListener("pause", () => setIcon(playing, false));
+audio.addEventListener("ended", () => setIcon(playing, false));
+audio.addEventListener("timeupdate", () => {
+  if (playing && audio.duration) tiles[playing].el.querySelector(".prog i").style.width = (100 * audio.currentTime / audio.duration) + "%";
+});
+
+// ---- picks: the page database (so Claude can read them), or this browser when the database isn't available
+function render() {
+  let k = 0, v = 0;
+  for (const c of LIB) {
+    const s = picks[c.id], t = tiles[c.id].el;
+    t.classList.toggle("keep", s === "keep"); t.classList.toggle("veto", s === "veto");
+    t.querySelector(".kb").setAttribute("aria-pressed", s === "keep"); t.querySelector(".vb").setAttribute("aria-pressed", s === "veto");
+    if (s === "keep") k++; else if (s === "veto") v++;
+    t.hidden = !(filter === "all" || (filter === "todo" && !s) || filter === s);
+  }
+  for (const id in tiles) { const row = tiles[id].row; row.hidden = ![...row.querySelectorAll(".clip")].some(x => !x.hidden); }
+  document.querySelectorAll("section").forEach(sec => { sec.hidden = ![...sec.querySelectorAll(".type")].some(r => !r.hidden); });
+  document.getElementById("nk").textContent = k; document.getElementById("nv").textContent = v;
+  document.getElementById("nu").textContent = LIB.length - k - v;
+}
+document.querySelectorAll(".chip").forEach(b => b.onclick = () => {
+  filter = b.dataset.f;
+  document.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+});
+
+const chains = {};
+function vote(id, s) {
+  const next = picks[id] === s ? null : s;          // tapping the same choice again clears it
+  if (next) picks[id] = next; else delete picks[id];
+  render();
+  if (local) { try { localStorage.setItem("cozy-picks", JSON.stringify(picks)); } catch (e) {} return; }
+  if (!db) return;
+  const ref = db.collection("picks").doc(id);
+  chains[id] = (chains[id] || Promise.resolve()).then(() => next ? ref.set({ status: next, at: Date.now() }) : ref.delete())
+    .catch(e => { showNotice("A pick didn't save (" + (e && e.code || "error") + "). Tap it again to retry."); });
+}
+function showNotice(t) { const n = document.getElementById("notice"); n.textContent = t; n.hidden = false; }
+function useLocal() {
+  local = true;
+  try { picks = JSON.parse(localStorage.getItem("cozy-picks") || "{}"); } catch (e) { picks = {}; }
+  showNotice("Picks are saving in this browser only, so Claude can't see them from here. Open the page while signed in to claude.ai to share them.");
+  render();
+}
+render();
+(async () => {
+  const use = window.claude && window.claude.use;
+  db = use ? await window.claude.use("db") : null;
+  if (!db) { useLocal(); return; }
+  db.collection("picks").onSnapshot(snap => {
+    const fresh = {};
+    snap.docs.forEach(d => { const s = d.data() && d.data().status; if (s === "keep" || s === "veto") fresh[d.id] = s; });
+    picks = fresh; render();
+  }, e => { showNotice("Lost the connection to saved picks (" + e.code + "). Reload the page to reconnect."); });
+})();
+</script>
