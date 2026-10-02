@@ -142,9 +142,12 @@ work. Do NOT answer log questions from summary counts alone.
    normalize before ranking. (2) Printer count matters ONLY for "≥2/both running at once" (parallel
    capacity) — it does NOT affect "≥1 running": anyone with one printer and queued work can keep one going,
    so never excuse a low "≥1 printer + working" number by saying the other person has more printers (wrong).
-   For a low "≥1 running" number, the real causes are the window, time spent working-while-no-printer-runs
-   (Person-only), or simply having less work queued (fewer orders) — distinguish "idle with work available"
-   (a real opportunity) from "nothing left to print yet" (a demand issue, not the person's fault).
+   For a low "≥1 running" number, the real causes are the window and time spent working-while-no-printer-runs
+   (Person-only). NOTE (Dalia, business fact): MPP NEVER runs out of queued orders — there is always
+   something that could be printing. So "nothing left to print yet" is NOT a valid explanation, ever. Any
+   printer-idle moment that is not a break is a real missed opportunity — the person could always have had a
+   printer running. Treat ALL non-break Person-only / idle-printer time as recoverable (minus the small
+   unavoidable physical floor: grabbing envelopes, collecting prints).
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
