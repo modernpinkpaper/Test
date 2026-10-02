@@ -97,10 +97,14 @@ work. Do NOT answer log questions from summary counts alone.
    overlaps printing and fills printer-idle gaps.** Flag batched prep that coincides with idle printers.
    **REPORTING FORMAT for any time category (idle, gaps, dead time, etc.) — always:**
    1) Give each instance's duration precisely (minutes AND seconds, e.g. "4 min 12 s"), 2) with its exact
-   window (from HH:MM:SS to HH:MM:SS, local), 3) list every instance (don't just give a total), and 4) give
-   the DAY TOTAL for that category. Reason: a 7-min total made of many 30s–1min scattered gaps is NOT usable
-   recoverable time, but a single 7-min block is — Dalia needs the breakdown to tell the difference and to
-   spot any one big chunk hiding inside a total. Sort or mark the largest instances so big chunks stand out.
+   window (from HH:MM:SS to HH:MM:SS, local), 3) **the DETAILS of that instance — what she was actually
+   doing** (foreground window/app, the order/customer/doc involved, which printers were running, and a
+   camera-window flag when it is physically verifiable), 4) list every instance (don't just give a total),
+   and 5) give the DAY TOTAL for that category. Reason: a 7-min total made of many 30s–1min scattered gaps
+   is NOT usable recoverable time, but a single 7-min block is — Dalia needs the per-instance breakdown AND
+   the details to tell the difference, judge whether each block is real opportunity vs physical work vs a
+   problem, and spot any one big chunk hiding inside a total. Sort or mark the largest instances so big
+   chunks stand out.
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
