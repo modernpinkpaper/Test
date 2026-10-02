@@ -150,8 +150,17 @@ work. Do NOT answer log questions from summary counts alone.
    (qty once per order). Measured: Annie 29.7 s/card vs Kayla 23.4 s/card (~27% slower). This is a SEPARATE
    factor from printer count and compounds with it. Caveat heavily: the number blends true print speed +
    card-type mix (folded/kraft print slower than flat) + reprints (inflate seconds without adding a card) +
-   queue wait — so a high s/card is a lead to investigate (printer model? heavier card mix? more reprints?),
-   not proof of slowness by itself.
+   queue wait — so a high s/card is a lead to investigate, not proof of slowness by itself.
+   **FACTS FROM DALIA (apply before blaming print speed):** (1) ALL printers are the SAME model — the printer
+   model is NEVER the cause of slower per-card. (2) Per-card print time is driven by the SKU/product: more ink
+   on the page = slower. INVITES and FOLDED cards are ink-heavy (slower) AND carry more info to verify; FLAT
+   cards are faster and need less verifying. (3) Annie is TRAINING ON INVITES, so her slower s/card AND her
+   larger verify time are largely her PRODUCT MIX, not inefficiency — confirmed: ~33% of Annie's cards were
+   invite/folded vs Kayla ~93% flat (no invites). Compare print speed LIKE-SKU only (flat-to-flat); never
+   rank people on blended s/card across different product mixes. (4) Printers are heavily used and have
+   "personalities" — a given printer can struggle to feed thicker/certain-color envelopes (the kraft-feed
+   issue); treat recurring Machine-only stalls on a specific printer/stock as a likely physical feed problem
+   to confirm on camera, not operator slowness.
    CONFOUNDS to state every time: (1) a full-day window (setup+lunch) drags the % vs a 9am-on window —
    normalize before ranking. (2) Printer count matters ONLY for "≥2/both running at once" (parallel
    capacity) — it does NOT affect "≥1 running": anyone with one printer and queued work can keep one going,
