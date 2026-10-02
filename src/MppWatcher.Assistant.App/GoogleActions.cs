@@ -17,8 +17,12 @@ namespace MppWatcher.Assistant.App;
 /// </summary>
 internal static class GoogleActions
 {
-    private const string TrackerSheetId = "1nGa74uHh2yhcNdsSgtldylfhL2d7yxhzzYlwvEGPfvw";
-    private const string RecsTab = "AI MT LOG RECS";
+    // Override these without a rebuild via env vars MPP_TRACKER_SHEET_ID and MPP_TRACKER_TAB.
+    private static string TrackerSheetId =>
+        Environment.GetEnvironmentVariable("MPP_TRACKER_SHEET_ID") is { Length: > 0 } s
+            ? s : "1nGa74uHh2yhcNdsSgtldylfhL2d7yxhzzYlwvEGPfvw";
+    private static string RecsTab =>
+        Environment.GetEnvironmentVariable("MPP_TRACKER_TAB") is { Length: > 0 } t ? t : "AI MT LOG RECS";
 
     public static string? CredentialsPath()
     {
