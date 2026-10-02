@@ -129,6 +129,18 @@ Data: control names / window titles containing script names; file names like mpp
 Caveat: the logs give the name + that it's used; the actual connection lives in the script's own code,
 which is a separate source you hand to AI. This bridges the "logs see use, code sees wiring" gap.
 
+## 21. Digital clue -> check the camera (combine logs + physical footage)
+Goal: when the logs show something odd (a long dwell, reprints with no edits, a stall, a print-to-print
+gap), surface the exact person/PC + time window and tell Dalia to check the camera for that window, so
+the physical cause can be confirmed. Example (real): Annie's 7-min "dwell" on the Michelle Maddox order
+page (12:18:25->12:25:27, Oct 1) looked like slow verifying — camera showed she was hand-feeding thick
+KRAFT envelopes (a known feed problem). So: a long digital block can be a PHYSICAL bottleneck, not
+inefficiency; the fix was a printer/feeder that handles kraft. The analysis output should hand Dalia
+the time-stamped windows worth reviewing on camera.
+Data: dwell durations, reprint/edit/cleaning classification, print-job gaps, printer errors + the exact
+timestamps. Caveat: logs give the WHAT and the time; the WHY is a hypothesis until the camera (or Dalia)
+confirms it.
+
 ## 18. Live LLM assistant (real-time on-screen suggestions) — SEPARATE, opt-in, later
 Goal: an on-PC assistant that reads activity live and pops suggestions (e.g. "Carolina copy-pasting a
 lot -> Tampermonkey script", "Erika said collection ready -> add ad task to calendar").
