@@ -897,7 +897,7 @@ def render(lib, out):
     # grain + vignette (cozy film look), computed once
     yy, xx = np.mgrid[0:H, 0:W]
     vig = (1 - 0.12 * (((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2) ** 1.6).clip(0.82, 1)[..., None]
-    grain = np.random.default_rng(1).normal(0, 6, (4, H, W, 1)).astype(np.float32)
+    grain = np.random.default_rng(1).normal(0, 4, (1, H, W, 1)).astype(np.float32)     # fixed paper texture
     warm = np.array([1.03, 1.0, 0.95], np.float32)
 
     surf = cairo.ImageSurface(cairo.FORMAT_RGB24, W, H)
@@ -907,7 +907,7 @@ def render(lib, out):
         sf.write(wav, mix, SR)
         enc = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
                                 "-s", f"{W}x{H}", "-framerate", str(FPS), "-i", "-", "-i", wav, "-c:v", "libx264",
-                                "-pix_fmt", "yuv420p", "-crf", "18", "-c:a", "aac", "-b:a", "192k", "-shortest", out],
+                                "-pix_fmt", "yuv420p", "-crf", "21", "-preset", "slow", "-c:a", "aac", "-b:a", "192k", "-shortest", out],
                                stdin=subprocess.PIPE)
 
         def frame_of(s, t):
@@ -938,7 +938,7 @@ def render(lib, out):
                 prev = frame_of(p, T - p["t0"])
                 k = ease((T - s["t0"]) / XF)
                 img = prev * (1 - k) + img * k
-            img = img * vig * warm + grain[fi % 4]
+            img = img * vig * warm + grain[0]
             if T < 0.6:
                 img *= ease(T / 0.6)
             if T > total - 0.8:
