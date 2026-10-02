@@ -73,6 +73,19 @@ work. Do NOT answer log questions from summary counts alone.
      Note: the idle_start/idle_end markers only fire after ~5 min of no input, so for shorter chunks infer
      "hands off" from gaps between person-driven events (ui_action, ui_field_value, browser_page, file_*),
      NOT from print_job events.
+   **THE SMART GAP-FILL — cross-reference BOTH timelines (printer busy/idle × person active/idle).**
+   To find how someone could be faster, split the day into four quadrants:
+   (a) printer running + person working = ideal; (b) printer idle + person idle = break/dead;
+   (c) **printer IDLE + person doing desk work** (verify/research/claim) = lost PRINTER time — they stopped
+   the printer to do deskwork; (d) **printer RUNNING + person idle** = the fill-able slot (printer runs
+   itself while they wait/watch). The optimization: move the deskwork from (c) INTO the (d) windows, so the
+   person does verifying/claiming/research WHILE the printer runs, and the printer never stops for it.
+   Measured example (Annie, 1 day): both-busy 264m, printer-running/person-idle 46m (fill-able),
+   printer-idle/person-working 110m (movable), break 48m. Proven pattern difference: Kayla did 92% of her
+   verification while a printer was running; Annie only 52% (she front-loads a verify batch with printers
+   idle). CAVEAT (rule 8): "person idle while printer runs" includes physically tending the printer
+   (feeding kraft, collecting prints) which logs as no-input but is NOT free time — confirm on camera
+   before counting it as recoverable.
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
