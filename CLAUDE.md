@@ -134,8 +134,13 @@ work. Do NOT answer log questions from summary counts alone.
    "Printer printing" uses the canonical submit→finished definition above; "working" = a person-driven event
    (click/type/navigate) within ~45s. Measured example (same day): Annie 56/9/23/10% vs Kayla 74/5/13/5% —
    the actionable gap is Person-only (Annie 110m vs Kayla 54m, ~56m more deskwork with printers idle).
-   CONFOUND to state every time: more printers make "≥1 printing" easier, and a full-day window (setup+lunch)
-   drags the % vs a 9am-on window — normalize before ranking people.
+   CONFOUNDS to state every time: (1) a full-day window (setup+lunch) drags the % vs a 9am-on window —
+   normalize before ranking. (2) Printer count matters ONLY for "≥2/both running at once" (parallel
+   capacity) — it does NOT affect "≥1 running": anyone with one printer and queued work can keep one going,
+   so never excuse a low "≥1 printer + working" number by saying the other person has more printers (wrong).
+   For a low "≥1 running" number, the real causes are the window, time spent working-while-no-printer-runs
+   (Person-only), or simply having less work queued (fewer orders) — distinguish "idle with work available"
+   (a real opportunity) from "nothing left to print yet" (a demand issue, not the person's fault).
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
