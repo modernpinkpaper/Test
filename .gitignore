@@ -11,3 +11,4 @@ TestResults/
 artifacts/
 publish/
 setup-output/
+__pycache__/
