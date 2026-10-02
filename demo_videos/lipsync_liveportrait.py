@@ -68,6 +68,7 @@ def main():
     for i, fr in enumerate(frames):
         h, w = fr.shape[:2]
         big = cv2.resize(fr, (W, int(h * W / w)), interpolation=cv2.INTER_CUBIC)[:H]
+        big = np.ascontiguousarray(big[:big.shape[0] // 2 * 2])                        # encoder needs an even height
         if levels[i] > 0.04:
             info = cropper.crop_source_image(big, crop_cfg)
             if info is not None:
@@ -81,7 +82,7 @@ def main():
                 x_d = lp.stitching(x_s, x_d)
                 with torch.no_grad():
                     out = lp.parse_output(lp.warp_decode(f_s, x_s, x_d)["out"])[0]
-                mask = prepare_paste_back(inf.mask_crop, info["M_c2o"], dsize=(W, H))
+                mask = prepare_paste_back(inf.mask_crop, info["M_c2o"], dsize=(W, big.shape[0]))
                 big = paste_back(out, info["M_c2o"], big, mask)
         wr.append_data(big)
         if i % 24 == 0:
