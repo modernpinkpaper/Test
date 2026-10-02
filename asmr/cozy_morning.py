@@ -20,8 +20,8 @@ OUT = (0.13, 0.09, 0.08)          # outline: warm near-black
 LW = 7
 
 C = dict(wall="#fdebc6", wall2="#f8dfb0", wood="#e9b46a", wood_d="#c98a45", mint="#9fd8c2", mint_d="#7cc2a8",
-         floor="#e8953f", skin="#ffe3cc", blush="#ff9b9b", hair="#8a5232", hair_hi="#b06e44", sweater="#f4978e",
-         sweater_d="#e07f76", apron="#fff3dd", sky="#9fbcd3", sky2="#d9e6ee", cat="#f6b26b", cat_d="#e08f45",
+         floor="#e8953f", skin="#ffe3cc", blush="#ff9b9b", hair="#8b4a26", hair_hi="#b8743f", sweater="#2f6b5b",
+         sweater_d="#245548", apron="#fbf1dc", sky="#9fbcd3", sky2="#d9e6ee", cat="#f6b26b", cat_d="#e08f45",
          cream="#fff8ec", yolk="#ffcc33", red="#e85d5d", jar1="#7fc8a9", jar2="#f7c873", jar3="#f29fb3", duck="#ffd84d")
 
 
@@ -223,6 +223,7 @@ def arm(ctx, s, e, h, hand_prop=None):
     ctx.stroke()
     line(ctx, [s, e], w=44, col=C["sweater"])
     line(ctx, [e, h], w=40, col=C["sweater"])
+    line(ctx, [s, e, h], w=12, col=C["apron"])                                  # cream stripe down the sleeve
     ell(ctx, h[0], h[1], 25, 23, fill=C["skin"], w=LW)
     if hand_prop:
         hand_prop(ctx, h[0], h[1])
@@ -242,83 +243,102 @@ def girl(ctx, x, y, t, hands=None, eyes="happy", mouth="smile", tilt=0.0, props=
     if back_arms:
         for side in ("left", "right"):
             arm(ctx, sh[side], *arms[side], props.get(side))
-    # back hair (the bob)
+    # back hair: a big round bob down to her chin, ends curling in
     ctx.save()
     ctx.translate(x, y - 165)
     ctx.rotate(math.radians(tilt))
-    rr(ctx, -205, -185, 410, 300, 150, fill=C["hair"], w=LW)
+    rr(ctx, -198, -192, 396, 330, 168, fill=C["hair"], w=LW)
+    for sg in (-1, 1):
+        ell(ctx, sg * 150, 118, 58, 34, fill=C["hair"], rot=-sg * 0.35)
     ctx.restore()
-    # body: sweater + apron
-    ctx.move_to(x - 95, y + 30)
-    ctx.curve_to(x - 120, y + 120, x - 135, y + 260, x - 140, y + 420)
-    ctx.line_to(x + 140, y + 420)
-    ctx.curve_to(x + 135, y + 260, x + 120, y + 120, x + 95, y + 30)
-    ctx.curve_to(x + 40, y + 10, x - 40, y + 10, x - 95, y + 30)
-    paint(ctx, C["sweater"])
-    ctx.move_to(x - 70, y + 120)
-    ctx.line_to(x + 70, y + 120)
-    ctx.curve_to(x + 90, y + 260, x + 100, y + 340, x + 105, y + 420)
-    ctx.line_to(x - 105, y + 420)
-    ctx.curve_to(x - 100, y + 340, x - 90, y + 260, x - 70, y + 120)
-    paint(ctx, C["apron"])
-    line(ctx, [(x - 70, y + 120), (x - 95, y + 32)], w=10, col=C["apron"])
-    line(ctx, [(x + 70, y + 120), (x + 95, y + 32)], w=10, col=C["apron"])
-    rr(ctx, x - 34, y + 180, 68, 56, 12, fill=C["apron"], w=5)                       # pocket
-    ctx.save()                                                                         # little heart on it
-    ctx.translate(x, y + 206)
-    ctx.scale(0.32, 0.32)
-    ctx.move_to(0, 22)
-    ctx.curve_to(-60, -20, -30, -60, 0, -28)
-    ctx.curve_to(30, -60, 60, -20, 0, 22)
+    # dress: green and cream stripes, round cream collar, red bow at the waist
+    def dress_path():
+        ctx.move_to(x - 92, y + 28)
+        ctx.curve_to(x - 118, y + 120, x - 150, y + 270, x - 165, y + 430)
+        ctx.line_to(x + 165, y + 430)
+        ctx.curve_to(x + 150, y + 270, x + 118, y + 120, x + 92, y + 28)
+        ctx.curve_to(x + 40, y + 8, x - 40, y + 8, x - 92, y + 28)
+    dress_path()
+    paint(ctx, C["apron"], w=0)
+    ctx.save()
+    dress_path()
+    ctx.clip()
+    for k in range(-6, 7):
+        cx = x + k * 58
+        ctx.move_to(cx - 14, y)
+        ctx.line_to(cx + 14, y)
+        ctx.line_to(cx + 14 + k * 9, y + 440)
+        ctx.line_to(cx - 14 + k * 9, y + 440)
+        ctx.close_path()
+        paint(ctx, C["sweater"], w=0)
     ctx.restore()
-    paint(ctx, C["red"], w=0)
+    dress_path()
+    paint(ctx, None)
+    for sg in (-1, 1):                                                                # collar
+        ctx.move_to(x, y + 22)
+        ctx.curve_to(x + sg * 40, y + 20, x + sg * 80, y + 34, x + sg * 78, y + 62)
+        ctx.curve_to(x + sg * 60, y + 86, x + sg * 14, y + 76, x, y + 40)
+        ctx.close_path()
+        paint(ctx, C["apron"], w=5)
+    bx, by = x, y + 190                                                               # waist bow
+    line(ctx, [(x - 128, by), (x + 128, by)], w=26, col="#e04848")
+    line(ctx, [(x - 128, by - 13), (x + 128, by - 13)], w=4)
+    line(ctx, [(x - 128, by + 13), (x + 128, by + 13)], w=4)
+    for sg in (-1, 1):
+        poly(ctx, [(bx, by), (bx + sg * 62, by - 34), (bx + sg * 66, by + 30)], fill="#e04848", w=5)
+        poly(ctx, [(bx + sg * 6, by + 8), (bx + sg * 34, by + 78), (bx + sg * 12, by + 70)], fill="#e04848", w=5)
+    ell(ctx, bx, by, 15, 15, fill="#e04848", w=5)
     # head
     ctx.save()
     ctx.translate(x, y - 165)
     ctx.rotate(math.radians(tilt))
-    ell(ctx, 0, 0, 168, 158, fill=C["skin"])
-    # bangs
-    ctx.new_sub_path()
-    ctx.arc(0, 8, 176, math.pi * 1.02, math.pi * 1.98)
-    pts = [(170, -30), (120, -62), (64, -40), (0, -70), (-64, -40), (-120, -62), (-170, -30)]
-    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
-        ctx.curve_to(x0 - 10, y0 + 30, x1 + 10, y1 + 30, x1, y1)
-    ctx.close_path()
-    paint(ctx, C["hair"])
-    for hx in (-90, 40):                                                              # hair shine
-        arc_line(ctx, hx, -40, 90, math.pi * 1.32, math.pi * 1.5, w=7, col=C["hair_hi"])
-    # side locks over the cheeks
-    for sgn in (-1, 1):
-        ctx.move_to(sgn * 160, -60)
-        ctx.curve_to(sgn * 185, 20, sgn * 175, 90, sgn * 140, 140)
-        ctx.curve_to(sgn * 150, 70, sgn * 140, 10, sgn * 120, -40)
+    ell(ctx, 0, 18, 158, 146, fill=C["skin"])
+    # side hair falling over the cheeks to the chin
+    for sg in (-1, 1):
+        ctx.move_to(sg * 150, -70)
+        ctx.curve_to(sg * 192, 10, sg * 188, 100, sg * 150, 150)
+        ctx.curve_to(sg * 140, 110, sg * 128, 40, sg * 112, -20)
         ctx.close_path()
         paint(ctx, C["hair"])
-    # bow
-    for sgn in (-1, 1):
-        ell(ctx, 120 + sgn * 26, -150, 26, 18, fill=C["cream"], rot=sgn * 0.4)
-    ell(ctx, 120, -150, 11, 11, fill=C["cream"])
+    # rounded bangs, cut straight across with three soft points
+    ctx.new_sub_path()
+    ctx.arc(0, 12, 182, math.pi, math.pi * 2)
+    ctx.curve_to(182, -10, 150, -18, 118, -26)
+    ctx.curve_to(96, -14, 70, -18, 46, -34)
+    ctx.curve_to(24, -20, -24, -20, -46, -34)
+    ctx.curve_to(-70, -18, -96, -14, -118, -26)
+    ctx.curve_to(-150, -18, -182, -10, -182, 12)
+    ctx.close_path()
+    paint(ctx, C["hair"])
+    for hx, hy, r in ((-110, -100, 9), (-70, -130, 6), (60, -125, 8), (110, -90, 6), (-20, -150, 5), (20, -95, 5)):
+        ell(ctx, hx, hy, r, r * 0.8, fill=C["hair_hi"], w=0)                          # the light spots in her hair
+    arc_line(ctx, -40, -40, 120, math.pi * 1.25, math.pi * 1.45, w=7, col=C["hair_hi"])
+    # cream bow on top
+    for sg in (-1, 1):
+        ell(ctx, 104 + sg * 30, -170, 30, 20, fill=C["apron"], rot=sg * 0.45)
+        line(ctx, [(104 + sg * 14, -168), (104 + sg * 34, -164)], w=3)
+    ell(ctx, 104, -170, 12, 12, fill=C["apron"])
     # face
     if eyes in ("happy", "sleep"):
-        for ex in (-62, 62):
-            arc_line(ctx, ex, 4 if eyes == "happy" else 10, 26, math.pi * 0.15, math.pi * 0.85, w=7)
-            line(ctx, [(ex + (24 if ex > 0 else -24), 14), (ex + (32 if ex > 0 else -32), 6)], w=5)
+        for ex in (-58, 58):
+            arc_line(ctx, ex, 14 if eyes == "happy" else 20, 22, math.pi * 0.18, math.pi * 0.82, w=6)
+            line(ctx, [(ex + (20 if ex > 0 else -20), 26), (ex + (27 if ex > 0 else -27), 20)], w=4)
     else:
         for ex in (-62, 62):
             ell(ctx, ex, 20, 17, 22, fill="#3a2418", w=0)
             ell(ctx, ex + 6, 12, 6, 7, fill="#ffffff", w=0)
-    ell(ctx, -100, 62, 32, 19, fill=C["blush"], w=0, alpha=0.7)
-    ell(ctx, 100, 62, 32, 19, fill=C["blush"], w=0, alpha=0.7)
-    ell(ctx, 0, 50, 4, 3, fill="#e7a98b", w=0)
+    ell(ctx, -96, 72, 30, 18, fill=C["blush"], w=0, alpha=0.75)
+    ell(ctx, 96, 72, 30, 18, fill=C["blush"], w=0, alpha=0.75)
+    ell(ctx, 0, 58, 4, 3, fill="#e7a98b", w=0)
     if mouth == "o":
-        ell(ctx, 0, 84, 10, 12, fill="#c9605a", w=5)
+        ell(ctx, 0, 90, 9, 11, fill="#c9605a", w=5)
     elif mouth == "open":
         ctx.move_to(-20, 74)
         ctx.curve_to(-14, 104, 14, 104, 20, 74)
         ctx.close_path()
         paint(ctx, "#c9605a", w=5)
     else:
-        arc_line(ctx, 0, 66, 18, math.pi * 0.2, math.pi * 0.8, w=6)
+        arc_line(ctx, 0, 74, 13, math.pi * 0.2, math.pi * 0.8, w=5)
     ctx.restore()
     if not back_arms:
         for side in ("left", "right"):
