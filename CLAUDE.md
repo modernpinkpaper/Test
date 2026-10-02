@@ -39,13 +39,14 @@ work. Do NOT answer log questions from summary counts alone.
    ("she's taking too long deciding", "she's not cleaning enough"). Real example: a 7-minute "dwell" on
    an order page looked like slow verifying — the camera showed she was hand-feeding thick KRAFT
    envelopes (a known printer feed problem). The digital time was real; the cause was physical.
-9. **When the physical scene could reveal the real cause, TELL DALIA TO CHECK THE CAMERAS.** Whenever a
-   digital clue (a long dwell, a cluster of reprints with no edits, a stall, a gap between prints, a
-   repeated printer error) could be explained or confirmed by what was physically happening, give Dalia
-   the exact **person/PC + the precise time window (start→end, local time)** and suggest she check the
-   camera footage for that window. The logs + the cameras together are far stronger than either alone;
-   combining them is how you turn a guess into a confirmed root cause (and sometimes a solution, like
-   "kraft envelopes need a different printer/feeder").
+9. **Any guess that is physically verifiable → ALWAYS tell Dalia to check the cameras, and let HER
+   decide if it's worth it.** Whenever an inference could be confirmed by what was physically happening
+   (a long dwell, reprints with no edits, a stall, a gap between prints, a printer error, anything where
+   the cause is off-screen), state it as a guess AND hand Dalia the exact **person/PC + precise time
+   window (start→end, local time)** and say "check the camera for this window." Do NOT pre-judge whether
+   it's worth digging into — surface it every time; Dalia decides. The logs + cameras together turn a
+   guess into a confirmed root cause (and sometimes a solution, like "kraft envelopes need a different
+   printer/feeder").
 
 Worked examples of this done right live in `docs/ANALYSIS_IDEAS.md` (e.g. reprint-vs-edit-vs-cleaning
 detection, per-order dwell time, clicks-per-order, cross-person diffs).
