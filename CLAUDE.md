@@ -39,6 +39,16 @@ work. Do NOT answer log questions from summary counts alone.
    the idle marker showed one ~29-min lunch (idle_seconds 1756), and the rest was DYMO labels + orders.
    Also: more printers / longer queues can keep printing through a break and MASK away-time, so never rank
    people by raw printer-busy % without checking idle markers and printer count.
+   **Counting ORDERS (not files):** ONE order prints MULTIPLE files — the card ("Name - 60 - FLD"), the
+   return-address envelope ("RA - Name - 60 - KRAFT"), sometimes a thank-you ("TY - Name") and back
+   pieces. Merge all pieces per customer (strip "RA -"/"TY -"/"back of", the "- qty - MATERIAL" suffix,
+   and "(1)/(2)") before counting, or you massively overcount (59 files were really ~35 orders). Exclude
+   stock/SKU codes (e.g. FTY018, HGC012, MS049) and driver docs. **The DYMO label printer is NOT a
+   production printer — never count it toward card output.** But it is gold as a cross-check and activity
+   signal: each DYMO label ≈ one order SHIPPED (Amazon order page -> Buy Shipping -> label prints), so the
+   DYMO count independently confirms the real order count, and DYMO activity explains "quiet card printer"
+   stretches (she's buying/printing shipping labels, not idle). For Kayla, notepads are a separate job —
+   count her regular orders only from ~9am on.
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
