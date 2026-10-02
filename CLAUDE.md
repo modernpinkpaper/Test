@@ -122,6 +122,20 @@ work. Do NOT answer log questions from summary counts alone.
    the details to tell the difference, judge whether each block is real opportunity vs physical work vs a
    problem, and spot any one big chunk hiding inside a total. Sort or mark the largest instances so big
    chunks stand out.
+   **STANDARD ENGAGEMENT TABLE (produce this for any productivity look — Dalia likes it).** Classify every
+   moment of the day into exactly one of four states and report each as % AND minutes, per person:
+   - 🟢 **Both engaged** — ≥1 printer printing AND person working the computer (the goal).
+   - 🖨️ **Machine-only** — ≥1 printer printing but person OFF the keyboard (tending/feeding the printer,
+     hand-prepping, or away/slacking). NOT "idle on all fronts" — product is still being made; camera says which.
+   - 💻 **Person-only** — person working the computer but NO printer printing (deskwork while machines idle).
+     THIS IS THE PRIMARY OPPORTUNITY — move/scatter this work so a printer is always running during it.
+   - ⚫ **Idle on all fronts (Neither)** — no printer printing AND off the keyboard = true dead time
+     (break, lunch, away). This is the real "idle everywhere" state.
+   "Printer printing" uses the canonical submit→finished definition above; "working" = a person-driven event
+   (click/type/navigate) within ~45s. Measured example (same day): Annie 56/9/23/10% vs Kayla 74/5/13/5% —
+   the actionable gap is Person-only (Annie 110m vs Kayla 54m, ~56m more deskwork with printers idle).
+   CONFOUND to state every time: more printers make "≥1 printing" easier, and a full-day window (setup+lunch)
+   drags the % vs a 9am-on window — normalize before ranking people.
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
