@@ -49,6 +49,18 @@ work. Do NOT answer log questions from summary counts alone.
    DYMO count independently confirms the real order count, and DYMO activity explains "quiet card printer"
    stretches (she's buying/printing shipping labels, not idle). For Kayla, notepads are a separate job —
    count her regular orders only from ~9am on.
+   **RECOVERABLE idle (the only "opportunity" worth flagging) = no computer input AND no printer running.**
+   A printer running through a break is NOT waste — the machine is producing (printing through lunch = fine).
+   So only flag downtime as recoverable when the `idle_start`/`idle_end` (no input) period OVERLAPS a
+   stretch where NO printer (card OR DYMO) is active. Time where printers run while the person is away, or
+   where printers are idle but the person is actively working (research, labels, orders), is NOT recoverable.
+   Measured example: Annie's recoverable idle was ~11 min/day; the rest of her "idle" was lunch or shipping.
+   **Do NOT use "did they open InDesign on this order" as a metric.** You MUST open InDesign to print every
+   order, so everyone is ~100%; a window-title match undercounts (batch opens, InDesign already in front,
+   file name != order name) and produces a false "only 57%" gap. That metric is invalid — don't report it.
+   **Throughput gap is usually CAPACITY (printer count / parallelism), not slack.** Two people can log the
+   same printer-busy minutes but one completes more orders because more printers run in parallel. Check
+   printer count and parallel-run time before concluding someone is "slower".
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
