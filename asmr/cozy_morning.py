@@ -230,7 +230,7 @@ def arm(ctx, s, e, h, hand_prop=None):
 
 
 def girl(ctx, x, y, t, hands=None, eyes="happy", mouth="smile", tilt=0.0, props=None, back_arms=False,
-         hat=False, legs=False, step=None):
+         hat=False, legs=False, step=None, feet=("shoe", "shoe"), lift=(0.0, 0.0)):
     """x, y = base of her neck. hands = {"left": (x, y) | None, "right": ...} world targets for her hands."""
     hands = hands or {}
     props = props or {}
@@ -239,11 +239,18 @@ def girl(ctx, x, y, t, hands=None, eyes="happy", mouth="smile", tilt=0.0, props=
     if legs:                                                               # legs + shoes under the dress
         for k, sg in enumerate((-1, 1)):
             ph = 0.0 if step is None else math.sin(step + k * math.pi)
-            lift = 22 * max(0.0, ph)
-            fx, fy = x + sg * 46 + 14 * ph, y + 500 - lift
+            up = 22 * max(0.0, ph) + lift[k]
+            fx, fy = x + sg * 46 + 14 * ph, y + 500 - up
             line(ctx, [(x + sg * 46, y + 400), (fx, fy - 12)], w=44)
             line(ctx, [(x + sg * 46, y + 400), (fx, fy - 12)], w=30, col=C["skin"])
-            ell(ctx, fx + sg * 6, fy, 34, 18, fill=C["sweater"])
+            if feet[k] == "boot":                                          # brown work boot
+                rr(ctx, fx - 24, fy - 78, 48, 80, 12, fill="#8a5232")
+                ell(ctx, fx + sg * 8, fy, 38, 18, fill="#8a5232")
+                line(ctx, [(fx - 22, fy - 60), (fx + 22, fy - 60)], w=4, col="#b8743f")
+            elif feet[k] == "slipper":
+                ell(ctx, fx + sg * 6, fy, 34, 18, fill="#f6b6b0")
+            else:
+                ell(ctx, fx + sg * 6, fy, 34, 18, fill=C["sweater"])
     sh = {"left": (x - 92, y + 46), "right": (x + 92, y + 46)}
     arms = {}
     for side in ("left", "right"):

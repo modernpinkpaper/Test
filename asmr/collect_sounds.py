@@ -15,6 +15,23 @@ import urllib.parse
 import urllib.request
 
 CATS = {
+    "Foley": [
+        ("steps_wood", "Footsteps on a wood floor", "footsteps wooden floor"),
+        ("steps_grass", "Footsteps on grass", "footsteps grass"),
+        ("run_grass", "Running on grass", "running grass"),
+        ("door_creak", "Wooden door opening", "wooden door open close"),
+        ("door_latch", "Door latch", "door latch"),
+        ("gate_creak", "Gate creaking", "gate creak"),
+        ("gate_latch", "Gate latch", "gate latch metal"),
+        ("chair", "Chair on a wood floor", "chair scrape wooden floor"),
+        ("rustle", "Clothes rustling", "clothes rustle"),
+        ("boots", "Pulling on boots", "boots putting on"),
+        ("hooves", "Hooves trotting", "hooves trotting"),
+        ("wings", "Wings flapping", "chicken wings flapping"),
+        ("squawk", "Chicken squawk", "chicken squawk"),
+        ("clock", "Clock ticking", "clock ticking"),
+        ("goat", "Goats", "goat bleat"),
+    ],
     "Kitchen": [
         ("chop", "Chopping vegetables", "chopping vegetables cutting board"),
         ("slice", "Knife slicing", "knife slicing cucumber"),
@@ -68,7 +85,6 @@ CATS = {
         ("door", "Wooden door", "wooden door creak"),
     ],
     "Farm": [
-        ("goat", "Goats", "goat bleat"),
         ("sheep", "Sheep", "sheep bleating"),
         ("cowbell", "Cowbells", "cow bell"),
         ("ducks", "Ducks", "ducks quacking"),
