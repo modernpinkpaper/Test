@@ -163,9 +163,11 @@ work. Do NOT answer log questions from summary counts alone.
    to confirm on camera, not operator slowness.
    **FRAMED designs (borders) are another slow-SKU factor like invites (Dalia):** a frame prints slower
    (ink top-to-bottom of the border) AND takes time to center, often causing a nudge-to-center → reprint
-   loop. DETECTING a frame: (1) TODAY, no add-on — border art lives in a "borders"/"borders2" folder, and
-   MT Log logs opens/searches there, so borders-folder access ≈ a framed order (measured: Kayla 51 such
-   events in a day, Annie 0). (2) The InDesign add-on as-is only shows "an object moved", not that it's a
+   loop. DETECTING a frame: (1) POSSIBLE but UNCONFIRMED — logs show a Desktop folder `...\borders2` opened/
+   searched with .indd files ps067/fs002/ml004/ks249 ("... RIGHT.indd") (Kayla 51 accesses/day, Annie 0). I
+   ASSUMED from the name this is border/frame art; Dalia has NOT confirmed what this folder or those codes
+   are — do NOT treat "borders2 access = framed order" as fact until she says so. LESSON: never infer meaning
+   from a folder/file name alone; ask Dalia. (2) The InDesign add-on as-is only shows "an object moved", not that it's a
    frame. (3) ENHANCE the add-on to log, per touched object: type (rectangle/graphic/text), whether it
    holds a placed image + that file's name (a border file ⇒ the frame), its bounds (near page size ⇒ likely
    the frame), and its script label (if frame objects are labeled, that's the direct tag). Then you can tag
