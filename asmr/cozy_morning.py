@@ -229,12 +229,21 @@ def arm(ctx, s, e, h, hand_prop=None):
         hand_prop(ctx, h[0], h[1])
 
 
-def girl(ctx, x, y, t, hands=None, eyes="happy", mouth="smile", tilt=0.0, props=None, back_arms=False):
+def girl(ctx, x, y, t, hands=None, eyes="happy", mouth="smile", tilt=0.0, props=None, back_arms=False,
+         hat=False, legs=False, step=None):
     """x, y = base of her neck. hands = {"left": (x, y) | None, "right": ...} world targets for her hands."""
     hands = hands or {}
     props = props or {}
-    bob = 3 * math.sin(t * 2.1)
+    bob = 3 * math.sin(t * 2.1) if step is None else -8 * abs(math.sin(step))
     y = y + bob
+    if legs:                                                               # legs + shoes under the dress
+        for k, sg in enumerate((-1, 1)):
+            ph = 0.0 if step is None else math.sin(step + k * math.pi)
+            lift = 22 * max(0.0, ph)
+            fx, fy = x + sg * 46 + 14 * ph, y + 500 - lift
+            line(ctx, [(x + sg * 46, y + 400), (fx, fy - 12)], w=44)
+            line(ctx, [(x + sg * 46, y + 400), (fx, fy - 12)], w=30, col=C["skin"])
+            ell(ctx, fx + sg * 6, fy, 34, 18, fill=C["sweater"])
     sh = {"left": (x - 92, y + 46), "right": (x + 92, y + 46)}
     arms = {}
     for side in ("left", "right"):
@@ -313,11 +322,22 @@ def girl(ctx, x, y, t, hands=None, eyes="happy", mouth="smile", tilt=0.0, props=
     for hx, hy, r in ((-110, -100, 9), (-70, -130, 6), (60, -125, 8), (110, -90, 6), (-20, -150, 5), (20, -95, 5)):
         ell(ctx, hx, hy, r, r * 0.8, fill=C["hair_hi"], w=0)                          # the light spots in her hair
     arc_line(ctx, -40, -40, 120, math.pi * 1.25, math.pi * 1.45, w=7, col=C["hair_hi"])
-    # cream bow on top
-    for sg in (-1, 1):
+    if hat:                                                                # straw sun hat with a red ribbon
+        ell(ctx, 0, -150, 250, 48, fill="#f2d38a")
+        ctx.move_to(-140, -150)
+        ctx.curve_to(-140, -300, 140, -300, 140, -150)
+        ctx.close_path()
+        paint(ctx, "#f2d38a")
+        line(ctx, [(-136, -176), (136, -176)], w=24, col="#e04848")
+        line(ctx, [(-136, -188), (136, -188)], w=4)
+        line(ctx, [(-136, -164), (136, -164)], w=4)
+        for k in range(-3, 4):
+            line(ctx, [(k * 34, -200), (k * 30, -270)], w=3, col="#d9b466")
+    for sg in ((-1, 1) if not hat else ()):
         ell(ctx, 104 + sg * 30, -170, 30, 20, fill=C["apron"], rot=sg * 0.45)
         line(ctx, [(104 + sg * 14, -168), (104 + sg * 34, -164)], w=3)
-    ell(ctx, 104, -170, 12, 12, fill=C["apron"])
+    if not hat:
+        ell(ctx, 104, -170, 12, 12, fill=C["apron"])
     # face
     if eyes in ("happy", "sleep"):
         for ex in (-58, 58):
@@ -871,8 +891,23 @@ def build_shots(lib):
 
 
 # ------------------------------------------------------------------ render
-def render(lib, out):
-    S = build_shots(lib)
+def rain_bed(lib, S, n):
+    """Rain through the whole morning (two clips back to back), softer under the close-ups, out before night."""
+    rain = np.concatenate([load(lib, "rain_roof_2"), load(lib, "rain_roof_3")])
+    night = S[-1]["t0"]
+    bed = np.zeros((n, 2), np.float32)
+    L = min(len(rain), int((night + 1.0) * SR))
+    bed[:L] = rain[:L]
+    k = 1 - np.clip((np.arange(n) / SR - (night - 0.5)) / 1.5, 0, 1)
+    close = np.zeros(n, np.float32)
+    for s in S[2:9]:
+        close[int(s["t0"] * SR):int((s["t0"] + s["dur"]) * SR)] = 1
+    close = np.convolve(close, np.ones(SR // 2) / (SR // 2), "same")
+    return bed * ((0.32 - 0.14 * close) * k)[:, None]
+
+
+def render(lib, out, S=None, bed_fn=None):
+    S = S or build_shots(lib)
     t0 = 0.0
     for s in S:
         s["t0"] = t0
@@ -897,20 +932,10 @@ def render(lib, out):
                 cache[sid] = load(lib, sid)
             a = cache[sid][int(off * SR):int((off + ln + 0.4) * SR)]
             put(a, s["t0"] + start, gain)
-    # rain bed through the whole morning (two clips crossfaded so it never loops audibly), out before night
-    rain = np.concatenate([load(lib, "rain_roof_2"), load(lib, "rain_roof_3")])
-    night = S[-1]["t0"]
-    bed = np.zeros_like(mix)
-    L = min(len(rain), int((night + 1.0) * SR))
-    bed[:L] = rain[:L]
-    k = np.ones(n, np.float32)
-    ramp = np.clip((np.arange(n) / SR - (night - 0.5)) / 1.5, 0, 1)
-    k *= 1 - ramp
-    close = np.zeros(n, np.float32)                                            # softer under the close-ups
-    for s in S[2:9]:
-        close[int(s["t0"] * SR):int((s["t0"] + s["dur"]) * SR)] = 1
-    close = np.convolve(close, np.ones(SR // 2) / (SR // 2), "same")
-    mix += bed * (0.32 - 0.14 * close)[:, None] * k[:, None]
+    if bed_fn is not None:
+        mix += bed_fn(lib, S, n)
+    else:
+        mix += rain_bed(lib, S, n)
     mix = mix[:int((total + 0.3) * SR)]
     mix = mix / max(1e-6, np.abs(mix).max()) * 0.9
 

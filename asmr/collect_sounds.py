@@ -67,6 +67,17 @@ CATS = {
         ("garden", "Picking vegetables", "picking vegetables garden"),
         ("door", "Wooden door", "wooden door creak"),
     ],
+    "Farm": [
+        ("goat", "Goats", "goat bleat"),
+        ("sheep", "Sheep", "sheep bleating"),
+        ("cowbell", "Cowbells", "cow bell"),
+        ("ducks", "Ducks", "ducks quacking"),
+        ("bees", "Bees in the garden", "bees buzzing flowers"),
+        ("pump", "Hand water pump", "hand water pump"),
+        ("cast_iron", "Cast-iron skillet", "cast iron skillet"),
+        ("hammer", "Hammering nails", "hammer nails wood"),
+        ("wheelbarrow", "Wheelbarrow", "wheelbarrow"),
+    ],
     "Crafts": [
         ("knit", "Knitting", "knitting needles"),
         ("sew", "Hand sewing", "hand sewing fabric"),
