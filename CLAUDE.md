@@ -128,7 +128,11 @@ work. Do NOT answer log questions from summary counts alone.
    - 🖨️ **Machine-only** — ≥1 printer printing but person OFF the keyboard (tending/feeding the printer,
      hand-prepping, or away/slacking). NOT "idle on all fronts" — product is still being made; camera says which.
    - 💻 **Person-only** — person working the computer but NO printer printing (deskwork while machines idle).
-     THIS IS THE PRIMARY OPPORTUNITY — move/scatter this work so a printer is always running during it.
+     THIS IS THE PRIMARY OPPORTUNITY. The fix (Dalia's): WORK AHEAD — do this prep EARLIER, while printers
+     are already printing (during Both-engaged / Machine-only time), so you build a BUFFER of ready-to-print
+     jobs. Then the instant a print finishes you fire the next already-prepped job and the printer never waits.
+     Goal: shrink Person-only toward a small unavoidable floor (grabbing envelopes, physical bits), not big
+     batches of verifying done in dead printer time. Measure success as Person-only % going DOWN over time.
    - ⚫ **Idle on all fronts (Neither)** — no printer printing AND off the keyboard = true dead time
      (break, lunch, away). This is the real "idle everywhere" state.
    "Printer printing" uses the canonical submit→finished definition above; "working" = a person-driven event
