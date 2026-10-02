@@ -44,11 +44,15 @@ public sealed class SopScreenshotter
 
         try
         {
-            using var bmp = Grab(cfg.Capture.ScreenshotActiveWindowOnly, cfg.Capture.ScreenshotMaxWidth);
+            var title = NativeMethods.GetWindowTitle(NativeMethods.GetForegroundWindow());
+            var step = Interlocked.Increment(ref _stepNo);
+            var caption = $"Step {step:0000}    {DateTime.Now:h:mm:ss tt}" + (string.IsNullOrWhiteSpace(title) ? "" : "    —  " + title);
+            using var bmp = Grab(cfg.Capture.ScreenshotActiveWindowOnly, cfg.Capture.ScreenshotMaxWidth, caption);
             if (bmp is null) return null;
             var folder = TargetFolder(snap);
             Directory.CreateDirectory(folder);
-            var file = Path.Combine(folder, $"step_{Interlocked.Increment(ref _stepNo):0000}_{now:HHmmss_fff}.jpg");
+            // Self-describing filename: step number + time + the window it was taken on.
+            var file = Path.Combine(folder, $"step_{step:0000}_{now.ToLocalTime():HHmmss}_{SafeName(title)}.jpg");
             Save(bmp, file, cfg.Capture.ScreenshotQuality);
             _lastShotUtc = now;
             return file;
@@ -60,7 +64,7 @@ public sealed class SopScreenshotter
         }
     }
 
-    private static Bitmap? Grab(bool activeWindowOnly, int maxWidth)
+    private static Bitmap? Grab(bool activeWindowOnly, int maxWidth, string caption)
     {
         Rectangle rect;
         if (activeWindowOnly && NativeMethods.GetWindowRect(NativeMethods.GetForegroundWindow(), out var r)
@@ -73,16 +77,63 @@ public sealed class SopScreenshotter
             rect = b.Value;
         }
         var shot = new Bitmap(rect.Width, rect.Height);
-        using (var g = Graphics.FromImage(shot)) g.CopyFromScreen(rect.Location, Point.Empty, rect.Size);
+        using (var g = Graphics.FromImage(shot))
+        {
+            g.CopyFromScreen(rect.Location, Point.Empty, rect.Size);
+            DrawCursorHighlight(g, rect); // yellow circle at the mouse so you can see what was clicked
+        }
+
+        var final = shot;
         if (maxWidth > 0 && rect.Width > maxWidth)
         {
             var h = (int)(rect.Height * (maxWidth / (double)rect.Width));
             var small = new Bitmap(maxWidth, Math.Max(1, h));
             using (var g = Graphics.FromImage(small)) { g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic; g.DrawImage(shot, 0, 0, maxWidth, h); }
             shot.Dispose();
-            return small;
+            final = small;
         }
-        return shot;
+
+        DrawCaption(final, caption); // after resize so the text stays crisp
+        return final;
+    }
+
+    /// <summary>A soft transparent-yellow circle behind the mouse, so each screenshot shows where the click was.</summary>
+    private static void DrawCursorHighlight(Graphics g, Rectangle rect)
+    {
+        if (!NativeMethods.GetCursorPos(out var cp)) return;
+        int cx = cp.X - rect.Left, cy = cp.Y - rect.Top;
+        if (cx < 0 || cy < 0 || cx >= rect.Width || cy >= rect.Height) return;
+        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        const int radius = 26;
+        using var fill = new SolidBrush(Color.FromArgb(80, 255, 215, 0));   // see-through yellow
+        g.FillEllipse(fill, cx - radius, cy - radius, radius * 2, radius * 2);
+        using var ring = new Pen(Color.FromArgb(210, 240, 170, 0), 3f);
+        g.DrawEllipse(ring, cx - radius, cy - radius, radius * 2, radius * 2);
+    }
+
+    /// <summary>Burn a small caption bar (step #, time, window) along the bottom so the image explains itself.</summary>
+    private static void DrawCaption(Bitmap bmp, string caption)
+    {
+        if (string.IsNullOrWhiteSpace(caption)) return;
+        using var g = Graphics.FromImage(bmp);
+        using var font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+        var textH = (int)Math.Ceiling(g.MeasureString("Ag", font).Height);
+        var barH = textH + 8;
+        var y = bmp.Height - barH;
+        using var bg = new SolidBrush(Color.FromArgb(175, 0, 0, 0));
+        g.FillRectangle(bg, 0, y, bmp.Width, barH);
+        using var fmt = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter };
+        g.DrawString(caption, font, Brushes.White, new RectangleF(6, y + 3, bmp.Width - 12, barH), fmt);
+    }
+
+    /// <summary>Make a window title safe + short for a file name.</summary>
+    private static string SafeName(string? s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "window";
+        foreach (var c in Path.GetInvalidFileNameChars()) s = s!.Replace(c, ' ');
+        s = s!.Replace("  ", " ").Trim();
+        if (s.Length > 50) s = s[..50].Trim();
+        return s.Length == 0 ? "window" : s;
     }
 
     private static void Save(Bitmap bmp, string path, int quality)
