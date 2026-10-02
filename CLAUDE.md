@@ -95,6 +95,12 @@ work. Do NOT answer log questions from summary counts alone.
    (3) true idle. And the broader rule: **batching prep — digital OR physical (verifying, envelope prep) —
    while printers sit idle at other times is itself the inefficiency. The fix is to SCATTER that prep so it
    overlaps printing and fills printer-idle gaps.** Flag batched prep that coincides with idle printers.
+   **REPORTING FORMAT for any time category (idle, gaps, dead time, etc.) — always:**
+   1) Give each instance's duration precisely (minutes AND seconds, e.g. "4 min 12 s"), 2) with its exact
+   window (from HH:MM:SS to HH:MM:SS, local), 3) list every instance (don't just give a total), and 4) give
+   the DAY TOTAL for that category. Reason: a 7-min total made of many 30s–1min scattered gaps is NOT usable
+   recoverable time, but a single 7-min block is — Dalia needs the breakdown to tell the difference and to
+   spot any one big chunk hiding inside a total. Sort or mark the largest instances so big chunks stand out.
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
