@@ -25,6 +25,12 @@ work. Do NOT answer log questions from summary counts alone.
    Order numbers (112-xxxxxxx-xxxxxxx) appear in claim buttons and downloaded zip names; printed docs
    are named by customer, so link order→print via the customer name. Each person's folder is one PC, so
    point at the whole `mpp activity` folder (not one person) to answer "who did X".
+   **PRINTER IDLE/BUSY — critical:** a printer stays BUSY long after a job is submitted. Do NOT measure
+   idle as the gap between consecutive `print_job` (submit) events — that is wrong and will invent idle
+   time that doesn't exist (one real job held a printer 867s/14min). Use `seconds_in_queue` on the
+   `print_job_finished` event to build each job's busy interval [finished - seconds_in_queue, finished],
+   merge intervals across printers, and only the gaps between merged busy blocks are true idle. Page
+   counts (`total_pages`/`pages_printed`) are unreliable (often 0/1); trust `seconds_in_queue` for timing.
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
