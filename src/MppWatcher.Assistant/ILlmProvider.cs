@@ -46,10 +46,11 @@ public sealed class HeuristicLlmProvider : ILlmProvider
         }
 
         // 2) The same control clicked many times — a candidate to automate with a small script.
+        // Skip navigation / window-switch / taskbar junk so we don't suggest "automate New Tab".
         var repeats = ctx.NewEvents
             .Where(e => e.EventType == "ui_action")
             .Select(e => Str(e.Metadata, "control_name"))
-            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Where(n => !string.IsNullOrWhiteSpace(n) && IsAutomatable(n!))
             .Select(n => n!)
             .GroupBy(n => n, StringComparer.OrdinalIgnoreCase)
             .Where(g => g.Count() >= _repeatThreshold)
@@ -76,6 +77,26 @@ public sealed class HeuristicLlmProvider : ILlmProvider
 
     public Task<string> AnswerAsync(string question, IReadOnlyList<WatchEvent> events, string person, CancellationToken ct = default) =>
         Task.FromResult("Asking questions needs the Claude brain. Set ANTHROPIC_API_KEY, then run the --ask command again.");
+
+    // Control names that are just navigation / window-switching / taskbar noise — never "automate" targets.
+    private static readonly string[] JunkContains =
+    {
+        "running window", "memory usage", "- google chrome", "new tab", "tab flyout", "file explorer",
+        "search box", "bypass", "font size", "close find", "date and time", "address and search",
+        "minimize", "maximize", "google chrome", "- etsy", "- amazon",
+    };
+    private static readonly HashSet<string> JunkExact = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "amazon", "etsy", "back", "close", "new tab", "orders", "you", "messages", "home", "menu",
+    };
+
+    private static bool IsAutomatable(string name)
+    {
+        var n = name.Trim();
+        if (n.Length < 3 || JunkExact.Contains(n)) return false;
+        var low = n.ToLowerInvariant();
+        return !JunkContains.Any(j => low.Contains(j));
+    }
 
     private static string? Str(JsonObject m, string key)
     {

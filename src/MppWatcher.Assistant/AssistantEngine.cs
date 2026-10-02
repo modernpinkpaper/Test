@@ -37,10 +37,20 @@ public sealed class AssistantEngine
 
     public async Task<IReadOnlyList<Recommendation>> TickAsync(CancellationToken ct = default)
     {
+        // First ever run (no cursor file yet): don't flood with the whole backlog — mark everything
+        // already seen and start fresh from "now". Suggestions begin on the next NEW activity.
+        var firstRun = !File.Exists(_cfg.CursorPath);
+
         var all = ActivityReader.ReadJsonlFolder(_cfg.ActivityFolder);
         var cursor = ActivityCursor.Load(_cfg.CursorPath);
         var result = ActivityReader.SelectNew(all, cursor);
         if (result.Events.Count == 0) return Array.Empty<Recommendation>();
+
+        if (firstRun)
+        {
+            result.NewCursor.Save(_cfg.CursorPath);
+            return Array.Empty<Recommendation>();
+        }
 
         var memory = AssistantMemory.Load(_cfg.MemoryPath);
         var learned = LearnedMemory.Load(_cfg.LearnedMemoryPath);

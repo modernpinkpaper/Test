@@ -6,7 +6,8 @@ namespace MppWatcher.Assistant.App;
 
 /// <summary>
 /// A small sticky card in the bottom-right corner showing one suggestion (title + why) and its buttons.
-/// It stays until the user clicks something. Each click is recorded to the recommendations feedback log.
+/// It auto-sizes its height to the text (so nothing is cut off), stays until the user clicks something,
+/// and never steals focus. The tray re-stacks the remaining cards when one closes.
 /// </summary>
 internal sealed class NotificationCard : Form
 {
@@ -40,50 +41,59 @@ internal sealed class NotificationCard : Form
         ShowInTaskbar = false;
         TopMost = true;
         StartPosition = FormStartPosition.Manual;
-        Width = 380;
-        Height = 190;
         BackColor = Color.White;
+        Width = 380;
 
+        const int pad = 12;
+        var contentWidth = Width - pad * 2;
+
+        // Title and body auto-size and WRAP to the full text (no truncation — you can read everything).
         var title = new Label
         {
             Text = rec.Title,
             Font = new Font(Font.FontFamily, 10f, FontStyle.Bold),
-            Dock = DockStyle.Top,
-            Height = 46,
-            Padding = new Padding(10, 8, 10, 0),
+            AutoSize = true,
+            MaximumSize = new Size(contentWidth, 0),
+            Location = new Point(pad, pad),
         };
+        Controls.Add(title);
+
         var why = new Label
         {
-            Text = rec.Why,
-            Dock = DockStyle.Top,
-            Height = 66,
-            Padding = new Padding(10, 0, 10, 0),
+            Text = string.IsNullOrWhiteSpace(rec.Why) ? "" : rec.Why,
+            AutoSize = true,
+            MaximumSize = new Size(contentWidth, 0),
             ForeColor = Color.DimGray,
+            Location = new Point(pad, title.Bottom + 6),
         };
+        Controls.Add(why);
+
         var buttons = new FlowLayoutPanel
         {
-            Dock = DockStyle.Bottom,
-            Height = 70,
-            Padding = new Padding(6),
+            Location = new Point(pad - 3, why.Bottom + 8),
+            Width = contentWidth + 6,
+            AutoSize = true,
             WrapContents = true,
             FlowDirection = FlowDirection.LeftToRight,
         };
-
         var defs = rec.Buttons.Count > 0 ? rec.Buttons : new List<SuggestedButton> { new("Dismiss", "dismiss") };
         foreach (var b in defs)
         {
             var captured = b;
-            var button = new Button { Text = b.Label, AutoSize = true, Margin = new Padding(4) };
+            var button = new Button { Text = b.Label, AutoSize = true, Margin = new Padding(3) };
             button.Click += (_, _) => OnButton(captured);
             buttons.Controls.Add(button);
         }
-
         Controls.Add(buttons);
-        Controls.Add(why);
-        Controls.Add(title);
+
+        // Fit the card to its content so long suggestions aren't cut off.
+        Height = buttons.Bottom + pad + 6;
 
         PositionBottomRight(stackIndex);
     }
+
+    /// <summary>Lets the tray re-stack this card after another one closes (no empty gaps).</summary>
+    public void SetLocation(int x, int y) => Location = new Point(x, y);
 
     private void OnButton(SuggestedButton b)
     {

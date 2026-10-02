@@ -99,9 +99,23 @@ internal sealed class AssistantTrayContext : ApplicationContext
     private void ShowCard(Recommendation rec)
     {
         var card = new NotificationCard(rec, _log, _opts.RemindMinutes, _cards.Count);
-        card.FormClosed += (_, _) => _cards.Remove(card);
+        card.FormClosed += (_, _) => { _cards.Remove(card); Relayout(); };
         _cards.Add(card);
         card.Show();
+        Relayout();
+    }
+
+    /// <summary>Re-stack all open cards from the bottom up, so closing one never leaves an empty gap.</summary>
+    private void Relayout()
+    {
+        var wa = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1024, 768);
+        var y = wa.Bottom - 12;
+        foreach (var card in _cards)
+        {
+            y -= card.Height;
+            card.SetLocation(wa.Right - card.Width - 12, y);
+            y -= 10;
+        }
     }
 
     protected override void Dispose(bool disposing)
