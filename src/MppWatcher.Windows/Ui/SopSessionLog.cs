@@ -3,7 +3,7 @@ using MppWatcher.Core.Capture;
 using MppWatcher.Core.Configuration;
 using MppWatcher.Core.Diagnostics;
 using MppWatcher.Core.Events;
-using MppWatcher.Core.Runtime;
+using MppWatcher.Core.Pipeline;
 
 namespace MppWatcher.Windows.Ui;
 
