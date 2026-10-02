@@ -31,6 +31,14 @@ work. Do NOT answer log questions from summary counts alone.
    `print_job_finished` event to build each job's busy interval [finished - seconds_in_queue, finished],
    merge intervals across printers, and only the gaps between merged busy blocks are true idle. Page
    counts (`total_pages`/`pages_printed`) are unreliable (often 0/1); trust `seconds_in_queue` for timing.
+   **Count ALL printers, including the DYMO label printer** — printing shipping labels IS productive
+   work; excluding the DYMO makes label/shipping stretches look falsely idle.
+   **For "was the person actually away", use the explicit `idle_start`/`idle_end` events (`idle_seconds`)
+   — that is the ground truth, not printer gaps.** A card printer can be quiet while the person is busy
+   printing labels or processing orders. Real example: a 59-min card-printer gap was NOT a 59-min break —
+   the idle marker showed one ~29-min lunch (idle_seconds 1756), and the rest was DYMO labels + orders.
+   Also: more printers / longer queues can keep printing through a break and MASK away-time, so never rank
+   people by raw printer-busy % without checking idle markers and printer count.
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
