@@ -62,6 +62,32 @@ def gait(xfun, t0, t1, stride):
     return steps, phase
 
 
+class Shots:
+    """Camera angles over a continuous timeline: hard cuts on the action, time never jumps.
+    Each shot is (start, framing(t) -> (zoom, focus x, focus y, tilt degrees, foreground grass?))."""
+
+    def cam_at(self, t):
+        fn = self.shots[0][1]
+        for t0, f in self.shots:
+            if t >= t0:
+                fn = f
+        out = fn(t)
+        return out if len(out) == 5 else tuple(out) + (0.0, False)[len(out) - 3:]
+
+
+def fg_grass(ctx, fx, y, t):
+    """Big grass blades right in front of the lens, for the ground-level shots."""
+    for i in range(-8, 9):
+        gx = fx + i * 70 + 20 * math.sin(i * 1.7)
+        sway = 6 * math.sin(t * 2 + i)
+        for a in (-0.35, 0.05, 0.4):
+            ctx.move_to(gx - 8, y + 60)
+            ctx.curve_to(gx + 20 * a, y, gx + 50 * a + sway, y - 50, gx + 70 * a + sway, y - 95 - 15 * (i % 3))
+            ctx.line_to(gx + 8, y + 60)
+            ctx.close_path()
+            paint(ctx, "#5fa85a", w=4)
+
+
 # ------------------------------------------------------------------ one-shot sound pools
 class Pools:
     """Single real sounds cut out of recordings: each footstep / hoof / flap / creak becomes its own clip."""
@@ -241,7 +267,7 @@ TABLE_X, HOOK_X, BENCH_X, DOOR_X = 380, 1060, 1300, 1700                        
 CLOCK_X, CLOCK_Y = 800, 640
 
 
-class Inside:
+class Inside(Shots):
     def __init__(self):
         # her path across the room (x) and height (sitting / standing)
         self.xk = [(0, TABLE_X), (4.6, TABLE_X), (8.8, HOOK_X - 100), (11.3, HOOK_X - 100), (12.9, BENCH_X),
@@ -251,9 +277,29 @@ class Inside:
         self.dur = 26.0
         self.walk_steps, self.walk_phase = gait(lambda t: track(t, self.xk), 0, self.dur, 92)
         self.walk_steps = [t for t in self.walk_steps if not (12.9 < t < 18.0)]
-        self.cam = [(0, (1.3, 520, 1080)), (3.8, (1.3, 520, 1080)), (6.5, (1.1, 760, 1090)), (9.4, (1.45, 960, 960)),
-                    (11.6, (1.45, 960, 960)), (13.2, (1.45, 1240, 1110)), (17.2, (1.45, 1240, 1110)),
-                    (19.0, (1.15, 1450, 1080)), (21.2, (1.45, 1640, 1080)), (23.6, (1.3, 1700, 1060)), (26.0, (1.5, 1820, 1060))]
+        X = lambda t: track(t, self.xk)                                              # noqa: E731
+        Y = lambda t: track(t, self.yk)                                              # noqa: E731
+
+        def push(z0, z1, fx, fy, t0, t1):
+            return lambda t: (lerp(z0, z1, ease((t - t0) / (t1 - t0))), fx, fy)
+        self.shots = [
+            (0.0, lambda t: (lerp(2.1, 2.3, t / 2.3), X(t) + 40, Y(t) - 110)),            # close: the cup at her lips
+            (2.3, push(2.9, 3.1, TABLE_X + 160, FLOOR - 390, 2.3, 3.45)),                  # insert: cup meets saucer
+            (3.45, push(0.95, 1.0, 720, 1150, 3.45, 4.9)),                                 # wide: chair back, she stands
+            (4.9, lambda t: (2.1, X(t), FLOOR + 30)),                                      # low: slippers on the boards
+            (6.6, lambda t: (1.25, X(t), 1100)),                                           # tracking
+            (8.9, push(1.7, 1.85, HOOK_X - 60, 900, 8.9, 11.3)),                           # the hook and the hat
+            (11.3, lambda t: (1.3, X(t), 1100)),
+            (13.4, push(1.35, 1.45, BENCH_X, 1120, 13.4, 14.0)),                           # sits on the bench
+            (14.0, push(2.5, 2.7, BENCH_X - 46, FLOOR - 70, 14.0, 15.2)),                 # left foot into the boot
+            (15.2, push(1.4, 1.45, BENCH_X, 1120, 15.2, 15.7)),
+            (15.7, push(2.5, 2.7, BENCH_X + 46, FLOOR - 70, 15.7, 16.9)),                 # right boot
+            (16.9, push(1.2, 1.3, BENCH_X + 40, 1100, 16.9, 18.7)),                        # stands, takes the basket
+            (18.7, lambda t: (1.0, X(t) + 120, 1100)),                                     # walks to the door
+            (20.9, push(3.0, 3.2, DOOR_X - 10, FLOOR - 330, 20.9, 22.0)),                 # hand on the latch
+            (22.0, push(1.25, 1.35, DOOR_X + 60, 1060, 22.0, 23.6)),                       # door swings open
+            (23.6, lambda t: (1.4, X(t), 1060)),                                           # out she goes
+        ]
         self.tick_times = [k * 1.0 + 0.5 for k in range(26)]                           # pendulum ends its swing
 
     # moments
@@ -463,7 +509,7 @@ FEET_Y = G + 140
 HOUSE_DOOR, GATE_X, PEN_X = 180, 1620, 1900
 
 
-class Outside:
+class Outside(Shots):
     def __init__(self):
         self.dur = 34.0
         # her path: out the door, sees the goat, chases, catches up, leads it to the pen, gate, pat, a few steps back
@@ -488,18 +534,35 @@ class Outside:
         self.bleats = [3.2, 5.1, 9.8, 23.1, 27.0]
         self.door_shut = (0.9, 1.5)
         self.gate_close, self.gate_latch = (24.0, 25.2), 25.4
-        self.cam = [(0, (1.15, 420, 1180)), (2.6, (1.0, 640, 1150)), (4.6, (0.95, 760, 1150)), (8.0, (0.85, 1150, 1170)),
-                    (12.0, (0.85, 900, 1170)), (15.0, (1.0, 1180, 1160)), (19.0, (1.05, 1450, 1160)),
-                    (24.0, (1.3, 1740, 1140)), (30.0, (1.3, 1720, 1140)), (34.0, (0.95, 1300, 1150))]
+        X = lambda t: track(t, self.xk)                                              # noqa: E731
+        GX = lambda t: track(t, self.gk)                                             # noqa: E731
 
-    def cam_at(self, t):
-        """Keyframed camera, except during the chase: frame her and the goat together, zooming out as it pulls away."""
-        base = track(t, self.cam)
-        x, gx = track(t, self.xk), track(t, self.gk)
-        d = abs(gx - x)
-        dyn = (max(0.62, min(1.0, 980 / (d + 560))), (x + gx) / 2, 1150)
-        w = ease((t - 4.4) / 0.8) * (1 - ease((t - 15.0) / 1.0))
-        return tuple(lerp(a, b, w) for a, b in zip(base, dyn))
+        def chase(tilt):
+            def f(t):
+                x, gx = X(t), GX(t)
+                return (max(0.62, min(1.0, 980 / (abs(gx - x) + 560))), (x + gx) / 2, 1150, tilt * math.sin(t * 0.7), False)
+            return f
+        startles = sorted((s_, h["x"]) for h in self.hens for s_ in h["startle"] if 9.4 < s_ < 11.0)
+        hen_shot = (lambda t: (1.8, startles[0][1] + 40, FEET_Y - 210, 0, True)) if startles else chase(2.0)
+        self.shots = [
+            (0.0, lambda t: (lerp(0.78, 0.82, t / 0.9), 700, 1150)),                       # wide: the homestead
+            (0.9, lambda t: (2.2, HOUSE_DOOR + 40, G - 170)),                              # the door shut behind her
+            (1.9, lambda t: (1.2, X(t), 1130)),                                            # walking out
+            (2.7, lambda t: (lerp(2.0, 2.2, (t - 2.7) / 1.2), X(t), NECK_OUT - 170)),      # her face: the goat!
+            (3.9, lambda t: (1.5, GX(t), FEET_Y - 260)),                                  # the goat looks up, bolts
+            (5.3, chase(2.5)),                                                             # the chase, wide
+            (8.4, lambda t: (2.2, GX(t), FEET_Y - 175, 0, True)),                           # ground level: hooves
+            (9.6, hen_shot),                                                               # hens scatter
+            (10.9, lambda t: (2.0, X(t), FEET_Y - 190, 0, True)),                           # her boots running
+            (12.2, chase(-2.0)),
+            (15.4, lambda t: (1.15, (X(t) + GX(t)) / 2, 1150)),                            # she catches up
+            (17.6, lambda t: (1.0, (X(t) + GX(t)) / 2, 1150)),                             # leading it home
+            (21.8, lambda t: (lerp(0.9, 0.95, (t - 21.8) / 2), 1600, 1150)),               # into the pen
+            (23.7, lambda t: (1.8, GATE_X + 60, G + 20)),                                  # the gate swings
+            (25.15, lambda t: (2.8, GATE_X + 110, G + 20)),                                # the latch drops
+            (25.9, lambda t: (lerp(1.25, 1.35, (t - 25.9) / 4), GATE_X + 40, 1100)),       # the pat
+            (30.0, lambda t: (lerp(1.2, 0.75, ease((t - 30) / 4)), lerp(1500, 1150, ease((t - 30) / 4)), 1150)),
+        ]
 
     def hen_state(self, h, t):
         """(x, hop, flap, face) for a hen: it scatters (hops, flaps, runs off) when the chase gets close."""
@@ -526,23 +589,27 @@ class Outside:
         shut = ease((t - self.door_shut[0]) / (self.door_shut[1] - self.door_shut[0]))
         w = 160 * lerp(0.15, 1.0, shut)
         rr(ctx, HOUSE_DOOR + 80 - w, G - 330, w, 330, 8, fill="#c98a45")
+        if shut > 0.6:
+            rr(ctx, HOUSE_DOOR + 30, G - 176 - (12 if self.door_shut[1] - 0.3 < t < self.door_shut[1] else 0), 44, 12, 5, fill="#5a5a5a", w=4)
         rr(ctx, -200, G - 380, 110, 100, 8, fill="#bfe3f5")
         HD.ground(ctx, "day", path=False)
-        # pen with its gate
-        for x in range(GATE_X + 120, 2400, 80):
-            rr(ctx, x - 10, G - 30, 20, 140, 5, fill="#fff3dd", w=5)
-        rr(ctx, GATE_X + 100, G + 10, 800, 16, 5, fill="#fff3dd", w=5)
-        rr(ctx, GATE_X + 100, G + 60, 800, 16, 5, fill="#fff3dd", w=5)
-        rr(ctx, GATE_X - 14, G - 50, 28, 170, 6, fill="#e9c08a")                    # gate post
-        rr(ctx, GATE_X + 100, G - 50, 28, 170, 6, fill="#e9c08a")
-        closed = ease((t - self.gate_close[0]) / (self.gate_close[1] - self.gate_close[0]))
-        gw = 110 * lerp(0.2, 1.0, closed)                                          # gate swings on its post
-        for gy in (G - 10, G + 50):
-            rr(ctx, GATE_X, gy, gw, 16, 5, fill="#fff3dd", w=5)
-        line(ctx, [(GATE_X, G + 66), (GATE_X + gw, G - 4)], w=8, col="#fff3dd")
-        line(ctx, [(GATE_X, G + 66), (GATE_X + gw, G - 4)], w=3)
-        lift = 14 if self.gate_latch - 0.4 < t < self.gate_latch else 0
-        rr(ctx, GATE_X + 96, G + 14 - lift, 30, 10, 4, fill="#5a5a5a", w=3)
+        def pen():                                                                  # the pen with its gate
+            for x in range(GATE_X + 120, 2400, 80):
+                rr(ctx, x - 10, G - 30, 20, 140, 5, fill="#fff3dd", w=5)
+            rr(ctx, GATE_X + 100, G + 10, 800, 16, 5, fill="#fff3dd", w=5)
+            rr(ctx, GATE_X + 100, G + 60, 800, 16, 5, fill="#fff3dd", w=5)
+            rr(ctx, GATE_X - 14, G - 50, 28, 170, 6, fill="#e9c08a")                    # gate post
+            rr(ctx, GATE_X + 100, G - 50, 28, 170, 6, fill="#e9c08a")
+            closed = ease((t - self.gate_close[0]) / (self.gate_close[1] - self.gate_close[0]))
+            gw = 110 * lerp(0.2, 1.0, closed)                                          # gate swings on its post
+            for gy in (G - 10, G + 50):
+                rr(ctx, GATE_X, gy, gw, 16, 5, fill="#fff3dd", w=5)
+            line(ctx, [(GATE_X, G + 66), (GATE_X + gw, G - 4)], w=8, col="#fff3dd")
+            line(ctx, [(GATE_X, G + 66), (GATE_X + gw, G - 4)], w=3)
+            lift = 14 if self.gate_latch - 0.4 < t < self.gate_latch else 0
+            rr(ctx, GATE_X + 96, G + 14 - lift, 30, 10, 4, fill="#5a5a5a", w=3)
+        if t < 23.7:                                                                # goat still outside: pen behind it
+            pen()
         for k in range(5):                                                          # the garden the goat raided
             ell(ctx, 960 + k * 70, G + 40 + (k % 2) * 20, 30, 24, fill="#6cc48a")
         # hens
@@ -555,6 +622,8 @@ class Outside:
         face = 1 if gv > 0.5 else -1 if gv < -0.5 else (-1 if t > 24.0 else 1 if t > 15 else -1)
         bl = max([math.sin(math.pi * min(1, (t - b) / 0.8)) for b in self.bleats if 0 <= t - b <= 0.8], default=0.0)
         goat(ctx, gx, FEET_Y, t, face=face, phase=self.gphase(t), run=track(t, self.run), bleat=bl, s=1.45)
+        if t >= 23.7:                                                               # goat inside: fence and latch in front of it
+            pen()
         # her
         x = track(t, self.xk)
         runk = track(t, self.run)
@@ -644,10 +713,7 @@ def render(lib, out):
     P = build_pools(lib)
     M = Mixer(total)
 
-    def camA(t):
-        return track(t, A.cam)
-
-    A.sounds(P, M, 0.0, lambda t: camA(t)[1])
+    A.sounds(P, M, 0.0, lambda t: A.cam_at(t)[1])
     B.sounds(P, M, A.dur - XF, lambda t: B.cam_at(t)[1])
     # ambience: soft birds through the window, louder once the door opens and outside; hens clucking in the yard
     M.bed(load(lib, "birds_2") if os.path.exists(os.path.join(lib, "sounds", "birds_2.mp3")) else None, 0, A.DOOR_OPEN[0], 0.05)
@@ -665,12 +731,15 @@ def render(lib, out):
 
     def frame(scene, cam, t):
         ctx = cairo.Context(surf)
-        z, fx, fy = scene.cam_at(t) if hasattr(scene, "cam_at") else track(t, cam)
+        z, fx, fy, rot, grass = scene.cam_at(t)
         ctx.save()
         ctx.translate(W / 2, H / 2)
-        ctx.scale(z, z)
+        ctx.rotate(math.radians(rot))
+        ctx.scale(z * (1 + 0.03 * abs(math.sin(math.radians(rot)))), z * (1 + 0.03 * abs(math.sin(math.radians(rot)))))
         ctx.translate(-fx, -fy)
         scene.draw(ctx, t)
+        if grass:
+            fg_grass(ctx, fx, FEET_Y + 90, t)
         ctx.restore()
         surf.flush()
         return np.frombuffer(surf.get_data(), np.uint8).reshape(H, surf.get_stride() // 4, 4)[:, :W, 2::-1].astype(np.float32)
@@ -685,12 +754,12 @@ def render(lib, out):
         for fi in range(int(total * FPS)):
             T = fi / FPS
             if T < A.dur - XF:
-                img = frame(A, A.cam, T)
+                img = frame(A, None, T)
             elif T < A.dur:
                 k = ease((T - (A.dur - XF)) / XF)
-                img = frame(A, A.cam, T) * (1 - k) + frame(B, B.cam, T - (A.dur - XF)) * k
+                img = frame(A, None, T) * (1 - k) + frame(B, None, T - (A.dur - XF)) * k
             else:
-                img = frame(B, B.cam, T - (A.dur - XF))
+                img = frame(B, None, T - (A.dur - XF))
             img = img * vig * warm + grain
             if T < 0.8:
                 img *= ease(T / 0.8)
