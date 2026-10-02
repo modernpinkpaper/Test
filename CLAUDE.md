@@ -61,6 +61,18 @@ work. Do NOT answer log questions from summary counts alone.
    **Throughput gap is usually CAPACITY (printer count / parallelism), not slack.** Two people can log the
    same printer-busy minutes but one completes more orders because more printers run in parallel. Check
    printer count and parallel-run time before concluding someone is "slower".
+   **TWO SEPARATE LENSES — keep them distinct:**
+   - **Output lens (printer speed):** signal = printer idle (no printer running). Question: how to fill it
+     so the machines produce more. Person activity is irrelevant here; a person can be busy while a
+     printer sits idle.
+   - **Productivity lens (is the person working):** signal = the computer not moving — NO person-driven
+     input (clicks/typing/navigation), regardless of printers. Print jobs running do NOT count as person
+     activity. A ~30-min no-input stretch while printers run = a break (they left it printing). SHORTER,
+     scattered no-input chunks (not a clean long block) = not clicking around = likely chatting / bathroom
+     / away from desk → a productivity flag → give Dalia the time window and say check the Ring camera.
+     Note: the idle_start/idle_end markers only fire after ~5 min of no input, so for shorter chunks infer
+     "hands off" from gaps between person-driven events (ui_action, ui_field_value, browser_page, file_*),
+     NOT from print_job events.
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
