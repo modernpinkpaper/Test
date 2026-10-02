@@ -138,6 +138,20 @@ work. Do NOT answer log questions from summary counts alone.
    "Printer printing" uses the canonical submit→finished definition above; "working" = a person-driven event
    (click/type/navigate) within ~45s. Measured example (same day): Annie 56/9/23/10% vs Kayla 74/5/13/5% —
    the actionable gap is Person-only (Annie 110m vs Kayla 54m, ~56m more deskwork with printers idle).
+   ALWAYS SHOW, every productivity output: (1) this four-state table, AND (2) the instance-by-instance
+   breakdown of Idle-on-all-fronts (per the reporting format), AND (3) a breakdown of Person-only time BY
+   ACTIVITY (InDesign / Google-verify / Amazon / Etsy / chat / files / etc.) with the big blocks and their
+   times — separate the unavoidable edges (morning build before files exist, end-of-day, clock-in/out) from
+   the recoverable MIDDAY deskwork done while printers sit idle (the work-ahead target). Dalia decides what
+   to act on. (Blind spot: without the InDesign add-on / screenshots you cannot see INSIDE the InDesign or
+   verify work — say so; it may or may not be reducible.)
+   **PRINT SPEED PER CARD matters (Dalia): some cards print slower, so you physically make fewer.** Report
+   seconds-per-card per person = sum of card-job durations (submit→finished machine-seconds) ÷ total cards
+   (qty once per order). Measured: Annie 29.7 s/card vs Kayla 23.4 s/card (~27% slower). This is a SEPARATE
+   factor from printer count and compounds with it. Caveat heavily: the number blends true print speed +
+   card-type mix (folded/kraft print slower than flat) + reprints (inflate seconds without adding a card) +
+   queue wait — so a high s/card is a lead to investigate (printer model? heavier card mix? more reprints?),
+   not proof of slowness by itself.
    CONFOUNDS to state every time: (1) a full-day window (setup+lunch) drags the % vs a 9am-on window —
    normalize before ranking. (2) Printer count matters ONLY for "≥2/both running at once" (parallel
    capacity) — it does NOT affect "≥1 running": anyone with one printer and queued work can keep one going,
