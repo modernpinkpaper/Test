@@ -104,15 +104,24 @@ public class AssistantTests
     }
 
     [Fact]
-    public async Task Engine_tick_writes_recs_then_nothing_new_second_time()
+    public async Task Engine_first_tick_seeds_cursor_then_new_activity_writes_recs()
     {
         var dir = TempDir();
-        var e = Ev("printer_problem", DateTimeOffset.UtcNow, "x1",
+        var file = Path.Combine(dir, "events_1.jsonl");
+        var e1 = Ev("printer_problem", DateTimeOffset.UtcNow, "x1",
             meta: new JsonObject { ["printer"] = "P", ["reason"] = "Paper jam", ["resolved"] = false });
-        File.WriteAllText(Path.Combine(dir, "events_1.jsonl"), EventJson.Serialize(e) + "\n");
+        File.WriteAllText(file, EventJson.Serialize(e1) + "\n");
 
         var cfg = new AssistantConfig { ActivityFolder = dir, OutputFolder = dir, Person = "Dalia" };
         var engine = new AssistantEngine(cfg, new HeuristicLlmProvider());
+
+        // First ever run: no flood of the backlog — just mark everything seen and start fresh.
+        Assert.Empty(await engine.TickAsync());
+
+        // New activity after the first run now produces a suggestion.
+        var e2 = Ev("printer_problem", DateTimeOffset.UtcNow.AddSeconds(5), "x2",
+            meta: new JsonObject { ["printer"] = "P", ["reason"] = "Out of paper", ["resolved"] = false });
+        File.AppendAllText(file, EventJson.Serialize(e2) + "\n");
 
         var recs = await engine.TickAsync();
         Assert.Single(recs);
