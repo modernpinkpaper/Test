@@ -31,6 +31,15 @@ work. Do NOT answer log questions from summary counts alone.
    `print_job_finished` event to build each job's busy interval [finished - seconds_in_queue, finished],
    merge intervals across printers, and only the gaps between merged busy blocks are true idle. Page
    counts (`total_pages`/`pages_printed`) are unreliable (often 0/1); trust `seconds_in_queue` for timing.
+   **"In use" vs "true idle" are two different measures — don't undercount simultaneous running.** Card
+   jobs are short (~35-50s) with a ~40s feed/collect gap between consecutive jobs on the same printer, so
+   raw `seconds_in_queue` intervals leave micro-gaps that make "both printers running at once" look far
+   lower than reality (measured: strict 36% vs realistic ~50% for the same day). For UTILIZATION questions
+   ("how much are both printers running", "both running AND working"), treat consecutive same-printer jobs
+   with a gap under ~90s as ONE continuous run (merge them) — that gap is feeding, not idle. For RECOVERABLE
+   IDLE/opportunity questions, keep the strict measure (truly no printer active). Example: Annie's two
+   printers were both in use ~44% of the day and Kayla's two busiest ~39% — i.e. Annie is EQUAL-or-better
+   than Kayla on two printers; the output gap is Kayla's 3rd printer, not two-printer discipline.
    **Count ALL printers, including the DYMO label printer** — printing shipping labels IS productive
    work; excluding the DYMO makes label/shipping stretches look falsely idle.
    **For "was the person actually away", use the explicit `idle_start`/`idle_end` events (`idle_seconds`)
