@@ -170,13 +170,6 @@ public sealed class SopScreenshotter
     }
 
     /// <summary>Screenshots go beside the person's logs in the export folder; falls back to the local data folder.</summary>
-    private string TargetFolder(CaptureSnapshot snap)
-    {
-        var cfg = _config();
-        var label = EventNormalizer.ResolveEmployeeId(cfg, _identity.WindowsUsername, _identity.ComputerName);
-        var sub = Path.Combine(LocalFolderUploader.SafeSegment(label), "_sop_screenshots",
-            LocalFolderUploader.SafeSegment(snap.Label) + "_" + snap.SessionId[..8]);
-        try { return Path.Combine(ExportDestination.Resolve(WatcherPaths.ExportFolder(cfg)), sub); }
-        catch { return Path.Combine(_localFallbackFolder, "sop_screenshots", sub); }
-    }
+    private string TargetFolder(CaptureSnapshot snap) =>
+        SopPaths.SessionFolder(_config(), _identity, _localFallbackFolder, snap);
 }

@@ -24,6 +24,13 @@ public sealed class CaptureController
     private string _label = "";
     private string _sessionId = "";
 
+    /// <summary>Raised when a session starts, carrying the new (recording) snapshot.</summary>
+    public event Action<CaptureSnapshot>? Started;
+    /// <summary>Raised when a session stops, carrying the snapshot it had just before stopping.</summary>
+    public event Action<CaptureSnapshot>? Stopped;
+    /// <summary>Raised for every event tagged while a session is recording (event + its snapshot).</summary>
+    public event Action<Events.WatchEvent, CaptureSnapshot>? EventTagged;
+
     public CaptureSnapshot Current
     {
         get { lock (_gate) return new CaptureSnapshot(_active, _paused, _mode, _label, _sessionId); }
@@ -32,24 +39,29 @@ public sealed class CaptureController
     /// <summary>Starts a session (replacing any current one). Returns the new snapshot.</summary>
     public CaptureSnapshot Start(CaptureMode mode, string label)
     {
+        CaptureSnapshot snap;
         lock (_gate)
         {
             _active = true; _paused = false; _mode = mode;
             _label = string.IsNullOrWhiteSpace(label) ? (mode == CaptureMode.Sop ? "SOP" : "Decision") : label.Trim();
             _sessionId = Guid.NewGuid().ToString("N");
-            return new CaptureSnapshot(_active, _paused, _mode, _label, _sessionId);
+            snap = new CaptureSnapshot(_active, _paused, _mode, _label, _sessionId);
         }
+        Started?.Invoke(snap); // fire outside the lock so handlers can do file IO safely
+        return snap;
     }
 
     /// <summary>Stops the session. Returns the snapshot it had just before stopping (Active may be false).</summary>
     public CaptureSnapshot Stop()
     {
+        CaptureSnapshot was;
         lock (_gate)
         {
-            var was = new CaptureSnapshot(_active, _paused, _mode, _label, _sessionId);
+            was = new CaptureSnapshot(_active, _paused, _mode, _label, _sessionId);
             _active = false; _paused = false;
-            return was;
         }
+        Stopped?.Invoke(was); // fire outside the lock
+        return was;
     }
 
     public CaptureSnapshot Pause() { lock (_gate) { if (_active) _paused = true; return new CaptureSnapshot(_active, _paused, _mode, _label, _sessionId); } }
@@ -63,5 +75,6 @@ public sealed class CaptureController
         e.Metadata["capture_mode"] = s.Mode == CaptureMode.Sop ? "sop" : "decision";
         e.Metadata["capture_label"] = s.Label;
         e.Metadata["capture_session_id"] = s.SessionId;
+        EventTagged?.Invoke(e, s); // fire outside the lock so the session-log writer can save it to disk
     }
 }

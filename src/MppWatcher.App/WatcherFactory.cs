@@ -24,6 +24,12 @@ internal static class WatcherFactory
     private static IEnumerable<ICollector> Collectors(RuntimeServices s)
     {
         var c = s.Config.Current.Collectors;
+
+        // Save a copy of each Record-Task session's MT Log slice (session_log.jsonl + session_log.txt)
+        // beside that session's screenshots. It is not a collector — it subscribes to capture start/stop,
+        // and the CaptureController holds those handler references for the whole runtime lifetime.
+        _ = new MppWatcher.Windows.Ui.SopSessionLog(() => s.Config.Current, s.Identity, s.Paths.FallbackFolder, s.Capture, s.Log);
+
         // Activity first: it is stopped last, so its final session closes after the others stop.
         if (c.Activity.Enabled) yield return new WindowsActivityCollector(s.Identity.WatcherRunId, s.Paths.CheckpointPath);
         if (c.Process.Enabled) yield return new ProcessCollector(new WindowsProcessSource());
