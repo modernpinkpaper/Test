@@ -1,3 +1,6 @@
+using System.Net.Http;
+using System.Text;
+using System.Text.Json.Nodes;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
@@ -34,9 +37,22 @@ internal static class GoogleActions
         return File.Exists(local) ? local : null;
     }
 
-    /// <summary>Append [when, title, why] to the AI MT LOG RECS tab. Returns false to let the caller fall back.</summary>
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
+
+    /// <summary>
+    /// Append [when, title, why, urgency] to the tracker. Simplest path (no Google Cloud / service
+    /// account): set MPP_TRACKER_WEBHOOK_URL to a Google Apps Script Web App that appends the row.
+    /// Falls back to the Sheets API (service-account creds) if the webhook isn't set. Returns false so
+    /// the caller can open/copy instead.
+    /// </summary>
     public static bool TryAddToTracker(Recommendation rec)
     {
+        var hook = Environment.GetEnvironmentVariable("MPP_TRACKER_WEBHOOK_URL");
+        if (!string.IsNullOrWhiteSpace(hook))
+        {
+            try { return PostToWebhook(hook!, rec); } catch { /* fall through to Sheets API / caller fallback */ }
+        }
+
         var path = CredentialsPath();
         if (path is null) return false;
         try
@@ -57,6 +73,21 @@ internal static class GoogleActions
             return true;
         }
         catch { return false; }
+    }
+
+    /// <summary>POST the recommendation as JSON to an Apps Script Web App that appends it to the sheet.</summary>
+    private static bool PostToWebhook(string url, Recommendation rec)
+    {
+        var payload = new JsonObject
+        {
+            ["time"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+            ["title"] = rec.Title,
+            ["why"] = rec.Why,
+            ["urgency"] = rec.Urgency,
+        }.ToJsonString();
+        using var content = new StringContent(payload, Encoding.UTF8, "application/json");
+        var resp = Http.PostAsync(url, content).GetAwaiter().GetResult();
+        return resp.IsSuccessStatusCode;
     }
 
     /// <summary>Create a short calendar event ~1 hour out. Returns false to let the caller fall back.</summary>
