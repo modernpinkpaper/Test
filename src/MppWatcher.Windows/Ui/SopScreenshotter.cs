@@ -12,8 +12,9 @@ namespace MppWatcher.Windows.Ui;
 
 /// <summary>
 /// Saves a JPEG of the active window on each step, but ONLY while an SOP "Record Task" session is
-/// recording (never otherwise). Images go next to that person's logs so they sync and can sit beside
-/// the step in the SOP. Throttled so rapid clicks do not spam images.
+/// recording (never otherwise). Each image marks the click (yellow dot + red ring + a label of what was
+/// clicked), is named step_NNNN_HHMMSS_&lt;action&gt; so it lines up with the MT Log by step/time, and carries
+/// a caption bar. Images go next to that person's logs so they sync. Throttled so rapid clicks don't spam.
 /// </summary>
 public sealed class SopScreenshotter
 {
@@ -31,8 +32,12 @@ public sealed class SopScreenshotter
         _config = config; _identity = identity; _localFallbackFolder = localFallbackFolder; _capture = capture; _log = log;
     }
 
-    /// <summary>If a SOP recording is active and screenshots are enabled, save one and return its file path (else null).</summary>
-    public string? MaybeCapture()
+    /// <summary>
+    /// If a SOP recording is active and screenshots are enabled, save one and return its file path (else null).
+    /// <paramref name="action"/> = what was clicked (goes in the file name + caption + marker), and the click
+    /// point (<paramref name="clickX"/>/<paramref name="clickY"/>, screen coords) is where the marker is drawn.
+    /// </summary>
+    public string? MaybeCapture(string? action = null, int clickX = -1, int clickY = -1)
     {
         var snap = _capture.Current;
         if (!snap.WantsScreenshots) return null;
@@ -45,14 +50,18 @@ public sealed class SopScreenshotter
         try
         {
             var title = NativeMethods.GetWindowTitle(NativeMethods.GetForegroundWindow());
+            var what = string.IsNullOrWhiteSpace(action) ? title : action!;
             var step = Interlocked.Increment(ref _stepNo);
-            var caption = $"Step {step:0000}    {DateTime.Now:h:mm:ss tt}" + (string.IsNullOrWhiteSpace(title) ? "" : "    —  " + title);
-            using var bmp = Grab(cfg.Capture.ScreenshotActiveWindowOnly, cfg.Capture.ScreenshotMaxWidth, caption);
+            var caption = $"Step {step:0000}    {now.ToLocalTime():h:mm:ss tt}"
+                          + (string.IsNullOrWhiteSpace(what) ? "" : "    —  " + what)
+                          + (string.IsNullOrWhiteSpace(title) || title == what ? "" : "    [" + title + "]");
+
+            using var bmp = Grab(cfg.Capture.ScreenshotActiveWindowOnly, cfg.Capture.ScreenshotMaxWidth, caption, clickX, clickY, what);
             if (bmp is null) return null;
             var folder = TargetFolder(snap);
             Directory.CreateDirectory(folder);
-            // Self-describing filename: step number + time + the window it was taken on.
-            var file = Path.Combine(folder, $"step_{step:0000}_{now.ToLocalTime():HHmmss}_{SafeName(title)}.jpg");
+            // Self-describing name that lines up with the MT Log: step number + time + what was clicked.
+            var file = Path.Combine(folder, $"step_{step:0000}_{now.ToLocalTime():HHmmss}_{SafeName(what)}.jpg");
             Save(bmp, file, cfg.Capture.ScreenshotQuality);
             _lastShotUtc = now;
             return file;
@@ -64,7 +73,7 @@ public sealed class SopScreenshotter
         }
     }
 
-    private static Bitmap? Grab(bool activeWindowOnly, int maxWidth, string caption)
+    private static Bitmap? Grab(bool activeWindowOnly, int maxWidth, string caption, int clickX, int clickY, string? label)
     {
         Rectangle rect;
         if (activeWindowOnly && NativeMethods.GetWindowRect(NativeMethods.GetForegroundWindow(), out var r)
@@ -80,7 +89,7 @@ public sealed class SopScreenshotter
         using (var g = Graphics.FromImage(shot))
         {
             g.CopyFromScreen(rect.Location, Point.Empty, rect.Size);
-            DrawCursorHighlight(g, rect); // yellow circle at the mouse so you can see what was clicked
+            DrawClickMarker(g, rect, clickX, clickY, label); // show where + what was clicked (full res)
         }
 
         var final = shot;
@@ -97,28 +106,44 @@ public sealed class SopScreenshotter
         return final;
     }
 
-    /// <summary>A soft transparent-yellow circle behind the mouse, so each screenshot shows where the click was.</summary>
-    private static void DrawCursorHighlight(Graphics g, Rectangle rect)
+    /// <summary>Yellow dot + red ring at the click, plus a red label of what was clicked, so the step is obvious.</summary>
+    private static void DrawClickMarker(Graphics g, Rectangle rect, int clickX, int clickY, string? label)
     {
-        if (!NativeMethods.GetCursorPos(out var cp)) return;
-        int cx = cp.X - rect.Left, cy = cp.Y - rect.Top;
+        int cx, cy;
+        if (clickX >= 0 && clickY >= 0) { cx = clickX - rect.Left; cy = clickY - rect.Top; }
+        else if (NativeMethods.GetCursorPos(out var cp)) { cx = cp.X - rect.Left; cy = cp.Y - rect.Top; }
+        else return;
         if (cx < 0 || cy < 0 || cx >= rect.Width || cy >= rect.Height) return;
+
         g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
         const int radius = 26;
-        using var fill = new SolidBrush(Color.FromArgb(80, 255, 215, 0));   // see-through yellow
-        g.FillEllipse(fill, cx - radius, cy - radius, radius * 2, radius * 2);
-        using var ring = new Pen(Color.FromArgb(210, 240, 170, 0), 3f);
-        g.DrawEllipse(ring, cx - radius, cy - radius, radius * 2, radius * 2);
+        var red = Color.FromArgb(225, 230, 45, 40);
+        using (var fill = new SolidBrush(Color.FromArgb(80, 255, 215, 0)))   // see-through yellow
+            g.FillEllipse(fill, cx - radius, cy - radius, radius * 2, radius * 2);
+        using (var ring = new Pen(red, 3f))
+            g.DrawEllipse(ring, cx - radius, cy - radius, radius * 2, radius * 2);
+
+        if (!string.IsNullOrWhiteSpace(label))
+        {
+            using var font = new Font("Segoe UI", 9f, FontStyle.Bold);
+            var text = label!.Length > 40 ? label[..40] + "…" : label;
+            var sz = g.MeasureString(text, font);
+            float lx = cx + radius + 6, ly = cy - sz.Height / 2;
+            if (lx + sz.Width + 8 > rect.Width) lx = cx - radius - 6 - sz.Width - 8; // flip to the left near an edge
+            if (lx < 0) lx = 2;
+            using (var bg = new SolidBrush(red))
+                g.FillRectangle(bg, lx, ly - 1, sz.Width + 8, sz.Height + 2);
+            g.DrawString(text, font, Brushes.White, lx + 4, ly);
+        }
     }
 
-    /// <summary>Burn a small caption bar (step #, time, window) along the bottom so the image explains itself.</summary>
+    /// <summary>Burn a small caption bar (step #, time, action, window) along the bottom so the image explains itself.</summary>
     private static void DrawCaption(Bitmap bmp, string caption)
     {
         if (string.IsNullOrWhiteSpace(caption)) return;
         using var g = Graphics.FromImage(bmp);
         using var font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
-        var textH = (int)Math.Ceiling(g.MeasureString("Ag", font).Height);
-        var barH = textH + 8;
+        var barH = (int)Math.Ceiling(g.MeasureString("Ag", font).Height) + 8;
         var y = bmp.Height - barH;
         using var bg = new SolidBrush(Color.FromArgb(175, 0, 0, 0));
         g.FillRectangle(bg, 0, y, bmp.Width, barH);
@@ -126,7 +151,7 @@ public sealed class SopScreenshotter
         g.DrawString(caption, font, Brushes.White, new RectangleF(6, y + 3, bmp.Width - 12, barH), fmt);
     }
 
-    /// <summary>Make a window title safe + short for a file name.</summary>
+    /// <summary>Make a window title / action safe + short for a file name.</summary>
     private static string SafeName(string? s)
     {
         if (string.IsNullOrWhiteSpace(s)) return "window";

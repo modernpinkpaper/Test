@@ -346,14 +346,14 @@ public sealed class UiAutomationCollector : ICollector
         if (!decision.Log) return;
         _ctx.Sink.Emit(UiEventFactory.Action(info, decision, "click", now));
         _actionsLogged++;
-        MaybeSopShot(info.Name ?? info.ControlType, "click");
+        MaybeSopShot(info.Name ?? info.ControlType, "click", x, y);
     }
 
     /// <summary>During an SOP recording, save a screenshot of this step and emit a sop_screenshot event.</summary>
-    private void MaybeSopShot(string? about, string trigger)
+    private void MaybeSopShot(string? about, string trigger, int clickX = -1, int clickY = -1)
     {
         if (_sop is null) return;
-        var file = _sop.MaybeCapture();
+        var file = _sop.MaybeCapture(about, clickX, clickY);
         if (file is null) return;
         var e = this.NewEvent(MppWatcher.Core.Events.EventTypes.SopScreenshot, _ctx!.Clock.Now);
         e.Metadata["screenshot_file"] = file;
