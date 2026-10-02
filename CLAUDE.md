@@ -55,7 +55,12 @@ work. Do NOT answer log questions from summary counts alone.
    return-address envelope ("RA - Name - 60 - KRAFT"), sometimes a thank-you ("TY - Name") and back
    pieces. Merge all pieces per customer (strip "RA -"/"TY -"/"back of", the "- qty - MATERIAL" suffix,
    and "(1)/(2)") before counting, or you massively overcount (59 files were really ~35 orders). Exclude
-   stock/SKU codes (e.g. FTY018, HGC012, MS049) and driver docs. **The DYMO label printer is NOT a
+   stock/SKU codes (e.g. FTY018, HGC012, MS049) and driver docs. **CARD QUANTITY:** the number in the doc
+   name ("Name - 130 - FLAT") is the order's card count. For total cards on a printer/day, sum each ORDER's
+   quantity ONCE (not per job — one order prints over several passes, so per-job summing massively
+   overcounts). total_pages/pages_printed are unreliable and there is no copies field, so the name's "- NN -"
+   is the best volume signal. Example: Kayla's 3rd (LEFT SIDE) printer = ~19 orders ≈ 780 cards in a day,
+   which accounts for ~20 of the ~25-order Kayla-vs-Annie gap (concrete proof the gap is the 3rd printer). **The DYMO label printer is NOT a
    production printer — never count it toward card output.** But it is gold as a cross-check and activity
    signal: each DYMO label ≈ one order SHIPPED (Amazon order page -> Buy Shipping -> label prints), so the
    DYMO count independently confirms the real order count, and DYMO activity explains "quiet card printer"
