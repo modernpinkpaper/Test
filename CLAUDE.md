@@ -83,9 +83,18 @@ work. Do NOT answer log questions from summary counts alone.
    Measured example (Annie, 1 day): both-busy 264m, printer-running/person-idle 46m (fill-able),
    printer-idle/person-working 110m (movable), break 48m. Proven pattern difference: Kayla did 92% of her
    verification while a printer was running; Annie only 52% (she front-loads a verify batch with printers
-   idle). CAVEAT (rule 8): "person idle while printer runs" includes physically tending the printer
-   (feeding kraft, collecting prints) which logs as no-input but is NOT free time — confirm on camera
-   before counting it as recoverable.
+   idle). Mechanism (measured): avg printers running WHILE she verifies — Kayla 1.9, Annie 0.6; both switch
+   windows at the same ~2s cadence, so the edge is NOT multitasking skill, it is keeping printers in flight
+   as a buffer so the (inevitable) multitasking rides on top of production that never stops. That resolves
+   the batch-vs-flow tension: multitasking's switch cost is real, but you don't pay it in lost PRINTING if a
+   machine is always running underneath.
+   **The "printer running + person idle" windows (quadrant d) are an OPPORTUNITY FLAG, never a caveat to
+   dismiss.** ALWAYS surface each one to Dalia with its camera time-window, because it reveals either: (1) a
+   hidden physical PROBLEM (e.g., struggling to feed kraft envelopes) the person may not speak up about —
+   Dalia can fix it (talk to them / switch the printer); (2) legit physical prep (feeding/collecting); or
+   (3) true idle. And the broader rule: **batching prep — digital OR physical (verifying, envelope prep) —
+   while printers sit idle at other times is itself the inefficiency. The fix is to SCATTER that prep so it
+   overlaps printing and fills printer-idle gaps.** Flag batched prep that coincides with idle printers.
 5. **Account for role/training before calling something a "gap".** A difference may be a different job
    the person isn't trained on (e.g. notepads), or normal learning-curve slowness for a trainee — not a
    flaw. Confirm with Dalia before recommending a process change.
