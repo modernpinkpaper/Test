@@ -3,6 +3,10 @@
 A running list of everything Dalia wants to learn from MT Log data. Each item = the GOAL, the DATA it
 uses, and the CAVEATS. Use any of these as the base of a prompt when handing logs to AI.
 
+> Related files: the operative analysis RULES Claude follows live in **`CLAUDE.md`**; a readable copy of
+> those rules is in **`docs/PRINTING_LOG_ANALYSIS_RULES.md`**. This file is the IDEAS catalog (what the
+> data could be used for); those two are the HOW (the method Claude applies every time).
+
 Reminder of what the regular (always-on) logs contain, per event:
 timestamp (UTC + local), computer/PC, employee/PC label, app, window title, domain/URL, page type,
 SKUs / ASINs / listing IDs / order numbers, clicks (ui_action, with control name), finished field
@@ -54,13 +58,29 @@ Caveat: captured on focus-leave, so sometimes partial.
 ## 10. Print team — per-hour count + tracker auto-fill
 Goal: start/end of counted printing, prints per hour, auto-fill the print log sheet.
 Data: print_job / print_job_finished (printer, document, pages, seconds_in_queue). Exclude notepads and
-other non-counted jobs by Dalia's rules (name/folder/printer). Count PAGES not just jobs.
+other non-counted jobs by Dalia's rules (name/folder/printer). Count ORDERS/cards, not raw jobs.
 Caveat: exclusion needs jobs to be distinguishable; "finished" = left the Windows queue (good proxy).
+UPDATED timing rule (see CLAUDE.md "printer running"): a printer is BUSY from when the job is SENT to
+when it finishes — pair print_job (submit) with its print_job_finished by (printer, job_id); interval =
+[submit, finished]. Never measure idle as the gap between submit events (that invents idle). Page counts
+(total_pages/pages_printed) are unreliable — trust seconds_in_queue for timing, and the "- NN -" in the
+doc name for card quantity (sum each order ONCE, not per job — one order prints over several passes).
+DYMO cross-check: count ALL printers incl. the DYMO label printer for ACTIVITY, but NEVER count DYMO
+toward card output. Each DYMO label ≈ one order SHIPPED, so the DYMO count independently confirms the
+real order count and explains "quiet card printer" stretches (she's printing shipping labels, not idle).
 
 ## 11. Print team — per-SKU print time + speed analysis
 Goal: how long each SKU takes to print (ink-heavy vs light) and the gap before the next job (how fast
 she lines up the next). Rank what makes the fast person fast. Data: print job timing + workflow.
 Caveat: computer half only; physical technique inferred as hypotheses to confirm by observing.
+Seconds-per-card = sum of card-job durations (submit→finished machine-seconds) ÷ total cards (qty once
+per order). FACTS FROM DALIA that MUST be applied before blaming speed: (1) ALL printers are the SAME
+model — the model is never the cause. (2) The SKU drives per-card time — more ink = slower; INVITES and
+FOLDED/FRAMED cards are ink-heavy (slower) and need more verifying; FLAT cards are faster. (3) Annie
+trains on invites, so her slower s/card + bigger verify time are mostly product MIX, not inefficiency.
+So: COMPARE PRINT SPEED LIKE-SKU ONLY (flat-to-flat); never rank people on blended s/card across
+different product mixes. (4) Printers have "personalities" — one struggling to feed thick/kraft stock is
+a likely physical feed problem to confirm on camera, not operator slowness.
 
 ## 12. Printer out-of-paper / errors (feature to build)
 Goal: "who lets the printer run out, how often, time lost" -> restocking recommendations.
@@ -94,6 +114,15 @@ character style, measurements) via accessibility. What it CANNOT do: canvas obje
 labels, which object got a swatch — that lives inside InDesign's canvas, not exposed to Windows.
 Deeper path: a script/plugin INSIDE InDesign (ExtendScript/UXP) that logs its own changes — a separate
 add-on from MT Log (Dalia already writes .jsx scripts).
+FRAME-DETECTION enhancement (idea): framed designs (borders) print slower (ink top-to-bottom of the
+border) AND take time to center → a nudge-to-center → reprint loop. To detect a frame, enhance the
+InDesign add-on to log, per touched object: its TYPE (rectangle/graphic/text), whether it holds a PLACED
+IMAGE + that file's name (a border file ⇒ the frame), its BOUNDS (near page size ⇒ likely the frame), and
+its SCRIPT LABEL (if frame objects are labeled, that's the direct tag). Then you can tag "adjusted the
+FRAME (border file X) → reprint" and count the centering-reprint loop. The current add-on only says "an
+object moved", not that it's a frame. CAUTION (learned the hard way): do NOT infer a frame from a folder/
+file name alone — the Desktop "borders2" folder + codes (ps067/fs002/ml004/ks249) are UNCONFIRMED; ask
+Dalia what they are before treating "borders2 access = framed order" as fact.
 
 ## 17. Print-team optimization suggestions
 Goal: suggest how the print team can be faster/more accurate.
@@ -119,6 +148,8 @@ CONFIRMED action item from the Kayla vs Annie run: Annie has no extra/3rd printe
 printer ("XTRA RIGHT") carried 152 jobs in parallel; Annie's load funnels through 2 printers and queues.
 Giving Annie an extra printer is a genuine, data-backed throughput win (the one real gap once notepads
 and normal one-by-one regular-order claiming are set aside).
+Pending comparison: Carolina — compare her once she has print data (parked during slow season / fresh
+empty logs). Same rules apply: compare within the same process and account for training before any "gap".
 
 ## 20. "Scripts I use" index → pull the code to see how it's wired
 Goal: MT Log sees WHICH scripts/extensions/codes you use (by name — e.g. mpp-CLAIM-BUTTONS-v3.2,
@@ -140,6 +171,32 @@ the time-stamped windows worth reviewing on camera.
 Data: dwell durations, reprint/edit/cleaning classification, print-job gaps, printer errors + the exact
 timestamps. Caveat: logs give the WHAT and the time; the WHY is a hypothesis until the camera (or Dalia)
 confirms it.
+
+## 22. Two lenses + the 4-state engagement table (the productivity standard)
+Goal: measure a print person two SEPARATE ways and never mix them. (a) OUTPUT lens (printer speed):
+signal = printer idle (no printer running); the person being busy is irrelevant. (b) PRODUCTIVITY lens
+(is the person working): signal = the computer not moving — no person-driven input (clicks/typing/nav);
+print jobs running do NOT count as person activity.
+Then classify every moment of the day into exactly ONE of four states and report each as % AND minutes:
+🟢 Both engaged (a printer printing AND person working), 🖨️ Machine-only (printer printing, person off
+the keyboard), 💻 Person-only (person working but NO printer printing — THE MAIN OPPORTUNITY), ⚫ Idle on
+all fronts (no printer printing AND off keyboard = true dead time). Always also show the instance-by-
+instance breakdown of Idle-on-all-fronts and a breakdown of Person-only time BY ACTIVITY (InDesign /
+verify / Amazon / etc.). Data: print busy intervals (submit→finished) × person-driven events within
+~45s. Caveat: can't see INSIDE InDesign without the add-on — say so. Full spec lives in CLAUDE.md.
+
+## 23. Work-ahead buffer + recoverable-idle fix (how to act on Person-only time)
+Goal: turn the measurement into a concrete fix. Person-only time (deskwork while printers sit idle) is
+recoverable; the fix is WORK AHEAD — do the prep (verify/claim/research/envelope prep) EARLIER, while a
+printer is already running, so you build a buffer of ready-to-print jobs and the printer never waits. The
+smart gap-fill: move deskwork INTO the "printer running + person idle" windows so the printer never stops
+for it. Recoverable idle = no computer input AND no printer running (a printer running through a break is
+NOT waste). Business fact (Dalia): MPP NEVER runs out of queued orders, so "nothing to print yet" is
+never a valid excuse — any non-break idle printer is a real missed chance (minus the small unavoidable
+physical floor: grabbing envelopes, collecting prints). REPORTING RULE for any time category: give each
+instance's exact duration (min + sec), its exact window (start→end local), what she was actually doing,
+list EVERY instance, the day total, and mark the biggest chunks. Data: the four states from #22 + idle
+markers. Caveat: a long block is often PHYSICAL — hand Dalia the camera window, don't assume slacking.
 
 ## 18. Live LLM assistant (real-time on-screen suggestions) — SEPARATE, opt-in, later
 Goal: an on-PC assistant that reads activity live and pops suggestions (e.g. "Carolina copy-pasting a
