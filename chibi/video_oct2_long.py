@@ -154,7 +154,8 @@ def build_timeline():
     import video_321 as V
     tl, t = [], 0.35
     prev_sec = None
-    for i, ((sec, line), shot) in enumerate(zip(LINES, SHOTS)):
+    n = int(os.environ.get("LIMIT", len(LINES)))
+    for i, ((sec, line), shot) in enumerate(list(zip(LINES, SHOTS))[:n]):
         tone, txt = voices.split_tag(line)
         a = faster(tighten(voices.say(VOICE, line)), f"{i:03d}_{abs(hash(line)) % 10 ** 8}")
         if sec != prev_sec and i:
