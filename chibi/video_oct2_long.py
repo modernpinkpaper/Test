@@ -260,7 +260,11 @@ SCREENS = Screens()
 
 def cam_target(key, tgt):
     if tgt == "full":
-        return (VW / 2, VH / 2, 1.0)
+        c = SCREENS.box(key, "_content")
+        if not c:
+            return (VW / 2, VH / 2, 1.0)
+        x, y, w, h = c
+        return (x + w / 2, y + h / 2, min(2.2, max(1.0, min(VW / max(w, 1), VH / max(h, 1)))))
     if isinstance(tgt, tuple):
         return tgt
     b = SCREENS.box(key, tgt)
@@ -292,15 +296,33 @@ def camera(seg, T, key):
     return c[0], c[1], c[2] * drift
 
 
-def view_rect(cx, cy, z):
+def view_rect(cx, cy, z, content=None):
+    """The visible part of the screen: kept inside the app windows (no empty wallpaper) when zoomed in."""
     w, h = VW / z, VH / z
-    x0 = min(max(cx - w / 2, 0), VW - w)
-    y0 = min(max(cy - h / 2, 0), VH - h)
+    bx0, by0, bx1, by1 = 0, 0, VW, VH
+    if content:
+        cx0, cy0, cw, ch = content
+        cx0, cy0 = max(cx0, 0), max(cy0, 0)
+        cx1, cy1 = min(cx0 + cw, VW), min(cy0 + ch, VH)
+        if cx1 - cx0 >= w:
+            bx0, bx1 = cx0, cx1
+        else:
+            m = (cx0 + cx1) / 2
+            bx0, bx1 = m - w / 2, m + w / 2
+        if cy1 - cy0 >= h:
+            by0, by1 = cy0, cy1
+        else:
+            m = (cy0 + cy1) / 2
+            by0, by1 = m - h / 2, m + h / 2
+    x0 = min(max(cx - w / 2, bx0), bx1 - w)
+    y0 = min(max(cy - h / 2, by0), by1 - h)
+    x0 = min(max(x0, 0), VW - w)
+    y0 = min(max(y0, 0), VH - h)
     return x0, y0, w, h
 
 
 def draw_screen(key, cam):
-    x0, y0, w, h = view_rect(*cam)
+    x0, y0, w, h = view_rect(*cam, SCREENS.box(key, "_content"))
     hi = cam[2] > 1.15
     im = SCREENS.get(key, hi)
     s = im.width / VW
@@ -545,8 +567,8 @@ def fx_overlay(frame, seg, T):
     d = ImageDraw.Draw(frame)
     if fx == "title":
         k = eout(t / 0.4)
-        ov = Image.new("RGBA", frame.size, (255, 236, 243, int(200 * k)))
-        frame.alpha_composite(ov)
+        ov = Image.new("RGBA", (PW, PH), (255, 236, 243, int(225 * k)))
+        frame.alpha_composite(ov, (PX, PY))
         s = 0.6 + 0.4 * k
         d = ImageDraw.Draw(frame)
         d.text((W / 2, 700), "DAY 1", font=font(220 * s), fill=PINK, anchor="mm", stroke_width=10, stroke_fill=(255, 255, 255))

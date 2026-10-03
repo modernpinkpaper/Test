@@ -1094,6 +1094,10 @@ def render(out_dir, jobs):
             pg.evaluate("document.fonts.ready")
             boxes = pg.evaluate("""() => Object.fromEntries([...document.querySelectorAll('[data-t]')].map(e => {
                 const r = e.getBoundingClientRect(); return [e.dataset.t, [r.x, r.y, r.width, r.height]]; }))""")
+            boxes["_content"] = pg.evaluate("""() => { let a = [1e9, 1e9, -1e9, -1e9];
+                for (const e of document.querySelectorAll('.w,.ch,.as,.toast,.tip')) { const r = e.getBoundingClientRect();
+                  a = [Math.min(a[0], r.x), Math.min(a[1], r.y), Math.max(a[2], r.right), Math.max(a[3], r.bottom)]; }
+                return [a[0], a[1], a[2] - a[0], a[3] - a[1]]; }""")
             pg.screenshot(path=png)
             json.dump(boxes, open(os.path.join(out_dir, key + ".json"), "w"))
         b.close()
