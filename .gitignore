@@ -11,3 +11,5 @@ TestResults/
 artifacts/
 publish/
 setup-output/
+__pycache__/
+talk/.cache/

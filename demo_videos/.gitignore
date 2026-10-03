@@ -1,0 +1,6 @@
+voices/*.wav
+_*.mp4
+_*.wav
+__pycache__/
+_voice_cache/
+models/
