@@ -101,13 +101,16 @@ A plain-English reference of the rules we built for reading the printing team's 
    it's used, not the internals — say "pull the script's code to confirm the wiring"; and never infer meaning
    from a name — list it as "noticed, confirm with Dalia," don't assert what it does.
 
-35c. **Surface listing tests to track (every daily analysis).** Dalia creates/updates a listing, lets it
-   run 30+ days, then checks results — often without typing her intention. End the report with a **"Possible
-   tests started"** section (each listing edit/create detected: date/time, listing SKU/ASIN + title, what
-   changed, platform, suggested +30-day check-back) and a **"tests due for follow-up"** list (detected 30+
-   days ago). Present each as a CANDIDATE ("you updated listing X — confirm as a test?") — the logs see the
-   action and fields touched, not the hypothesis; Dalia confirms which are real, annotates why, and sets the
-   reminder. Mainly her own PC (print-team logs won't have listing edits).
+35c. **Surface listing changes — tests + bulk — every daily analysis.** Scan the WHOLE activity folder
+   (everyone who edits listings — Dalia, Carolina, Erika, Arantza), not one PC. Detect notable listing
+   create/updates (listing edit page + Save/Publish + field changes + SKU/ASIN) and BULK changes (same action
+   across many SKUs, or many SKUs in one sitting). Sort into two buckets: **(a) Possible tests** → need
+   follow-up: date/time, who, listing SKU/ASIN + title, what changed, platform, suggested +30-day check-back,
+   plus a "tests due for follow-up" list; **(b) Bulk / SKU-wide changes** → no reminder, just a dated line
+   ("Apr 3 — added XYZ add-on to ~40 wedding-invite listings") so you can answer "when did we do X" later.
+   Each is a CANDIDATE you confirm (Type = Test | SKU-wide change) — the logs see the action + fields, not
+   the hypothesis. Output = a document you can get emailed (auto-email is a separate scheduled-job + Gmail
+   build; until then the analysis produces the document).
 
 ## Things NOT to do / blind spots
 

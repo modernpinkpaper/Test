@@ -215,17 +215,19 @@ work. Do NOT answer log questions from summary counts alone.
    add. CAVEATS: the logs see the NAME and that it was used, not the internals — say "pull the script's code
    to confirm the wiring" (see ANALYSIS_IDEAS #20); and NEVER infer meaning from a name alone — list it as
    "noticed, confirm with Dalia", don't assert what it does. This keeps Dalia's master systems doc current.
-11. **SURFACE LISTING TESTS to track (every daily analysis).** Dalia runs many tests: she creates/updates a
-   listing, lets it run 30+ days, then checks results — and often does NOT type her intention. End the report
-   with a **"Possible tests started"** section: each listing create/update detected from the logs (signal =
-   a listing edit/create page [Amazon Seller Central / Etsy] + a Save/Publish/Submit action + field changes
-   [title/price/bullets/keywords/images] + the SKU/ASIN/listing ID), giving date/time, the listing
-   (SKU/ASIN + title if seen), what appears to have changed, platform, and a suggested check-back date
-   (+30 days). Also list **"tests due for follow-up"** (ones detected 30+ days earlier). CAVEATS: the logs
-   see the ACTION and which fields were touched, NOT the hypothesis — present each as a CANDIDATE ("you
-   updated listing X — confirm as a test?"), never assert intention; Dalia confirms which are real, annotates
-   why, and sets the reminder. This is mainly Dalia's own PC (print-team logs won't have listing edits).
-   See ANALYSIS_IDEAS #24.
+11. **SURFACE LISTING CHANGES — tests (follow-up) + bulk changes (dated) — every daily analysis.** Scan the
+   WHOLE `mpp activity` folder (EVERYONE — Dalia, Carolina, Erika, Arantza; whoever edits listings), not one
+   PC. Detect notable listing changes (signal = a listing edit/create page [Amazon Seller Central / Etsy] +
+   a Save/Publish/Submit action + field changes [title/price/bullets/keywords/images] + the SKU/ASIN), plus
+   BULK changes (the SAME action across MANY SKUs in a short window, OR many SKUs edited in one sitting).
+   Sort into TWO buckets: **(a) Possible tests** — need follow-up → give date/time, who, listing (SKU/ASIN +
+   title), what changed, platform, and a suggested +30-day check-back; also list **"tests due for follow-up"**
+   (detected 30+ days earlier). **(b) Bulk / SKU-wide changes** — no reminder, just a dated change-log line
+   ("Apr 3 — added 'XYZ add-on' to ~40 wedding-invite listings") so Dalia can later answer "when did we do X".
+   CAVEATS: the logs see the ACTION + fields touched, NOT the hypothesis — present each as a CANDIDATE Dalia
+   confirms/annotates (Type = Test | SKU-wide change), never assert intention; she sets the reminder. Output
+   is a document she can get emailed (auto-email = a scheduled job + Gmail, a separate build; until then the
+   analysis just produces the document). See ANALYSIS_IDEAS #24.
 
 Worked examples of this done right live in `docs/ANALYSIS_IDEAS.md` (e.g. reprint-vs-edit-vs-cleaning
 detection, per-order dwell time, clicks-per-order, cross-person diffs).
