@@ -205,6 +205,16 @@ work. Do NOT answer log questions from summary counts alone.
    it's worth digging into — surface it every time; Dalia decides. The logs + cameras together turn a
    guess into a confirmed root cause (and sometimes a solution, like "kraft envelopes need a different
    printer/feeder").
+10. **FLAG SYSTEMS / SCRIPT CHANGES for Dalia's master systems document (every daily analysis).** As you
+   read the day, watch for any sign the tools/systems changed, and end the report with a short
+   **"Systems-doc updates"** section listing them (or "none noticed"). Flag: a NEW or renamed/version-bumped
+   script, extension, or code (e.g. `mpp-CLAIM-BUTTONS-v3.2` → `v3.3`, a new Tampermonkey userscript, a new
+   `.jsx`), a new site/app/tool showing up in the workflow, a new Google Sheet / Firestore / tab / file in
+   use, a changed step order or a step that disappeared, or a new printer/device. For each, give: what it is
+   (by the name seen in the logs), who/which PC, the date/time first seen, and what it seems to replace or
+   add. CAVEATS: the logs see the NAME and that it was used, not the internals — say "pull the script's code
+   to confirm the wiring" (see ANALYSIS_IDEAS #20); and NEVER infer meaning from a name alone — list it as
+   "noticed, confirm with Dalia", don't assert what it does. This keeps Dalia's master systems doc current.
 
 Worked examples of this done right live in `docs/ANALYSIS_IDEAS.md` (e.g. reprint-vs-edit-vs-cleaning
 detection, per-order dwell time, clicks-per-order, cross-person diffs).

@@ -91,6 +91,16 @@ A plain-English reference of the rules we built for reading the printing team's 
     likely physical feed problem to confirm on camera, not operator slowness.
 30. **"borders2" folder is UNCONFIRMED** — never infer meaning from a folder/file name; ask Dalia.
 
+## Daily report extras
+
+35b. **Flag systems / script changes for the master systems doc (every daily analysis).** End each daily
+   report with a short **"Systems-doc updates"** section (or "none noticed"). Flag: a new or renamed/
+   version-bumped script/extension/code, a new site/app/tool in the workflow, a new Google Sheet / Firestore
+   / tab / file, a changed or dropped step, or a new printer/device. For each: what it is (the name seen),
+   who/which PC, when first seen, and what it seems to replace/add. Caveats: the logs see the name + that
+   it's used, not the internals — say "pull the script's code to confirm the wiring"; and never infer meaning
+   from a name — list it as "noticed, confirm with Dalia," don't assert what it does.
+
 ## Things NOT to do / blind spots
 
 31. **Don't use "did they open InDesign on this order" as a metric** — everyone's ~100%, it produces a

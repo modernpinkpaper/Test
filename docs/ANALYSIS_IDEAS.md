@@ -17,6 +17,12 @@ SOP recording.
 ## 1. Daily productivity report (per person)
 Goal: per-person daily summary in Google Sheets — time per category, with collapsible detail rows.
 Data: app sessions + durations, domains, SKUs/orders/listings, files. Caveat: "completed" left to Dalia.
+ALWAYS end the daily report with a "Systems-doc updates" section (or "none noticed"): any NEW/renamed/
+version-bumped script/extension/code, new site/app/tool, new Google Sheet/Firestore/tab/file, changed or
+dropped step, or new printer/device — with the name seen, who/which PC, when first seen, and what it
+replaces/adds — so Dalia can keep her master systems document current. Caveats: logs see the NAME + that
+it's used, not internals (say "pull the script's code to confirm the wiring" — see #20); never infer meaning
+from a name, list as "noticed, confirm with Dalia." (Operative rule: CLAUDE.md standard #10.)
 
 ## 2. Time / friction ("why did this take so long?")
 Goal: explain where time went — interruptions, waiting, rework loops, help-lookups, click friction.
