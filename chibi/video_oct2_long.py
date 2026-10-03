@@ -265,6 +265,14 @@ def cam_target(key, tgt):
             return (VW / 2, VH / 2, 1.0)
         x, y, w, h = c
         return (x + w / 2, y + h / 2, min(2.2, max(1.0, min(VW / max(w, 1), VH / max(h, 1)))))
+    if isinstance(tgt, tuple) and isinstance(tgt[0], str):
+        b = SCREENS.box(key, tgt[0])
+        if not b:
+            return cam_target(key, "full")
+        x, y, w, h = b
+        fy = tgt[2] if len(tgt) > 2 else 0.5
+        fx = tgt[3] if len(tgt) > 3 else 0.5
+        return (x + w * fx, y + h * fy, tgt[1])
     if isinstance(tgt, tuple):
         return tgt
     b = SCREENS.box(key, tgt)
@@ -393,7 +401,7 @@ def chibi(frame, seg, T):
     im = sprite(face, mouth, eyes)
     bob = math.sin(T * 7) * 3 if talking else math.sin(T * 1.6) * 2
     # round badge
-    cx, cy, r = 178, 1600, 150
+    cx, cy, r = 168, 1690, 138
     d = ImageDraw.Draw(frame)
     d.ellipse((cx - r - 7, cy - r - 7, cx + r + 7, cy + r + 7), fill=PINK)
     d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(255, 226, 236))
@@ -491,7 +499,7 @@ def captions(frame, seg, T):
     for i, w in enumerate(chunk):
         if i <= cur:
             col = (255, 214, 64) if i == cur else (255, 255, 255)
-            d.text((x, 1300), w, font=f, fill=col, anchor="lm", stroke_width=9, stroke_fill=(20, 14, 22))
+            d.text((x, 1462), w, font=f, fill=col, anchor="lm", stroke_width=9, stroke_fill=(20, 14, 22))
         x += f.getlength(w) + gap
 
 
@@ -499,9 +507,9 @@ def now_card(frame, seg, T, key):
     """The little card next to her: which app she's in."""
     app = APP_NAMES.get(key.rstrip("0123456789_") if key not in APP_NAMES else key, None) or app_for(key)
     d = ImageDraw.Draw(frame)
-    d.rounded_rectangle((350, 1475, 1056, 1555), 24, fill=(255, 255, 255), outline=(245, 205, 220), width=4)
-    d.text((378, 1515), "NOW IN", font=font(22), fill=(160, 140, 160), anchor="lm")
-    d.text((490, 1515), app, font=font(34), fill=INK, anchor="lm")
+    d.rounded_rectangle((330, 1580, 1056, 1660), 24, fill=(255, 255, 255), outline=(245, 205, 220), width=4)
+    d.text((358, 1620), "NOW IN", font=font(22), fill=(160, 140, 160), anchor="lm")
+    d.text((470, 1620), app, font=font(34), fill=INK, anchor="lm")
 
 
 def app_for(key):

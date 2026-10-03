@@ -110,7 +110,7 @@ def window(title, body, x, y, w, h, icon=None, extra="", tid=""):
     ic = ico(icon, 16) if icon else ""
     t = f' data-t="{tid}"' if tid else ""
     return (f'<div class="w" style="left:{x}px;top:{y}px;width:{w}px;height:{h}px"{t}>'
-            f'<div class="wt">{ic}<span>{E(title)}</span>{extra}<div class="ctl"><span>—</span><span>☐</span><span>✕</span></div></div>'
+            f'<div class="wt">{ic}<span{(" data-t=" + tid + "_title") if tid else ""}>{E(title)}</span>{extra}<div class="ctl"><span>—</span><span>☐</span><span>✕</span></div></div>'
             f'<div class="wb">{body}</div></div>')
 
 
@@ -204,7 +204,7 @@ def printq(st):
     {rows.replace('<td>', '<td style="padding:7px 10px">')}</table>
     <div style="margin-top:auto;border-top:1px solid #e5e5e5;padding:5px 10px;color:#555">{st.get("n", 2)} document(s) in queue</div></div>"""
     title = "Office Printer - Paused" if st.get("paused", 1) else "Office Printer"
-    w = window(title, body, 150, 380, 980, 330, "settings", tid="queue")
+    w = window(title, body, 40, 60, 1200, 1000, "settings", tid="queue")
     if st.get("hl"):
         w = w.replace(f'<span>{title}</span>', f'<span class="hl" style="padding:2px 6px">{title}</span>')
     return desk(st["clock"], w, on=("settings",))
@@ -268,7 +268,7 @@ def sheets_frame(name, rows, ref, fx, tabs, cols="ABCDEFGHIJ", active=0, widths=
             f'<div class="tool"><span>🔍</span><span>↶</span><span>↷</span><span>🖨</span><span>100% ▾</span><span>$</span><span>%</span>'
             f'<span>Default... ▾</span><span>— 10 +</span><span><b>B</b></span><span><i>I</i></span><span>A</span></div>'
             f'<div class="fx"><div class="nb">{ref}</div><div class="f"><i style="color:#888">fx</i>&nbsp;&nbsp;{E(fx)}</div></div>'
-            f'<div style="flex:1;overflow:hidden"><table>{cg}{th}{rows}</table></div><div class="tabsb">＋ ☰ {tbs}</div></div>')
+            f'<div style="flex:1;overflow:hidden"><table data-t="grid">{cg}{th}{rows}</table></div><div class="tabsb">＋ ☰ {tbs}</div></div>')
 
 
 TEAMS_CSS = """
@@ -314,7 +314,7 @@ def teams(st):
             f'<div class="list"><div class="lh">Chat <span style="margin-left:auto;font-weight:400">⋯ &nbsp;✎</span></div>{li}</div>'
             f'<div class="main"><div class="mh"><div class="av" style="background:{chats[0][2]};width:32px;height:32px">{chats[0][0][0]}{chats[0][0].split()[-1][0]}</div>'
             f'{E(chats[0][0])}<span style="color:#5b5fc7;border-bottom:2px solid #5b5fc7;padding:16px 0">Chat</span><span>Shared</span></div>'
-            f'<div class="msgs">{msgs}</div><div class="cmp" data-t="compose">{st.get("typing") or "Type a message"}<span style="margin-left:auto">😊 📎 ➤</span></div></div></div>')
+            f'<div class="msgs" data-t="msgs">{msgs}</div><div class="cmp" data-t="compose">{st.get("typing") or "Type a message"}<span style="margin-left:auto">😊 📎 ➤</span></div></div></div>')
     w = window("Chat | Maya R. | Microsoft Teams", body, 60, 70, 1160, 1150, "teams")
     return desk(st["clock"], w, on=("teams",))
 
@@ -361,8 +361,8 @@ def sc_messages(st):
              f'<div style="margin-top:12px;display:flex;gap:10px"><span class="ab y">Send</span><span class="ab">Templates</span><span class="ab">No response needed</span></div></div>')
     body = (f'<div class="h1">Buyer-Seller Messages</div><div style="display:flex;gap:10px;margin-bottom:14px">'
             f'<span class="ab b" data-t="needs">Needs response (4)</span><span class="ab">All messages</span><span class="ab">Unread</span><span class="ab">Archived</span></div>'
-            f'<div style="display:flex;gap:16px;height:1000px"><div class="card" style="width:420px;padding:0;overflow:hidden">{lis}</div>'
-            f'<div class="card" style="flex:1;padding:0">{right}</div></div>')
+            f'<div style="display:flex;gap:16px;height:1000px"><div class="card" style="width:420px;padding:0;overflow:hidden" data-t="list">{lis}</div>'
+            f'<div class="card" style="flex:1;padding:0" data-t="thread">{right}</div></div>')
     return desk(st["clock"], f"<style>{SC_CSS}</style>" + sc_page("Amazon", "sellercentral.amazon.com/messaging/inbox?fi=responseNeeded", body))
 
 
@@ -406,7 +406,7 @@ def programs(st):
     <div style="color:#333;margin-bottom:10px">To uninstall a program, select it from the list and then click Uninstall, Change, or Repair.</div>
     <div style="border-bottom:1px solid #ddd;padding:4px 0;margin-bottom:4px">Organize ▾ &nbsp;&nbsp;<span data-t="uninstall" style="{'border:1px solid #7ab;padding:2px 8px;background:#e5f1fb' if st.get('sel') else 'color:#aaa'}">Uninstall</span></div>
     <table style="width:100%;border-collapse:collapse"><tr style="text-align:left;color:#4c607a"><th style="font-weight:400;padding:4px 8px">Name</th><th style="font-weight:400">Publisher</th><th style="font-weight:400">Installed On</th><th style="font-weight:400;text-align:right;padding-right:10px">Size</th></tr>{rows}</table></div></div>"""
-    w = window("Programs and Features", body, 80, 120, 1120, 640, "settings")
+    w = window("Programs and Features", body, 40, 60, 1200, 1100, "settings")
     if st.get("confirm"):
         w += window("Programs and Features", '<div style="padding:22px;font-size:13px">Are you sure you want to uninstall MT Log?<div style="margin-top:28px;display:flex;gap:8px;justify-content:flex-end">'
                     '<span class="btn pri" data-t="yes">Yes</span><span class="btn">No</span></div></div>', 420, 380, 440, 170)
@@ -415,7 +415,7 @@ def programs(st):
         w += window("MT Log Setup", f'<div style="padding:20px;font-size:13px"><b style="font-size:15px">{"Installing MT Log" if k < 100 else "MT Log is installed"}</b>'
                     f'<div style="color:#555;margin:6px 0 18px">{"Copying files…" if k < 100 else "Logging is on. You can close this window."}</div>'
                     f'<div style="height:14px;background:#e6e6e6;border-radius:7px;overflow:hidden"><div style="width:{k}%;height:100%;background:#06b025"></div></div>'
-                    f'<div style="margin-top:26px;text-align:right"><span class="btn{" pri" if k >= 100 else ""}">{"Finish" if k >= 100 else "Cancel"}</span></div></div>', 380, 760, 520, 210, "mtlog")
+                    f'<div style="margin-top:26px;text-align:right" data-t="setup"><span class="btn{" pri" if k >= 100 else ""}">{"Finish" if k >= 100 else "Cancel"}</span></div></div>', 380, 760, 520, 210, "mtlog")
     return desk(st["clock"], w, on=("settings",))
 
 
@@ -452,13 +452,13 @@ def startup_scripts(st):
     files = [("mpp-indesign-logger.jsx", "10/2/2026 8:33 AM", "JSX File", "18 KB")] if st.get("dropped") else []
     body = explorer(["Local Disk (C:)", "Users", "User", "AppData", "Roaming", "Adobe", "InDesign", "Version 20.0", "en_US", "Scripts", "Startup Scripts"],
                     files, sel=0 if st.get("dropped") else None)
-    w = window("Startup Scripts - File Explorer", body, 60, 140, 1160, 560, "explorer", tid="explorer")
+    w = window("Startup Scripts - File Explorer", body, 40, 60, 1200, 700 if st.get("downloads") else 1100, "explorer", tid="explorer")
     if st.get("drag"):
         w += ('<div style="position:absolute;left:520px;top:470px;padding:6px 10px;background:rgba(204,232,255,.9);border:1px solid #99d1ff;'
               'font-size:12px;z-index:40" data-t="drag">📄 mpp-indesign-logger.jsx<br><span style="color:#0067c0">→ Copy to Startup Scripts</span></div>')
     if st.get("downloads"):
         w += window("Downloads - File Explorer", explorer(["Downloads"], [("mpp-indesign-logger.jsx", "10/2/2026 8:32 AM", "JSX File", "18 KB"),
-                    ("MTLog-win-x64.zip", "10/2/2026 8:24 AM", "Compressed (zipped) Folder", "71,882 KB")], sel=0), 160, 720, 900, 380, "explorer")
+                    ("MTLog-win-x64.zip", "10/2/2026 8:24 AM", "Compressed (zipped) Folder", "71,882 KB")], sel=0), 120, 790, 1040, 420, "explorer")
     return desk(st["clock"], w, on=("explorer",))
 
 
@@ -470,12 +470,12 @@ def bee(st):
     body = (f'<div style="display:flex;height:100%;font:13px Noto"><div style="width:180px;background:#fdf6e3;border-right:1px solid #ddd;padding:10px;line-height:2">'
             f'<b>Users</b><br>🟢 Jess<br>🟢 Maya<br>🟢 Bri<br>🟡 Nora</div><div style="flex:1;display:flex;flex-direction:column">'
             f'<div style="flex:1;padding:12px;background:#fff">{msgs}</div><div style="height:70px;border-top:1px solid #ddd;padding:10px;color:#555" data-t="beein">{E(st.get("typing", ""))}</div></div></div>')
-    w = window(f'{st.get("who", "Jess")} - BeeBEEP 5.8.6', body, 260, 300, 760, 520, "bee")
+    w = window(f'{st.get("who", "Jess")} - BeeBEEP 5.8.6', body, 100, 120, 1080, 900, "bee")
     return desk(st["clock"], st.get("under", "") + w, on=("bee",))
 
 
 ASSIST_CSS = """
-.as{position:absolute;right:30px;top:90px;width:430px;background:#1f1d2b;border-radius:14px;color:#eee;font-family:Inter;box-shadow:0 18px 50px rgba(0,0,0,.45);
+.as{position:absolute;right:30px;top:150px;width:560px;zoom:1.25;background:#1f1d2b;border-radius:14px;color:#eee;font-family:Inter;box-shadow:0 18px 50px rgba(0,0,0,.45);
  padding:16px;z-index:30}
 .as .hd{display:flex;align-items:center;gap:10px;font:700 15px Inter;margin-bottom:12px}
 .as .dot{width:10px;height:10px;border-radius:50%;background:#3ddc84;box-shadow:0 0 8px #3ddc84}
@@ -503,7 +503,7 @@ def assistant(st):
              f'{cs or "<div style=color:#aaa;font-size:13px;padding:20px>Watching… first check soon.</div>"}</div>')
     if st.get("countdown"):
         panel += f'<div class="tip" data-t="tip">✳ MPP Assistant (Claude)<br><span style="color:#ffd45e">Next check in {st["countdown"]}</span></div>'
-    under = st.get("under", "")
+    under = st.get("under") or (f"<style>{SC_CSS}</style>" + sc_page("Seller Central", "sellercentral.amazon.com/home", sc_home_body()))
     return desk(st["clock"], under + panel, on=("mtlog", "claude"))
 
 
@@ -534,12 +534,15 @@ def claude(st):
             conv += f'<div class="um"{" data-t=" + m[2] if len(m) > 2 else ""}>{E(m[1])}</div>'
         else:
             conv += f'<div class="am"{" data-t=" + m[2] if len(m) > 2 else ""}>{m[1]}</div>'
+    if conv:
+        i = conv.rfind('<div class="')
+        conv = conv[:i] + '<div data-t="last" ' + conv[i + 5:]
     chats = st.get("chats", ["MT Log install + InDesign logger", "MPP Assistant setup", "Team timing analysis", "Proof automator questions", "Printing log rules"])
     side = "".join(f'<div class="it{" on" if i == st.get("on", 0) else ""}">{E(c)}</div>' for i, c in enumerate(chats))
     typing = st.get("typing", "")
     body = (f'<style>{CLAUDE_CSS}</style><div class="cl"><div class="side"><div style="font:600 17px Serif4;padding:4px 8px 14px">Claude</div>'
             f'<div class="new">⊕ New chat</div><div style="margin:14px 8px 6px;color:#8a8880;font-size:12px">Recents</div>{side}</div>'
-            f'<div class="main"><div class="ttl">{E(chats[st.get("on", 0)])} ▾</div><div class="conv">{conv}</div>'
+            f'<div class="main"><div class="ttl">{E(chats[st.get("on", 0)])} ▾</div><div class="conv" data-t="conv">{conv}</div>'
             f'<div class="inp" data-t="prompt"><div style="color:{"#141413" if typing else "#8a8880"}">{E(typing) if typing else "Reply to Claude…"}</div>'
             f'<div class="row"><span>＋</span><span>⚙</span><span style="margin-left:auto">Opus ▾</span><div class="send">↑</div></div></div></div></div>')
     return desk(st["clock"], chrome([(("#d97757", "✳"), chats[st.get("on", 0)] + " - Claude")], 0, "claude.ai/chat/0a1b2c3d", body, bookmarks=False),
@@ -588,12 +591,12 @@ def envvars(st):
                              f'<span class="btn">New...</span><span class="btn">Edit...</span><span class="btn">Delete</span></div>')
     body = box("User variables for User", rows, "uservars") + box("System variables", sv, "sysvars") + \
         '<div style="margin:6px 14px;text-align:right;display:flex;gap:6px;justify-content:flex-end"><span class="btn pri">OK</span><span class="btn">Cancel</span></div>'
-    w = window("Environment Variables", f'<div style="font-size:12px;background:#f9f9f9;height:100%">{body}</div>', 250, 220, 680, 560)
+    w = window("Environment Variables", f'<div style="font-size:12px;background:#f9f9f9;height:100%;zoom:1.45">{body}</div>', 90, 120, 1100, 830)
     if st.get("newdlg"):
-        w += window("New User Variable", f'<div style="padding:18px;font-size:12px;background:#f9f9f9;height:100%"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+        w += window("New User Variable", f'<div style="padding:18px;font-size:12px;zoom:1.4;background:#f9f9f9;height:100%"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
                     f'<span style="width:110px">Variable name:</span><div style="flex:1;border:1px solid #999;padding:5px;background:#fff" data-t="vname">{st["newdlg"][0]}</div></div>'
                     f'<div style="display:flex;align-items:center;gap:10px"><span style="width:110px">Variable value:</span><div style="flex:1;border:1px solid #999;padding:5px;background:#fff">{st["newdlg"][1]}</div></div>'
-                    f'<div style="margin-top:18px;display:flex;gap:6px;justify-content:flex-end"><span class="btn pri" data-t="ok">OK</span><span class="btn">Cancel</span></div></div>', 330, 560, 600, 190)
+                    f'<div style="margin-top:18px;display:flex;gap:6px;justify-content:flex-end"><span class="btn pri" data-t="ok">OK</span><span class="btn">Cancel</span></div></div>', 200, 620, 880, 280)
     return desk(st["clock"], w, on=("settings",))
 
 
@@ -638,8 +641,8 @@ def powershell(st):
     out = "".join(f'<div>{l}</div>' for l in lines)
     body = (f'<div style="background:#0c0c0c;height:100%;display:flex;flex-direction:column"><div style="height:40px;background:#202020;display:flex;align-items:flex-end;padding-left:8px">'
             f'<div style="background:#0c0c0c;color:#fff;border-radius:8px 8px 0 0;padding:8px 16px;font-size:12px">⚡ Windows PowerShell &nbsp;✕</div><span style="color:#ccc;padding:8px">＋ ⌄</span></div>'
-            f'<div style="padding:12px 14px;font:15px Mono;color:#cccccc;line-height:1.55">{out}</div></div>')
-    w = '<div class="w" style="left:90px;top:200px;width:1100px;height:640px" data-t="term"><div class="wb">' + body + '</div></div>'
+            f'<div style="padding:12px 14px;font:15px Mono;color:#cccccc;line-height:1.55" data-t="out">{out}</div></div>')
+    w = '<div class="w" style="left:40px;top:60px;width:1200px;height:1100px" data-t="term"><div class="wb">' + body + '</div></div>'
     return desk(st["clock"], st.get("under", "") + w, on=("term",))
 
 
@@ -665,14 +668,14 @@ def notepad(st):
             f'<div style="height:30px;display:flex;gap:18px;align-items:center;padding:0 12px;font-size:12px;border-bottom:1px solid #eee">File &nbsp; Edit &nbsp; View</div>'
             f'<div style="flex:1;padding:12px 16px;font:15px Mono;line-height:1.55;color:#111" data-t="text">{text}</div>'
             f'<div style="height:24px;border-top:1px solid #eee;font-size:11px;color:#555;padding:4px 12px">Ln 1, Col 1 &nbsp;|&nbsp; 100% &nbsp;|&nbsp; Windows (CRLF) &nbsp;|&nbsp; UTF-8</div></div>')
-    x, y, w, h = st.get("box", (120, 160, 1040, 760))
+    x, y, w, h = st.get("box", (40, 60, 1200, 1100))
     win = window(st.get("title", tabs[st.get("on", 0)] + " - Notepad"), body, x, y, w, h, "notepad")
     if st.get("saveas"):
         win += window("Save As", f'<div style="padding:16px;font-size:12px;background:#f9f9f9;height:100%"><div style="height:200px;border:1px solid #ddd;background:#fff;padding:8px;line-height:1.9">'
                       f'📁 Customer Service<br>📄 Shopify CS script 9.24.26.txt<br>📄 Amazon CS script.txt</div><div style="display:flex;gap:10px;align-items:center;margin-top:14px">'
                       f'<span style="width:80px">File name:</span><div style="flex:1;border:1px solid #0067c0;padding:5px;background:#fff" data-t="fname">{E(st["saveas"])}</div></div>'
                       f'<div style="display:flex;justify-content:flex-end;gap:6px;margin-top:14px"><span class="btn pri" data-t="save">Save</span><span class="btn">Cancel</span></div></div>',
-                      300, 420, 680, 360, "notepad")
+                      260, 420, 760, 400, "notepad")
     return desk(st["clock"], st.get("under", "") + win, on=("notepad",))
 
 
@@ -685,7 +688,7 @@ def proofs(st):
         files.insert(2, ("7614 - SAMPLE ORDER B - 10 - FLD - Copy", "10/2/2026 11:06 AM", "File folder", ""))
     ren = (2, "7614 - SAMPLE ORDER B - test diff date") if st.get("rename") else None
     body = explorer(["My Drive", "Orders", "Auto Proofs", "10-02-2026"], files, sel=st.get("sel"), rename=ren)
-    return desk(st["clock"], window("10-02-2026 - File Explorer", body, 60, 140, 1160, 620, "explorer", tid="explorer"), on=("explorer",))
+    return desk(st["clock"], window("10-02-2026 - File Explorer", body, 40, 60, 1200, 1100, "explorer", tid="explorer"), on=("explorer",))
 
 
 @screen
@@ -735,7 +738,7 @@ def shopify(st):
             f'<span style="margin-left:8px;background:#303030;color:#fff;border-radius:8px;padding:6px 12px;font-size:13px">Create order</span></div>'
             f'<div class="card"><div style="display:flex;gap:6px;padding:8px;font-size:13px;border-bottom:1px solid #ebebeb"><span style="padding:4px 10px">All</span>'
             f'<span style="padding:4px 10px;background:#ebebeb;border-radius:8px;font-weight:600" data-t="unf">Unfulfilled</span><span style="padding:4px 10px">Unpaid</span><span style="padding:4px 10px">Open</span><span style="padding:4px 10px">Archived</span></div>'
-            f'<table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="color:#616161;text-align:left;background:#f7f7f7"><th style="padding:8px 12px"></th><th>Order</th><th>Date</th><th>Customer</th><th>Total</th>'
+            f'<table data-t="orders" style="width:100%;border-collapse:collapse;font-size:13px"><tr style="color:#616161;text-align:left;background:#f7f7f7"><th style="padding:8px 12px"></th><th>Order</th><th>Date</th><th>Customer</th><th>Total</th>'
             f'<th>Payment status</th><th>Fulfillment status</th><th>Items</th></tr>{rows}</table></div></div></div></div>')
     return desk(st["clock"], chrome([(("#5e8e3e", "S"), "Sample Paper Co · Orders · Shopify")], 0, "admin.shopify.com/store/sample-paper-co/orders?selectedView=unfulfilled", body))
 
@@ -828,9 +831,9 @@ def workflow(st):
     else:
         right = ""
     body = (f'<style>{WF_CSS}</style><div class="h1">Create workflow <span class="pill" style="background:#e7f4f5;color:#007185;font-size:12px;vertical-align:middle">Seller Assistant · Beta</span></div>'
-            f'<div class="wf"><div class="card chat"><div style="font:600 14px Inter;margin-bottom:10px">✦ Seller Assistant</div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end">{bub}</div>'
+            f'<div class="wf"><div class="card chat" data-t="chat"><div style="font:600 14px Inter;margin-bottom:10px">✦ Seller Assistant</div><div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end">{bub}</div>'
             f'<div style="border:1px solid #888c8c;border-radius:10px;padding:10px;color:{"#0f1111" if st.get("typing") else "#6f7373"};font-size:13px;min-height:60px" data-t="wfin">{E(st.get("typing") or "Describe your workflow...")}</div></div>'
-            f'<div class="card" style="flex:1">{right}</div></div>')
+            f'<div class="card" style="flex:1" data-t="right">{right}</div></div>')
     return desk(st["clock"], f"<style>{SC_CSS}</style>" + sc_page("Create Workflow", "sellercentral.amazon.com/myworkflows/agents/create", body))
 
 
@@ -866,14 +869,14 @@ def csv_view(st):
 def zipview(st):
     files = [("customization_data.xml", "10/2/2026 1:34 PM", "XML Document", "6 KB"), ("surface_1_front.svg", "10/2/2026 1:34 PM", "SVG Document", "48 KB"),
              ("surface_2_back.svg", "10/2/2026 1:34 PM", "SVG Document", "22 KB"), ("preview.jpg", "10/2/2026 1:34 PM", "JPG File", "212 KB")]
-    w = window("112-5550193-7781024.zip - File Explorer", explorer(["Downloads", "112-5550193-7781024.zip"], files, sel=st.get("sel")), 60, 120, 1160, 420, "explorer")
+    w = window("112-5550193-7781024.zip - File Explorer", explorer(["Downloads", "112-5550193-7781024.zip"], files, sel=st.get("sel")), 40, 60, 1200, 1100 if not st.get("xml") else 520, "explorer")
     if st.get("xml"):
         xml = ['<?xml version="1.0" encoding="UTF-8"?>', '<customizationData>', '  <surface name="Front">', '    <area label="Name(s)">',
                '      <text>SARAH & BEN MILLER</text>', '      <font>Playfair Display</font>', '    </area>', '    <area label="Date">', '      <text>JUNE 6, 2027</text>',
                '    </area>', '  </surface>', '</customizationData>']
         xmlhtml = "".join("<div>" + E(l).replace(" ", "&nbsp;") + "</div>" for l in xml)
         w += window("customization_data.xml - Notepad", f'<div style="padding:12px 16px;font:15px Mono;line-height:1.55;background:#fff;height:100%">{xmlhtml}</div>',
-                    200, 580, 860, 440, "notepad")
+                    100, 600, 1080, 560, "notepad")
     return desk(st["clock"], w, on=("explorer",))
 
 
@@ -922,8 +925,7 @@ def gdoc(st):
     return desk(st["clock"], page)
 
 
-@screen
-def sc_home(st):
+def sc_home_body():
     tiles = [("Pending", "10", "#0f1111"), ("Unshipped", "72", "#0f1111"), ("Late shipment risk", "1", "#b12704"), ("Buyer messages", "4", "#c45500"), ("Returns", "0", "#0f1111")]
     t = "".join(f'<div class="card" style="flex:1" data-t="tile{i}"><div style="font-size:13px;color:#565959">{a}</div><div style="font:600 40px Inter;color:{c};margin-top:4px">{b}</div>'
                 f'<div class="lnk" style="font-size:12px;margin-top:4px">View ›</div></div>' for i, (a, b, c) in enumerate(tiles))
@@ -931,6 +933,12 @@ def sc_home(st):
             f'<div class="card" style="flex:2;height:320px"><b>Today\'s sales</b><div style="font:600 30px Inter;margin:8px 0">$1,284.50</div>'
             f'<div style="display:flex;align-items:flex-end;gap:8px;height:200px">' + "".join(f'<div style="flex:1;height:{h}%;background:#7fc2cc;border-radius:3px 3px 0 0"></div>' for h in (10, 4, 8, 3, 6, 12, 25, 40, 52, 61, 44, 58, 70)) +
             '</div></div><div class="card" style="flex:1;height:320px"><b>Account Health</b><div style="font:600 30px Inter;color:#067d62;margin-top:8px">Healthy</div></div></div>')
+    return body
+
+
+@screen
+def sc_home(st):
+    body = sc_home_body()
     return desk(st["clock"], f"<style>{SC_CSS}</style>" + sc_page("Seller Central", "sellercentral.amazon.com/home", body))
 
 
@@ -1015,7 +1023,7 @@ def gmail(st):
     body = (f'<style>{GMAIL_CSS}</style><div class="gm"><div class="top"><span style="font-size:20px">☰</span><b style="font:400 22px Roboto;color:#444">'
             f'<span style="color:#ea4335">M</span> Gmail</b><div class="s">🔍&nbsp; Search mail</div></div><div style="display:flex;flex:1"><div class="nav">'
             f'<div class="compose">✎ Compose</div><div class="on">📥 Inbox <span style="margin-left:auto;margin-right:12px">{38 - gone}</span></div><div>☆ Starred</div><div>⏱ Snoozed</div>'
-            f'<div>➤ Sent</div><div>📄 Drafts</div></div><div class="box">{tb}{out}</div></div></div>')
+            f'<div>➤ Sent</div><div>📄 Drafts</div></div><div class="box" data-t="inbox">{tb}{out}</div></div></div>')
     sn = f'<div class="snack">{st["snack"]}<span style="color:#8ab4f8">Undo</span></div>' if st.get("snack") else ""
     return desk(st["clock"], chrome([(("#ea4335", "M"), "Inbox (38) - shop@example.com - Gmail")], 0, "mail.google.com/mail/u/0/#inbox", body) + sn)
 
