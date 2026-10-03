@@ -178,6 +178,23 @@ Data: dwell durations, reprint/edit/cleaning classification, print-job gaps, pri
 timestamps. Caveat: logs give the WHAT and the time; the WHY is a hypothesis until the camera (or Dalia)
 confirms it.
 
+## 24. Listing-test detector + follow-up tracker (Dalia's A/B tests)
+Goal: Dalia runs many tests — create/update a listing, let it run 30+ days, then check results. She doesn't
+always type her intention. Have MT Log auto-surface each listing create/update as a CANDIDATE TEST so she
+can confirm it, document it, date it, and set a check-back reminder (~30 days).
+Detection signals (the "a test likely started" pattern): a browser_page on a listing edit/create page
+(Amazon Seller Central Edit listing / Manage Inventory, or Etsy listing editor) + a Save/Publish/Submit
+ui_action + ui_field_value changes on listing fields (title, price, bullets, keywords, images) + the
+SKU/ASIN/listing ID in view. For each, capture: date/time, which listing (SKU/ASIN + title if seen), what
+appears to have changed, and the platform.
+Output: end the daily report with "Possible tests started today" (listing, change, suggested check-back
+date = +30 days) AND "tests due for follow-up" (ones logged 30+ days ago). Dalia confirms which are real
+tests, annotates the intention, and sets the reminder (calendar / a Tests tab — ties to Project Tracker #15).
+Caveats (honest): the logs see the ACTION and which fields were touched, NOT the intention/hypothesis — she
+confirms + annotates. Sometimes the exact new value isn't captured. Can't tell a real test from a routine
+fix — she decides. Follow-up timing (30 days) is hers to set. Primarily Dalia's own PC; validate the
+detector against her logs (print-team logs won't have listing edits). (Operative: CLAUDE.md standard #11.)
+
 ## 22. Two lenses + the 4-state engagement table (the productivity standard)
 Goal: measure a print person two SEPARATE ways and never mix them. (a) OUTPUT lens (printer speed):
 signal = printer idle (no printer running); the person being busy is irrelevant. (b) PRODUCTIVITY lens

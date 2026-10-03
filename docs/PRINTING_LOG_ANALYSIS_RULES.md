@@ -101,6 +101,14 @@ A plain-English reference of the rules we built for reading the printing team's 
    it's used, not the internals — say "pull the script's code to confirm the wiring"; and never infer meaning
    from a name — list it as "noticed, confirm with Dalia," don't assert what it does.
 
+35c. **Surface listing tests to track (every daily analysis).** Dalia creates/updates a listing, lets it
+   run 30+ days, then checks results — often without typing her intention. End the report with a **"Possible
+   tests started"** section (each listing edit/create detected: date/time, listing SKU/ASIN + title, what
+   changed, platform, suggested +30-day check-back) and a **"tests due for follow-up"** list (detected 30+
+   days ago). Present each as a CANDIDATE ("you updated listing X — confirm as a test?") — the logs see the
+   action and fields touched, not the hypothesis; Dalia confirms which are real, annotates why, and sets the
+   reminder. Mainly her own PC (print-team logs won't have listing edits).
+
 ## Things NOT to do / blind spots
 
 31. **Don't use "did they open InDesign on this order" as a metric** — everyone's ~100%, it produces a
