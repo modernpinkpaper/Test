@@ -25,7 +25,8 @@ def font_css():
                          ("Inter", "inter", (400, 500, 600, 700, 800)), ("Serif4", "source-serif-4", (400, 600)),
                          ("Mono", "cascadia-code", (400, 600)), ("Noto", "noto-sans", (400, 500, 700))):
         for w in ws:
-            p = os.path.join(FONTS, pkg, "package", "files", f"{pkg}-latin-{w}-normal.woff2")
+            p = os.path.abspath(os.path.join(FONTS, pkg, "package", "files", f"{pkg}-latin-{w}-normal.woff2"))
+            assert os.path.exists(p), p
             out.append(f"@font-face{{font-family:'{fam}';font-weight:{w};src:url('file://{p}') format('woff2')}}")
     return "\n".join(out)
 
@@ -1098,8 +1099,11 @@ def render(out_dir, jobs):
             png = os.path.join(out_dir, key + ".png")
             if os.path.exists(png) and not os.environ.get("FORCE"):
                 continue
-            pg.set_content(page_html(name, st), wait_until="load")
+            hp = os.path.join(out_dir, key + ".html")
+            open(hp, "w").write(page_html(name, st))
+            pg.goto("file://" + hp, wait_until="load")
             pg.evaluate("document.fonts.ready")
+            os.remove(hp)
             boxes = pg.evaluate("""() => Object.fromEntries([...document.querySelectorAll('[data-t]')].map(e => {
                 const r = e.getBoundingClientRect(); return [e.dataset.t, [r.x, r.y, r.width, r.height]]; }))""")
             boxes["_content"] = pg.evaluate("""() => { let a = [1e9, 1e9, -1e9, -1e9];
