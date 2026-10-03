@@ -170,7 +170,7 @@ def build_timeline():
             a = np.zeros(int(len(txt.split()) * 0.27 * SR), np.float32)
             a[::997] = 0.001
         else:
-            a = faster(tighten(voices.say(VOICE, line)), f"{i:03d}_{abs(hash(line)) % 10 ** 8}")
+            a = faster(tighten(voices.say(VOICE, line)), f"{i:03d}_" + __import__("hashlib").md5(line.encode()).hexdigest()[:10])
         if sec != prev_sec and i:
             t += 0.25
         prev_sec = sec
