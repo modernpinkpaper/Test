@@ -149,6 +149,15 @@ def line_words(text):
     return re.sub(r"\[\w+\]\s*", "", text).split()
 
 
+def voice_cached(line):
+    import hashlib
+    import voices
+    tone, text = voices.split_tag(line)
+    ex, cfg, _ = voices.TONES[tone]
+    tag = f"cb3|{VOICE}|{tone}|{ex}|{cfg}|{text}|{os.path.getsize(voices.ref_for(VOICE))}"
+    return os.path.exists(os.path.join(voices.CACHE, hashlib.md5(tag.encode()).hexdigest() + ".wav"))
+
+
 def build_timeline():
     import voices
     import video_321 as V
@@ -157,7 +166,11 @@ def build_timeline():
     n = int(os.environ.get("LIMIT", len(LINES)))
     for i, ((sec, line), shot) in enumerate(list(zip(LINES, SHOTS))[:n]):
         tone, txt = voices.split_tag(line)
-        a = faster(tighten(voices.say(VOICE, line)), f"{i:03d}_{abs(hash(line)) % 10 ** 8}")
+        if os.environ.get("PLACEHOLDER") and not voice_cached(line):
+            a = np.zeros(int(len(txt.split()) * 0.27 * SR), np.float32)
+            a[::997] = 0.001
+        else:
+            a = faster(tighten(voices.say(VOICE, line)), f"{i:03d}_{abs(hash(line)) % 10 ** 8}")
         if sec != prev_sec and i:
             t += 0.25
         prev_sec = sec
@@ -166,6 +179,9 @@ def build_timeline():
             lead = 0.3
         dur = len(a) / SR
         cue_p = os.path.join(WORK, "lines", f"{i:03d}.cues.json")
+        if os.environ.get("PLACEHOLDER") and not voice_cached(line):
+            cue_p = os.path.join(WORK, "empty.cues.json")
+            json.dump([], open(cue_p, "w"))
         if not os.path.exists(cue_p):
             with tempfile.TemporaryDirectory() as d:
                 p = os.path.join(d, "l.wav")
@@ -423,13 +439,13 @@ def clock_at(seg, T):
     c = seg["shot"]["clock"]
     if isinstance(c, tuple):
         (h0, m0), (h1, m1) = to12(c[0]), to12(c[1])
-        a = (h0 % 12 + (12 if h0 < 7 else 0)) * 60 + m0
-        b = (h1 % 12 + (12 if h1 < 7 else 0)) * 60 + m1
+        a = (h0 % 12 + (12 if h0 < 7 or h0 == 12 else 0)) * 60 + m0
+        b = (h1 % 12 + (12 if h1 < 7 or h1 == 12 else 0)) * 60 + m1
         k = ease((T - seg["vs"]) / max(seg["t1"] - seg["vs"], 0.1))
         v = a + (b - a) * k
     else:
         h, m = to12(c)
-        v = (h % 12 + (12 if h < 7 else 0)) * 60 + m
+        v = (h % 12 + (12 if h < 7 or h == 12 else 0)) * 60 + m
     return v
 
 
@@ -505,6 +521,8 @@ def captions(frame, seg, T):
 
 def now_card(frame, seg, T, key):
     """The little card next to her: which app she's in."""
+    if seg["shot"].get("fx") in ("stats", "end", "title", "montage", "montage2"):
+        return
     app = APP_NAMES.get(key.rstrip("0123456789_") if key not in APP_NAMES else key, None) or app_for(key)
     d = ImageDraw.Draw(frame)
     d.rounded_rectangle((330, 1580, 1056, 1660), 24, fill=(255, 255, 255), outline=(245, 205, 220), width=4)
@@ -520,7 +538,7 @@ def app_for(key):
 
 
 APP_NAMES = {}
-APP_PREFIX = [("printq", "the printer queue"), ("sales", "Google Sheets"), ("teams", "Microsoft Teams"), ("player", "a screen recording"), ("rev_player", "a screen recording"),
+APP_PREFIX = [("custmsg", "Microsoft Teams"), ("wflink", "Microsoft Teams"), ("printq", "the printer queue"), ("sales", "Google Sheets"), ("teams", "Microsoft Teams"), ("player", "a screen recording"), ("rev_player", "a screen recording"),
               ("msgs", "Seller Central · messages"), ("waiting", "Seller Central · messages"), ("listing", "Amazon.com"), ("cl_", "my Claude chat"), ("typo", "my Claude chat"),
               ("env_q", "my Claude chat"), ("env_a", "my Claude chat"), ("why", "my Claude chat"), ("quit", "my Claude chat"), ("timing", "my Claude chat"),
               ("prog", "Programs and Features"), ("rein", "MT Log setup"), ("startup", "File Explorer"), ("fallbreak", "Microsoft Teams"), ("as_proj", "Apps Script"),
@@ -584,12 +602,12 @@ def fx_overlay(frame, seg, T):
         d.text((W / 2, 970), "do today?", font=font(76 * s), fill=INK, anchor="mm")
         d.text((W / 2, 1080), "Thursday · Oct 2", font=font(40 * s, 600), fill=(140, 110, 140), anchor="mm")
     elif fx in ("montage", "montage2", "timelapse"):
-        badge(frame, "⏩  TIME-LAPSE" if fx != "montage" else "⏩  EVERY APP · EVERY CLICK")
+        badge(frame, ">>  TIME-LAPSE" if fx != "montage" else ">>  EVERY APP · EVERY CLICK")
     elif fx == "counter":
         n = int(249 * ease((T - seg["vs"]) / max(seg["ve"] - seg["vs"], 0.1)))
         d.rounded_rectangle((300, 980, 780, 1130), 30, fill=(20, 14, 22))
         d.text((540, 1030), "SOP SCREENSHOTS", font=font(30), fill=(255, 190, 210), anchor="mm")
-        d.text((540, 1085), f"📸 {n}", font=font(60), fill=(255, 255, 255), anchor="mm")
+        d.text((540, 1085), f"{n}", font=font(60), fill=(255, 255, 255), anchor="mm")
     elif fx == "mtlogpop":
         k = eout((T - seg["vs"] - 0.4) / 0.3)
         if k > 0:
@@ -628,11 +646,11 @@ def fx_overlay(frame, seg, T):
         d.text((W / 2, 640), "that was", font=font(60, 600), fill=(140, 110, 140), anchor="mm")
         d.text((W / 2, 740), "DAY 1", font=font(170), fill=PINK, anchor="mm", stroke_width=8, stroke_fill=(255, 255, 255))
         d.rounded_rectangle((200, 880, 880, 1010), 60, fill=PINK)
-        d.text((W / 2, 945), "follow for day 2 →", font=font(54), fill=(255, 255, 255), anchor="mm")
+        d.text((W / 2, 945), "follow for day 2", font=font(54), fill=(255, 255, 255), anchor="mm")
 
 
-STATS = [("⏱", "6h 41m", "active on the computer"), ("🖱", "1,024", "clicks"), ("🌐", "241", "web pages"), ("🖨", "2 → 0", "prints that printed"),
-         ("✉", "4 → 0", "messages answered"), ("📊", "1", "very happy spreadsheet")]
+STATS = [("⏱", "6h 41m", "active on the computer"), ("🖱", "1,024", "clicks"), ("🌐", "241", "web pages"), ("🖨", "0 of 2", "prints actually printed"),
+         ("✉", "0 of 4", "messages answered"), ("📊", "1", "very happy spreadsheet")]
 STAT_WORDS = ["Okay", "seven", "thousand", "web", "prints", "messages", "spreadsheet"]
 
 
