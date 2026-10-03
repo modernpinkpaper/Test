@@ -772,3 +772,19 @@ if __name__ == "__main__":
         TL, total = build_timeline()
         for a in sys.argv[3:]:
             frame_at(float(a)).save(f"{sys.argv[2]}_{a}.png")
+
+
+def sheet(out, cols=8):
+    """Contact sheet: one frame from the middle of every line (quick framing check)."""
+    global TL
+    TL, total = build_timeline()
+    ims = [frame_at((s["vs"] + s["ve"]) / 2 + 0.3).resize((270, 480)) for s in TL]
+    rows = (len(ims) + cols - 1) // cols
+    c = Image.new("RGB", (270 * cols, 480 * rows), "white")
+    for i, im in enumerate(ims):
+        c.paste(im, ((i % cols) * 270, (i // cols) * 480))
+    c.save(out)
+
+
+if __name__ == "__main__" and sys.argv[1] == "sheet":
+    sheet(sys.argv[2])
