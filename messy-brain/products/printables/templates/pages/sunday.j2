@@ -1,0 +1,13 @@
+{% from "macros.j2" import page, icon, checklist %}
+{% call page(p, n) %}
+<div class="sgrid">
+  <div class="col">{{ checklist('Reset the house', p.house) }}{{ checklist('Reset me', p.me) }}</div>
+  <div class="col">{{ checklist('Reset the week', p.week) }}
+    <div class="card"><div class="h3">My big 3 this week</div>
+      {% for i in range(3) %}<div class="ci" style="min-height:40px"><span class="num">{{ i + 1 }}</span><span class="bl"></span></div>{% endfor %}
+    </div>
+  </div>
+</div>
+<div class="grow" style="display:flex;flex-direction:column"><div class="h3">Coming up this week</div>
+<div class="week7">{% for d in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}<div>{{ d }}</div>{% endfor %}</div></div>
+{% endcall %}

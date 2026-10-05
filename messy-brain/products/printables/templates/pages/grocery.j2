@@ -1,0 +1,10 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="g3">
+  {% for c in p.cats %}
+  <div class="card{% if loop.last %} soft{% endif %}"><div class="h3">{{ c }}</div>
+    {% for _ in range(7) %}<div class="ci fill"><span class="cb sm"></span><span class="bl"></span></div>{% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endcall %}

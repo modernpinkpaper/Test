@@ -1,0 +1,11 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="g2">
+  {% for c in p.cats %}
+  <div class="card"><div class="h3">{{ c }}</div>
+    <div class="colh"><span>Item</span><span style="width:34px;text-align:center">Have</span><span style="width:15px">Buy</span></div>
+    {% for _ in range(6) %}<div class="ci fill"><span class="bl"></span><span class="qty"></span><span class="cb sm"></span></div>{% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endcall %}

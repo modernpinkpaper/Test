@@ -1,0 +1,16 @@
+{% from "macros.j2" import page, icon, lines %}
+{% call page(p, n) %}
+<div class="tablewrap">
+<table class="grid meal">
+  <colgroup><col style="width:66px"><col><col><col></colgroup>
+  <thead><tr><th>Day</th><th>Breakfast</th><th>Lunch</th><th>Dinner</th></tr></thead>
+  <tbody>{% for d in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}<tr style="height:70px"><td class="dayc">{{ d }}</td><td></td><td></td><td></td></tr>{% endfor %}</tbody>
+</table>
+</div>
+<div class="two grow">
+  <div class="card"><div class="h3">No-brainer backup dinners</div><div class="lines grow"></div></div>
+  <div class="card"><div class="h3">Prep ahead &amp; defrost</div>
+    {% for i in range(5) %}<div class="ci fill"><span class="cb sm"></span><span class="bl"></span></div>{% endfor %}
+  </div>
+</div>
+{% endcall %}

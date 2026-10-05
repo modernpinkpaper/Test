@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block main %}
+<div class="links">
+  <h1 style="font-size:36px">Messy Brain, Tidy Home</h1>
+  <p>{{ cfg.tagline }}</p>
+  <a class="btn coral" href="{{ cfg.shop.ebook_url }}">📘 The 7-Day Home Reset ebook · {{ cfg.shop.ebook_price }}</a>
+  <a class="btn coral" href="{{ cfg.shop.printables_url }}">🖨️ Tidy Brain Printable Pack · {{ cfg.shop.printables_price }}</a>
+  <a class="btn" href="{{ cfg.shop.bundle_url }}">⭐ Get both (best value) · {{ cfg.shop.bundle_price }}</a>
+  <a class="btn ghost" href="/finds/">🛒 My Amazon finds for ADHD homes</a>
+  <a class="btn ghost" href="/blog/">💡 Free tips</a>
+  <p class="small">Some links are affiliate links. As an Amazon Associate I earn from qualifying purchases.</p>
+</div>
+{% endblock %}

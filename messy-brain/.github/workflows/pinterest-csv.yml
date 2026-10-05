@@ -1,0 +1,33 @@
+# On the 1st of each month, makes the Pinterest bulk-upload file(s) for the month
+# and saves them in the pinterest-uploads/ folder of this repo.
+# Upload them on Pinterest (desktop): Create -> Create Pins in bulk.
+name: Pinterest monthly file
+
+on:
+  schedule:
+    - cron: "0 12 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: state-writes
+  cancel-in-progress: false
+
+jobs:
+  csv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -r requirements.txt
+      - run: |
+          python tools/pinterest_csv.py 30
+          mkdir -p pinterest-uploads && cp build/pinterest/*.csv pinterest-uploads/
+      - run: |
+          git config user.name "automation"
+          git config user.email "automation@users.noreply.github.com"
+          git add pinterest-uploads state/pinterest_csv.json
+          git diff --cached --quiet || (git commit -m "Pinterest: monthly bulk upload file" && git pull --rebase && git push)

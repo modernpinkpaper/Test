@@ -1,0 +1,14 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="menu"><div class="menu-in">
+  {% for title, items in p.sections %}
+  <div class="msec"><h3>{{ title }}</h3>
+    {% for t, m in items %}<div class="mi"><span class="cb sm"></span><span>{{ t }}</span><span class="ld"></span><span class="mm">{{ m }}</span></div>{% endfor %}
+  </div>
+  {% endfor %}
+  <div class="msec"><h3>My own ideas</h3>
+    {% for _ in range(p.blanks) %}<div class="mi blank"><span class="cb sm"></span><span class="ld"></span></div>{% endfor %}
+  </div>
+  <div class="mfoot">{{ p.footnote }}</div>
+</div></div>
+{% endcall %}

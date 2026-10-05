@@ -1,0 +1,12 @@
+{% from "macros.j2" import page, icon, checklist %}
+{% call page(p, n) %}
+<div class="card soft">
+  <div class="h3">The 5-minute version<small>for low-energy days</small></div>
+  <div class="five-row">{% for i in p.five %}<span class="chip"><span class="cb"></span>{{ i }}</span>{% endfor %}</div>
+</div>
+<div class="zcols">
+  <div class="col">{{ checklist('Daily', p.daily, 'pick any 2') }}{{ checklist('Weekly', p.weekly) }}</div>
+  <div class="col">{{ checklist('Monthly', p.monthly) }}{{ checklist('Every few months', p.seasonal) }}</div>
+</div>
+<div class="card grow"><div class="h3">Notes &amp; supplies to buy</div><div class="lines grow"></div></div>
+{% endcall %}

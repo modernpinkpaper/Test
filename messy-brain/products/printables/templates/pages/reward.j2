@@ -1,0 +1,14 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="menu rew"><div class="menu-in">
+  {% for title, when, items in p.sections %}
+  <div class="msec"><h3>{{ title }}<small>{{ when }}</small></h3>
+    {% for t in items %}<div class="mi"><span class="cb sm"></span><span>{{ t }}</span><span class="ld"></span></div>{% endfor %}
+    {% for _ in range(2) %}<div class="mi blank"><span class="cb sm"></span><span class="ld"></span></div>{% endfor %}
+  </div>
+  {% endfor %}
+</div></div>
+<div class="card"><div class="h3">How I earn it</div>
+  {% for e in p.earn %}<div class="ci" style="border:none"><span style="width:44px;border-bottom:1px solid var(--rule);height:20px"></span><span>{{ e }}</span><span class="muted">=</span><span class="bl" style="border-bottom:1px solid var(--rule);height:20px"></span></div>{% endfor %}
+</div>
+{% endcall %}

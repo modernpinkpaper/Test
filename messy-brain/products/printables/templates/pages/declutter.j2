@@ -1,0 +1,17 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="tablewrap grow fillt">
+<table class="grid">
+  <colgroup><col style="width:70px"><col><col style="width:56px"><col style="width:56px"><col style="width:56px"><col style="width:66px"><col style="width:52px"></colgroup>
+  <thead><tr><th>Date</th><th>Spot I cleared</th><th class="c">Trash</th><th class="c">Donate</th><th class="c">Sell</th><th class="c">Relocate</th><th class="c">Min</th></tr></thead>
+  <tbody>{% for _ in range(p.rows) %}<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody>
+</table>
+</div>
+<div class="card"><div class="h3">Bags out the door<small>color one in for every bag</small></div>
+  <div class="bags">{% for i in range(p.bags) %}<span {% if (i + 1) % 10 == 0 %}class="m"{% endif %}>{% if (i + 1) % 10 == 0 %}{{ i + 1 }}{% endif %}</span>{% endfor %}</div>
+  <div class="hand muted" style="font-size:18px;margin-top:10px">Dashed circles are milestones. Every tenth bag earns a treat from the reward menu.</div>
+</div>
+<div class="card soft"><div class="h3">Donation run</div>
+  <div class="chips" style="padding:4px 0 6px">{% for t in ['Bagged up', 'In the car', 'Dropped off', 'Receipt saved', 'Treat claimed!'] %}<span class="chip"><span class="cb"></span>{{ t }}</span>{% endfor %}</div>
+</div>
+{% endcall %}

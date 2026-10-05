@@ -1,0 +1,14 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="tip"><span class="l">how:</span><span>Each day, pick three small things: one for your <b>home</b>, one for <b>future you</b>, one that's <b>kind to you</b>. Write them in, tick them off. One out of three still counts.</span></div>
+<div class="d3grid">
+  {% for d in days %}
+  <div class="card d3"><div class="day">{{ d }}</div>
+    {% for lab in ['Home', 'Future me', 'Kind to me'] %}<div class="ci"><span class="cb"></span><span class="lab">{{ lab }}</span><span class="bl"></span></div>{% endfor %}
+  </div>
+  {% endfor %}
+  <div class="card soft d3 ideas"><div class="day">Blank-brain ideas</div>
+    {% for g, xs in p.ideas %}<div class="ig"><b>{{ g }}</b><div>{{ xs|join(' · ') }}</div></div>{% endfor %}
+  </div>
+</div>
+{% endcall %}

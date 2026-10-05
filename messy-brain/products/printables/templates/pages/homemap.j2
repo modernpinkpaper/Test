@@ -1,0 +1,13 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="card" style="flex:1;min-height:0"><div class="h3">Sketch your home<small>boxes and arrows are perfect</small></div><div class="dotgrid"></div></div>
+<div class="two">
+  {% for half in p.things|slice(2) %}
+  <div class="tablewrap"><table class="grid">
+    <colgroup><col style="width:140px"><col></colgroup>
+    <thead><tr><th>Thing</th><th>Its home</th></tr></thead>
+    <tbody>{% for t in half %}<tr><td class="thing">{{ t }}</td><td></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endfor %}
+</div>
+{% endcall %}

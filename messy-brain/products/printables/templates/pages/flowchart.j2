@@ -1,0 +1,15 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="flow">
+  <div class="fstart">Pick up ONE item</div>
+  <div class="fno first"><span></span></div>
+  {% for q, ic, bin, what in p.steps %}
+  <div class="frow"><div class="fq"><span class="qn">{{ loop.index }}</span>{{ q }}</div><div class="fyes"><span>yes</span></div>
+    <div class="bin">{{ icon(ic) }}<div><b>{{ bin }}</b><span>{{ what }}</span></div></div></div>
+  <div class="fno"><span>no</span></div>
+  {% endfor %}
+  <div class="frow maybe"><div class="bin">{{ icon(p.maybe[0]) }}<div><b>{{ p.maybe[1] }}</b><span>{{ p.maybe[2] }}</span></div></div></div>
+</div>
+<div class="card"><div class="h3">When the timer rings</div><div class="chips" style="padding:4px 0 6px">{% for t in ['Trash bag out', 'Walk the Relocate basket', 'Donate bag in the car', 'Date the Maybe box'] %}<span class="chip"><span class="cb"></span>{{ t }}</span>{% endfor %}</div></div>
+<div class="tip"><span class="l">psst:</span><span>Stuck on one item for more than 10 seconds? It goes in Maybe. Keep moving. Momentum beats perfect decisions.</span></div>
+{% endcall %}

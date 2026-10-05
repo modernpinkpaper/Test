@@ -1,0 +1,113 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="{{ assets }}/brand.css">
+<style>
+  html, body { margin: 0; width: 1000px; height: 1500px; overflow: hidden; }
+  body { font-family: var(--font-body); color: var(--ink); background: var(--cream); position: relative; }
+  .wrap { position: absolute; inset: 0; padding: 90px 80px; box-sizing: border-box; display: flex; flex-direction: column; }
+  .brand { position: absolute; left: 0; right: 0; bottom: 52px; text-align: center; font: 600 30px var(--font-body); letter-spacing: .04em; color: var(--ink-soft); }
+  .brand b { color: var(--ink); }
+  .ad { position: absolute; right: 44px; top: 40px; font: 500 22px var(--font-body); color: var(--ink-soft); }
+  h1 { font-family: var(--font-display); font-weight: 800; line-height: 1.02; margin: 0; letter-spacing: -.01em; }
+  .sub { font-family: var(--font-hand); font-size: 64px; line-height: 1.05; margin-top: 26px; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(0); }
+  .tag { font-size: 26px; align-self: flex-start; }
+
+  /* ---------- list: title on top, checklist below ---------- */
+  .s-list h1 { font-size: 96px; margin-top: 36px; }
+  .s-list .sub { color: var(--coral); }
+  .s-list ul { list-style: none; padding: 0; margin: 50px 0 0; }
+  .s-list li { display: flex; gap: 26px; align-items: center; background: var(--paper); border-radius: 22px;
+               padding: 26px 30px; margin-bottom: 20px; font: 600 38px/1.2 var(--font-body); box-shadow: 0 4px 0 var(--line); }
+  .s-list li i { flex: none; width: 44px; height: 44px; border-radius: 12px; border: 4px solid var(--sage); position: relative; }
+  .s-list li i::after { content: ""; position: absolute; left: 12px; top: 2px; width: 12px; height: 24px;
+                        border: solid var(--sage); border-width: 0 6px 6px 0; transform: rotate(45deg); }
+
+  /* ---------- bold: big colour block ---------- */
+  .s-bold { background: var(--bg); }
+  .s-bold .wrap { justify-content: center; }
+  .s-bold h1 { font-size: 132px; color: var(--ink); }
+  .s-bold .sub { font-size: 76px; }
+  .s-bold .brand, .s-bold .ad { color: var(--ink); }
+  .s-bold .ring { position: absolute; width: 760px; height: 760px; right: -300px; top: -260px; border-radius: 50%; border: 70px solid rgba(255,255,255,.35); }
+  .s-bold .ring2 { position: absolute; width: 420px; height: 420px; left: -180px; bottom: -120px; border-radius: 50%; background: rgba(255,255,255,.28); }
+
+  /* ---------- note: sticky note on cream ---------- */
+  .s-note .note { position: relative; margin: 80px auto 0; width: 800px; min-height: 860px; background: var(--butter-soft);
+                  transform: rotate(-2.2deg); padding: 110px 70px 70px; box-sizing: border-box;
+                  box-shadow: 0 30px 60px rgba(43,42,51,.14), 0 3px 0 rgba(43,42,51,.06); }
+  .s-note .tape { position: absolute; top: -34px; left: 50%; width: 260px; height: 70px; margin-left: -130px;
+                  background: rgba(185,167,224,.55); transform: rotate(3deg); }
+  .s-note h1 { font-family: var(--font-hand); font-weight: 700; font-size: 124px; line-height: .98; }
+  .s-note .sub { font-family: var(--font-body); font-weight: 500; font-size: 44px; line-height: 1.25; margin-top: 40px; color: var(--ink-soft); }
+  .s-note .scribble { margin-top: 44px; height: 14px; width: 60%; border-radius: 99px; background: var(--coral); opacity: .75; }
+
+  /* ---------- find: single Amazon product ---------- */
+  .s-find .top { display: flex; justify-content: space-between; align-items: center; }
+  .s-find h1 { font-size: 128px; margin-top: 60px; }
+  .s-find .card { margin-top: auto; margin-bottom: 90px; background: var(--paper); border-radius: 34px; padding: 50px 56px;
+                  box-shadow: 0 6px 0 var(--line); position: relative; }
+  .s-find .pill { display: inline-block; background: var(--bg); border-radius: 999px; padding: 18px 34px; font: 700 44px var(--font-body); }
+  .s-find .why { font: 400 46px/1.4 var(--font-body); margin-top: 30px; color: var(--ink); }
+  .s-find .arrow { font-family: var(--font-hand); font-size: 64px; color: var(--coral); margin-top: 26px; }
+  .s-find .circle { position: absolute; width: 520px; height: 520px; border-radius: 50%; background: var(--bg); opacity: .55; right: -170px; top: 260px; }
+
+  /* ---------- find-note: handwritten "things that fixed my..." ---------- */
+  .s-findnote { background: var(--bg); }
+  .s-findnote .paper { margin: 40px auto 0; background: var(--paper); width: 820px; padding: 80px 70px 70px; box-sizing: border-box;
+                       border-radius: 8px; transform: rotate(1.6deg); box-shadow: 0 30px 60px rgba(43,42,51,.16);
+                       background-image: repeating-linear-gradient(transparent 0 68px, var(--line) 68px 70px); }
+  .s-findnote .kicker { font: 700 30px var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--coral); }
+  .s-findnote h1 { font-family: var(--font-hand); font-weight: 700; font-size: 110px; line-height: 1.0; margin-top: 20px; }
+  .s-findnote .name { font: 700 44px/1.25 var(--font-body); margin-top: 40px; }
+  .s-findnote .why { font: 400 38px/1.45 var(--font-body); color: var(--ink-soft); margin-top: 20px; }
+  .s-findnote .brand, .s-findnote .ad { color: var(--ink); }
+</style></head>
+<body class="s-{{ style }}" style="--bg: var(--{{ color }})">
+{% if style == 'list' %}
+  <div class="blob" style="width:460px;height:460px;background:var(--{{ color }}-soft);right:-160px;top:-140px"></div>
+  <div class="wrap">
+    <span class="tag">{{ kicker }}</span>
+    <h1>{{ title }}</h1>
+    <div class="sub">{{ sub }}</div>
+    <ul>{% for item in items[:5] %}<li><i></i>{{ item }}</li>{% endfor %}</ul>
+  </div>
+{% elif style == 'bold' %}
+  <div class="ring"></div><div class="ring2"></div>
+  <div class="wrap">
+    <span class="tag" style="background:rgba(255,255,255,.6)">{{ kicker }}</span>
+    <h1 style="margin-top:40px">{{ title }}</h1>
+    <div class="sub">{{ sub }}</div>
+  </div>
+{% elif style == 'note' %}
+  <div class="wrap">
+    <div class="note"><div class="tape"></div>
+      <h1>{{ title }}</h1>
+      <div class="scribble"></div>
+      <div class="sub">{{ sub }}</div>
+    </div>
+  </div>
+{% elif style == 'find' %}
+  <div class="circle"></div>
+  <div class="wrap">
+    <div class="top"><span class="tag">Amazon find · {{ kicker }}</span></div>
+    <h1>{{ title }}</h1>
+    <div class="card">
+      <span class="pill">{{ name }}</span>
+      <div class="why">{{ why }}</div>
+      <div class="arrow">tap to see it on Amazon →</div>
+    </div>
+  </div>
+{% elif style == 'findnote' %}
+  <div class="wrap">
+    <div class="paper">
+      <div class="kicker">{{ kicker }}</div>
+      <h1>{{ title }}</h1>
+      <div class="name">→ {{ name }}</div>
+      <div class="why">{{ why }}</div>
+    </div>
+  </div>
+{% endif %}
+  {% if ad %}<div class="ad">#ad · affiliate link</div>{% endif %}
+  <div class="brand"><b>Messy Brain, Tidy Home</b> · {{ domain }}</div>
+</body></html>

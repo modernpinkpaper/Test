@@ -1,0 +1,22 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<p class="lead">This pack isn't one more system to keep up with. It's a toolbox. Pick one page, use it until it stops helping, then pick another. Messy weeks are part of the plan, not a sign you failed.</p>
+<div>
+  <div class="h3">Not sure where to begin?</div>
+  <div class="starts">
+    <div class="start"><div class="if">The house feels like too much right now</div><div class="go">15-Minute Emergency Reset</div><div class="pg">Page {{ pn.emergency }}</div></div>
+    <div class="start"><div class="if">I want one tiny daily habit</div><div class="go">The Daily 3</div><div class="pg">Page {{ pn.daily3 }}</div></div>
+    <div class="start"><div class="if">I never know what to clean, or when</div><div class="go">Room-by-room zones</div><div class="pg">Pages {{ pn.kitchen }}–{{ pn.office }}</div></div>
+  </div>
+</div>
+<div class="grow" style="display:flex;flex-direction:column">
+  <div class="h3">What's inside</div>
+  <div class="toc" style="margin-top:6px">
+  {% for g, items in toc %}
+    <div class="tg"><h4>{{ g }}</h4>
+    {% for t, num in items %}<div class="te"><span>{{ t|safe }}</span><span class="ld"></span><span class="n">{{ num }}</span></div>{% endfor %}
+    </div>
+  {% endfor %}
+  </div>
+</div>
+{% endcall %}

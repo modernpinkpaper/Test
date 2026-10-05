@@ -1,0 +1,17 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="tablewrap">
+<table class="grid hab">
+  <colgroup><col style="width:170px"><col style="width:48px"><col style="width:48px">{% for _ in range(12) %}<col>{% endfor %}</colgroup>
+  <thead><tr><th>Bill</th><th>Due</th><th>Auto</th>{% for m in ['J','F','M','A','M','J','J','A','S','O','N','D'] %}<th>{{ m }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for _ in range(p.rows) %}<tr><td></td><td style="border-left:1px solid var(--line)"></td><td style="border-left:1px solid var(--line)"><span class="cb sm"></span></td>{% for m in range(12) %}<td {% if loop.first %}style="border-left:1px solid var(--line)"{% endif %}><span class="cb sm"></span></td>{% endfor %}</tr>{% endfor %}</tbody>
+</table>
+</div>
+<div class="h3" style="margin:2px 0 -8px">Paper pile, sorted</div>
+<div class="grow" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+  {% for t, s in [('To do', 'pay, sign, call'), ('To file', 'keep it'), ('To shred', 'bye!')] %}
+  <div class="card{% if loop.first %} soft{% endif %}"><div class="h3">{{ t }}<small>{{ s }}</small></div>
+    {% for _ in range(5) %}<div class="ci fill"><span class="cb sm"></span><span class="bl"></span></div>{% endfor %}</div>
+  {% endfor %}
+</div>
+{% endcall %}

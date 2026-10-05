@@ -1,0 +1,13 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="steps4">
+  {% for s in ['Pick one pile. Only one.', 'Set a 10-minute timer.', 'Sort into the 4 spots below.', 'Tick off the action list.'] %}<div><span class="num">{{ loop.index }}</span>{{ s }}</div>{% endfor %}
+</div>
+<div class="sort4">
+  {% for ic, t, d in p.sorts %}<div class="sortc">{{ icon(ic) }}<b>{{ t }}</b><span>{{ d }}</span><div class="tally">Tally</div></div>{% endfor %}
+</div>
+<div class="card grow"><div class="h3">This pile wants me to...<small>by when?</small></div>
+  {% for _ in range(9) %}<div class="ci fill"><span class="cb"></span><span class="bl"></span><span style="width:90px;height:60%;border-left:1px solid var(--line)"></span></div>{% endfor %}
+</div>
+<div style="display:flex;align-items:center;gap:16px"><div class="h3" style="margin:0">Piles conquered</div><div class="dots">{% for i in range(16) %}<span></span>{% endfor %}</div></div>
+{% endcall %}

@@ -1,0 +1,12 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="ch">
+  {% for t in p.days %}
+  <div class="cd{% if t.startswith('Rest day') %} rest{% endif %}{% if loop.last %} last{% endif %}">
+    <div class="top"><span class="dn"><small>DAY</small>{{ loop.index }}</span><span class="cb o"></span></div>
+    <div class="tx">{{ t }}</div>
+  </div>
+  {% endfor %}
+</div>
+<div class="tip"><span class="l">psst:</span><span>Aim for 15 minutes or less a day. Missed one? Skip it or double up later. The calendar is flexible. So are we.</span></div>
+{% endcall %}

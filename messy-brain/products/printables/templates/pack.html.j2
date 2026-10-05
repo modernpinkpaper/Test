@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Tidy Brain Printable Pack</title>
+<link rel="stylesheet" href="{{ brand_css }}">
+<style>
+{% include "pack.css" %}
+</style>
+</head>
+<body>
+{% for p in pages %}{% set n = loop.index %}{% include "pages/" ~ p.kind ~ ".j2" %}
+{% endfor %}
+</body>
+</html>

@@ -1,0 +1,15 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="cal">
+  {% for d in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}<div class="dh">{{ d }}</div>{% endfor %}
+  {% for _ in range(42) %}<div class="cell"><i></i></div>{% endfor %}
+</div>
+<div class="two">
+  <div class="card"><div class="h3">Weekly focus<small>one zone a week</small></div>
+    {% for w, z in p.rotation %}<div class="rot"><span class="cb sm"></span><span class="wk">{{ w }}</span><span>{{ z }}</span></div>{% endfor %}
+  </div>
+  <div class="card"><div class="h3">Once this month</div>
+    {% for i in p.once %}<div class="rot"><span class="cb sm"></span><span>{{ i }}</span></div>{% endfor %}
+  </div>
+</div>
+{% endcall %}

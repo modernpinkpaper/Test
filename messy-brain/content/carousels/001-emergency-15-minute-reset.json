@@ -1,0 +1,64 @@
+{
+  "id": "001-emergency-15-minute-reset",
+  "cta": "ebook",
+  "slides": [
+    {
+      "kind": "hook",
+      "title": "Someone's coming over in 15 minutes. Here's the ADHD emergency reset.",
+      "sub": "Save this for the next doorbell panic"
+    },
+    {
+      "kind": "point",
+      "num": 1,
+      "title": "Set a 15-minute timer first",
+      "body": "Not to rush you. To stop you from deep-cleaning the grout. The timer decides when we're done, not our brain."
+    },
+    {
+      "kind": "point",
+      "num": 2,
+      "title": "Only the rooms they'll see",
+      "body": "Entry, living room, bathroom. Close every other door. A closed door is a finished room today."
+    },
+    {
+      "kind": "point",
+      "num": 3,
+      "title": "Grab a laundry basket",
+      "body": "Walk through and toss every out-of-place thing in. Don't put anything away. Basket goes in the bedroom."
+    },
+    {
+      "kind": "point",
+      "num": 4,
+      "title": "Clear flat surfaces only",
+      "body": "Coffee table, counter, bathroom sink. Clear surfaces read as 'clean' even when the floor isn't perfect."
+    },
+    {
+      "kind": "point",
+      "num": 5,
+      "title": "Bathroom 3-step",
+      "body": "Fresh hand towel. Wipe the sink with whatever's there. Toilet lid down. That's the whole list."
+    },
+    {
+      "kind": "point",
+      "num": 6,
+      "title": "Last 2 minutes: light + smell",
+      "body": "Open a blind, turn on a lamp, light a candle or run the tap hot. Warm and bright beats spotless."
+    },
+    {
+      "kind": "quote",
+      "title": "Your guests are coming to see you, not to inspect your baseboards."
+    },
+    {
+      "kind": "cta",
+      "title": "This is Day 0 of a full 7-day reset",
+      "body": "The emergency reset plus the whole shame-free 7-day plan is in The Messy Brain Home Reset ebook. Link in bio."
+    }
+  ],
+  "caption": "Doorbell panic is a whole genre of ADHD.\nWhat's the first thing you shove in a closet?",
+  "hashtags": [
+    "adhd",
+    "adhdtiktok",
+    "cleaningmotivation",
+    "speedclean",
+    "adhdhome"
+  ]
+}

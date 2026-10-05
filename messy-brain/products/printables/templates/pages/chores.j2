@@ -1,0 +1,14 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="tablewrap grow" style="display:flex">
+<table class="grid chore" style="height:100%">
+  <colgroup><col><col style="width:92px">{% for _ in range(7) %}<col style="width:44px">{% endfor %}</colgroup>
+  <thead><tr><th>Chore</th><th>Who</th>{% for d in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}<th class="c">{{ d }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for ic, t in p.chores %}<tr><td><div class="cl"><span class="ico">{{ icon(ic) }}</span>{{ t }}</div></td><td></td>{% for _ in range(7) %}<td class="c"><span class="cb"></span></td>{% endfor %}</tr>{% endfor %}</tbody>
+</table>
+</div>
+<div class="card soft" style="flex-direction:row;align-items:center;gap:16px;padding:14px 18px">
+  <div style="width:44px;height:44px;flex:none">{{ icon('gift') }}</div>
+  <div style="flex:1"><div class="h3" style="margin-bottom:12px">When the chart is full, we get</div><div style="border-bottom:1px solid var(--rule);height:6px"></div></div>
+</div>
+{% endcall %}
