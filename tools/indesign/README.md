@@ -19,16 +19,20 @@ It answers the questions you asked:
 
 ---
 
-## 1. Set the secret, then install
+## 1. Install (no secret to paste anymore)
 
-First, open `mpp-indesign-logger.jsx` in any text editor and paste in the shared secret
-(the one in MT Log's `config.json` → `local_api.shared_secret`; ask the admin):
+**The easiest path: the MT Log installer now places this script for you.** When you run
+`MTLogSetup.exe`, it drops `mpp-indesign-logger.jsx` into every installed InDesign's
+*startup scripts* folder automatically, so it auto-runs the next time InDesign opens. You
+don't paste anything — the script reads MT Log's secret on its own (see note below). Just
+**restart InDesign** after installing MT Log and you're done.
 
-```js
-SHARED_SECRET: "the-real-shared-secret",
-```
+**No secret to paste.** The script reads the shared secret straight from MT Log's own file
+(`%LocalAppData%\MT Log\data\api-secret.txt`) on the same PC. That means a MT Log reinstall
+(which makes a new secret) can't break it — it always picks up the current one. Leave
+`SHARED_SECRET: ""` in the script unless you deliberately run a custom secret.
 
-It is already set to send to MT Log (`SEND_TO_MT_LOG: true`). Then:
+**Installing it by hand** (only if you're not using `MTLogSetup.exe`):
 
 1. Open InDesign.
 2. Open the Scripts panel: **Window → Utilities → Scripts**.
@@ -40,13 +44,16 @@ It is already set to send to MT Log (`SEND_TO_MT_LOG: true`). Then:
 To stop it, just quit InDesign. Running the script again restarts it cleanly (it never
 stacks up duplicate loggers).
 
-### Want to eyeball the output while testing?
+### Local backup copy (now ON by default)
 
-Set `LOG_TO_FILE: true` and it also writes a local copy you can open:
+`LOG_TO_FILE` now defaults to **true**, so the script always keeps a local daily copy you
+can open — a backup, and an easy way to confirm it's logging even if the live link is down:
 
 ```
 C:\Users\<you>\AppData\Local\MT Log\indesign\mpp-indesign-<PC>-<today>.jsonl
 ```
+
+(Set `LOG_TO_FILE: false` in the script if you don't want the local copy.)
 
 Each line is one action, for example:
 
@@ -62,7 +69,9 @@ Each line is one action, for example:
 
 ## 2. Make it start on its own (no clicking)
 
-Put the file in InDesign's **startup scripts** folder and it runs every time InDesign opens:
+**The MT Log installer already does this for you** (section 1). Do this by hand only if you
+installed the script manually: put the file in InDesign's **startup scripts** folder and it
+runs every time InDesign opens:
 
 ```
 C:\Program Files\Adobe\Adobe InDesign <version>\Scripts\startup scripts\

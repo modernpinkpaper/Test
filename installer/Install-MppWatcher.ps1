@@ -115,6 +115,32 @@ $lnk.Arguments = '--viewer'
 $lnk.WorkingDirectory = $InstallDir
 $lnk.Save()
 
+# Best-effort: drop the InDesign logger into every installed InDesign's "startup scripts"
+# folder so it auto-runs each time InDesign opens and reads the secret on its own (nothing
+# to paste). Skips quietly if InDesign isn't on this PC, so this never blocks the install.
+$jsx = Join-Path $SourceFolder 'mpp-indesign-logger.jsx'
+if (Test-Path $jsx) {
+    Write-Host '   Placing the InDesign logger (if InDesign is installed)...'
+    try {
+        $placed = 0
+        foreach ($pf in @($env:ProgramFiles, ${env:ProgramFiles(x86)})) {
+            if (-not $pf) { continue }
+            $adobe = Join-Path $pf 'Adobe'
+            if (-not (Test-Path $adobe)) { continue }
+            Get-ChildItem -Path $adobe -Directory -Filter 'Adobe InDesign*' -ErrorAction SilentlyContinue | ForEach-Object {
+                $dest = Join-Path $_.FullName 'Scripts\startup scripts'
+                try {
+                    New-Item -ItemType Directory -Force -Path $dest | Out-Null
+                    Copy-Item -Path $jsx -Destination $dest -Force
+                    $placed++
+                } catch {}
+            }
+        }
+        if ($placed -gt 0) { Write-Host "   InDesign logger installed to $placed startup folder(s) (restart InDesign to load)." }
+        else { Write-Host '   No InDesign found - logger not placed (fine; nothing to do).' }
+    } catch { Write-Host '   Could not place the InDesign logger; skipping (not required).' }
+}
+
 if (-not $NoWatchdog) {
     Write-Host '   Installing the watchdog service (restarts a stopped watcher within ~30 s)...'
     if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {

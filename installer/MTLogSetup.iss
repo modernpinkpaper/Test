@@ -42,6 +42,7 @@ Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\docs\PRIVACY.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\docs\LOCAL_API.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\tools\mpp-watcher-client.user.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\tools\indesign\mpp-indesign-logger.jsx"; DestDir: "{app}"; Flags: ignoreversion
 
 [Run]
 Filename: "powershell.exe"; \

@@ -38,14 +38,17 @@ var CONFIG = {
     // it with this PC's name + the employee + the date and files it in that person's day.
     SEND_TO_MT_LOG: true,
 
-    // MUST match "local_api.shared_secret" in MT Log's config.json. Ask the admin.
-    // If this is wrong/blank, sends are quietly refused.
-    SHARED_SECRET: "PUT-THE-SHARED-SECRET-HERE",
+    // The secret that lets this script talk to MT Log. LEAVE THIS BLANK — the script now
+    // reads it automatically from MT Log's own file (api-secret.txt) on this PC, so there
+    // is nothing to paste and a MT Log reinstall can't break it. Only set a value here if
+    // you deliberately run a custom secret (then it must match MT Log's config).
+    SHARED_SECRET: "",
     PORT: 47821,
 
-    // Optional local .jsonl copy. Off by default (MT Log is the real destination).
-    // Flip to true only if you want to eyeball the output on this PC while testing.
-    LOG_TO_FILE: false,
+    // Keep a local .jsonl copy of the day's InDesign actions on this PC, as a backup and an
+    // easy way to confirm logging is working (even if the live link to MT Log is down). MT
+    // Log is still the main destination; this is just a safety net. Set false to turn off.
+    LOG_TO_FILE: true,
 
     // How often (ms) to check tool / active doc / swatch edits / stroke & style changes.
     POLL_MS: 2000,
@@ -166,6 +169,42 @@ function jsonObject(o) {
     var parts = [], k;
     for (k in o) if (o.hasOwnProperty(k) && o[k] !== undefined) parts.push('"' + jsonEscape(k) + '":' + jsonValue(o[k]));
     return "{" + parts.join(",") + "}";
+}
+
+// ====================================================================================
+//  The shared secret — read automatically from MT Log's own file (api-secret.txt)
+//  so there is nothing to paste and a MT Log reinstall can't break it.
+// ====================================================================================
+var _secretCache = null;      // resolved secret string ("" = none found)
+var _secretCheckedMs = 0;     // last time we looked, so we can re-read if it rotates
+
+function mtLogDataFolder() {
+    // MT Log keeps its data (incl. api-secret.txt) in %LocalAppData%\MT Log\data.
+    try { return new Folder(Folder.userData.parent.fsName + "/Local/MT Log/data"); }
+    catch (e) { return null; }
+}
+
+function resolveSecret() {
+    // A secret deliberately set in CONFIG always wins.
+    if (CONFIG.SHARED_SECRET && CONFIG.SHARED_SECRET.length &&
+        CONFIG.SHARED_SECRET !== "PUT-THE-SHARED-SECRET-HERE") return CONFIG.SHARED_SECRET;
+    // Otherwise read MT Log's api-secret.txt. Re-check at most every 60s (cheap, and picks
+    // up a new secret after a reinstall without needing InDesign restarted).
+    var now = new Date().getTime();
+    if (_secretCache !== null && (now - _secretCheckedMs) < 60000) return _secretCache;
+    _secretCheckedMs = now;
+    _secretCache = "";
+    try {
+        var dir = mtLogDataFolder();
+        if (dir) {
+            var f = new File(dir.fsName + "/api-secret.txt");
+            if (f.exists && f.open("r")) {
+                var s = f.read(); f.close();
+                if (s) _secretCache = String(s).replace(/^\s+|\s+$/g, "");
+            }
+        }
+    } catch (e) { _secretCache = ""; }
+    return _secretCache;
 }
 
 // ====================================================================================
@@ -292,6 +331,8 @@ function toHex(bin) { var out = "", i; for (i = 0; i < bin.length; i++) out += (
 function sendToMtLog(eventType, data, description) {
     if (!CONFIG.SEND_TO_MT_LOG) return;
     try {
+        var secret = resolveSecret();
+        if (!secret) return; // no secret found yet — the local backup file still records it
         var payload = {
             event_type: eventType, script_name: "MPP InDesign Logger",
             description: description || "", timestamp: isoUtc(), data: data
@@ -299,7 +340,7 @@ function sendToMtLog(eventType, data, description) {
         var body = jsonObject(payload);
         var bodyBin = utf8(body);
         var ts = String(Math.floor(new Date().getTime() / 1000));
-        var sig = toHex(hmacSha256(utf8(CONFIG.SHARED_SECRET), utf8(ts + "." + body)));
+        var sig = toHex(hmacSha256(utf8(secret), utf8(ts + "." + body)));
         var conn = new Socket();
         if (conn.open("127.0.0.1:" + CONFIG.PORT, "BINARY")) {
             var req = "POST /v1/events HTTP/1.0\r\n" +
