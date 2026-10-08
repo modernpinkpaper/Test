@@ -16,6 +16,27 @@ jobs:
           dotnet-version: 8.0.x
       - run: dotnet test tests/MppWatcher.Core.Tests -c Release
 
+  crash-doctor:
+    name: InDesign Crash Doctor tests (Windows PowerShell 5.1 and 7)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tests on Windows PowerShell 5.1
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\indesign-crash-doctor\tests\Test-CrashDoctor.ps1
+      - name: Tests on PowerShell 7
+        shell: pwsh
+        run: pwsh -NoProfile -File tools\indesign-crash-doctor\tests\Test-CrashDoctor.ps1
+      - name: Full run on a real Windows machine (no InDesign installed)
+        shell: powershell
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'crash-report'
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools\indesign-crash-doctor\InDesignCrashDoctor.ps1 -NoOpen -OutFolder $out -Days 30
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $html = Get-ChildItem $out -Filter *.html | Select-Object -First 1
+          if (-not $html) { Write-Error 'No report was written'; exit 1 }
+          Get-Content (Get-ChildItem $out -Filter *.txt | Select-Object -First 1).FullName
+
   windows:
     name: Windows build, tests, smoke test, package
     runs-on: windows-latest
