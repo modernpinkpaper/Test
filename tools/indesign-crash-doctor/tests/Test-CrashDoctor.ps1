@@ -169,6 +169,17 @@ $vr = Get-Verdict $crashes $routine @() @() @() @() $false 90
 Assert ((($vr.Findings | ForEach-Object { $_.Title }) -join ' ') -notmatch 'changed in the week before') 'daily virus-list and Store updates are not reported as causes'
 $mdObj = '{"document":{"name":"HNP004 weekly planner.indd","unsaved":false}}' | ConvertFrom-Json
 Assert ((Get-Prop $mdObj 'document') -eq 'HNP004 weekly planner.indd') 'MT Log document objects show their name'
+
+# MT Log: a shared folder holds every PC's log - only this PC's events are used
+$mtDir = Join-Path $work 'mtlog'
+New-Item -ItemType Directory -Path $mtDir | Out-Null
+$ct = [datetime]'2026-10-08T12:04:25'
+$mk = { param($pc, $doc, $sec) '{"computer_id":"' + $pc + '","timestamp_local":"' + $ct.AddSeconds(-$sec).ToString('yyyy-MM-ddTHH:mm:ss') + '","event_type":"app_session_start","process_name":"InDesign","window_title":"' + $doc + ' @ 100%"}' }
+$lines = @((& $mk 'ANNIE' 'Gift Message.indd' 60), (& $mk 'KAYLAPC' 'Other PC.indd' 10))
+[System.IO.File]::WriteAllLines((Join-Path $mtDir 'events.jsonl'), [string[]]$lines)
+$mc = [pscustomobject]@{ Time = $ct; Document = ''; LastActions = @() }
+$null = Add-MtLogContext @($mc) @($mtDir) 'ANNIE'
+Assert ($mc.Document -eq 'Gift Message.indd') "MT Log events from other PCs are ignored ($($mc.Document))"
 $empty = Get-Verdict @() @() @() @() @() @() $false 90
 Assert ((($empty.Findings | ForEach-Object { $_.Title }) -join ' ') -match 'No crash records') 'no crashes gives a clear message'
 

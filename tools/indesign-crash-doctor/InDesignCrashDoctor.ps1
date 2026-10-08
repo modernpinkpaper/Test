@@ -954,7 +954,7 @@ function Get-MtLogFolders([string]$Given) {
     return $list
 }
 
-function Add-MtLogContext($Crashes, [string[]]$Folders) {
+function Add-MtLogContext($Crashes, [string[]]$Folders, [string]$Computer = $env:COMPUTERNAME) {
     if (-not $Folders -or $Folders.Count -eq 0 -or $Crashes.Count -eq 0) { return $false }
     $found = $false
     $byDay = $Crashes | Group-Object { $_.Time.ToString('yyyy-MM-dd') }
@@ -972,6 +972,9 @@ function Add-MtLogContext($Crashes, [string[]]$Folders) {
                 if ($line -notmatch '(?i)indesign') { continue }
                 try { $e = $line | ConvertFrom-Json } catch { continue }
                 if ((Get-Prop $e 'process_name') -notmatch '(?i)^indesign' -and (Get-Prop $e 'application') -notmatch '(?i)indesign') { continue }
+                # The shared Drive folder holds every PC's log; only this PC's events belong to its crashes.
+                $pc = Get-Prop $e 'computer_id'
+                if ($Computer -and $pc -and $pc -ne $Computer) { continue }
                 try { $t = [datetime]::Parse((Get-Prop $e 'timestamp_local'), [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind).ToLocalTime() } catch { continue }
                 $events += [pscustomobject]@{ Time = $t; Event = $e }
             }
