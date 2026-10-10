@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hair Color Try-On</title>
+<style>
+  :root { --bg:#faf7f8; --card:#fff; --ink:#2a2226; --mute:#74686e; --line:#e8dfe3; --brand:#b0306a; --brand-d:#8d2554; --good:#2f7d4f; --warn:#a8661a; --info:#4a5a8a; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  header { padding:14px 16px; border-bottom:1px solid var(--line); background:var(--card); }
+  header h1 { margin:0; font-size:20px; } header p { margin:2px 0 0; color:var(--mute); font-size:14px; }
+  main { display:grid; gap:16px; padding:16px; max-width:1200px; margin:0 auto; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); }
+  @media (max-width: 860px) { main { grid-template-columns: minmax(0,1fr); } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:14px; }
+  .card h2 { margin:0 0 8px; font-size:16px; }
+  label { display:block; font-size:14px; color:var(--mute); margin:10px 0 4px; }
+  select, input[type=text], input[type=search] { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; color:var(--ink); }
+  input[type=range] { width:100%; accent-color:var(--brand); }
+  button { font:inherit; padding:9px 14px; border-radius:8px; border:1px solid var(--brand); background:var(--brand); color:#fff; cursor:pointer; }
+  button.ghost { background:#fff; color:var(--brand); } button:disabled { opacity:.5; cursor:default; }
+  button.sm { padding:5px 10px; font-size:14px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; } .row > * { flex:0 0 auto; }
+  .grow { flex:1 1 auto !important; }
+  .val { float:right; color:var(--ink); font-weight:600; }
+  .stage { position:relative; width:100%; background:#222; border-radius:10px; overflow:hidden; touch-action:none; user-select:none; }
+  .stage canvas { display:block; width:100%; height:auto; }
+  .stage .layer { position:absolute; inset:0; }
+  #beforeWrap { position:absolute; inset:0; overflow:hidden; clip-path: inset(0 50% 0 0); }
+  #beforeWrap canvas { width:100%; }
+  #divider { position:absolute; top:0; bottom:0; left:50%; width:3px; background:#fff; box-shadow:0 0 4px rgba(0,0,0,.5); pointer-events:none; }
+  #knob { position:absolute; top:50%; left:50%; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:#fff; box-shadow:0 1px 6px rgba(0,0,0,.5); display:grid; place-items:center; font-size:14px; color:var(--brand); pointer-events:none; }
+  .tag { position:absolute; top:8px; padding:2px 8px; border-radius:6px; background:rgba(0,0,0,.55); color:#fff; font-size:12px; pointer-events:none; }
+  .empty { padding:60px 16px; text-align:center; color:#ddd; }
+  .note { font-size:13px; color:var(--mute); }
+  .msg { padding:8px 10px; border-radius:8px; margin:6px 0; font-size:14px; border-left:4px solid var(--info); background:#f1f3fa; }
+  .msg.good { border-color:var(--good); background:#eef7f1; } .msg.warn { border-color:var(--warn); background:#fbf3e8; }
+  .chips button { padding:4px 10px; font-size:13px; } .chips button.on { background:var(--brand); color:#fff; } .chips button { background:#fff; color:var(--brand); }
+  .chips button.on { background:var(--brand); color:#fff; }
+  .swatch { display:inline-block; width:18px; height:18px; border-radius:4px; vertical-align:middle; margin-right:6px; border:1px solid rgba(0,0,0,.2); }
+  .badge { display:inline-block; font-size:12px; padding:1px 8px; border-radius:10px; background:#eee; color:#444; margin-left:6px; }
+  .badge.checked { background:#e2f3e8; color:#245c3a; } .badge.partial { background:#fbefd9; color:#7a4d10; } .badge.unverified { background:#f8e1e1; color:#7a2020; }
+  details { margin-top:8px; } summary { cursor:pointer; color:var(--brand); }
+  ul.facts { margin:6px 0 0; padding-left:20px; font-size:14px; } ul.facts li { margin:3px 0; }
+  .looks { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; }
+  .look { border:1px solid var(--line); border-radius:8px; overflow:hidden; font-size:12px; } .look img { width:100%; display:block; } .look div { padding:4px 6px; }
+  #status { font-size:14px; color:var(--mute); margin-top:6px; min-height:20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Hair Color Try-On</h1>
+  <p>Your photo never leaves your device. Estimates only — always do a strand test.</p>
+</header>
+
+<main>
+  <section>
+    <div class="card">
+      <div class="row">
+        <input id="file" type="file" accept="image/*" class="grow">
+        <button id="btnAuto" class="ghost" disabled>Find my hair</button>
+      </div>
+      <div id="status">Choose a clear, well-lit photo. Natural daylight, no filters, hair down and facing the camera works best.</div>
+    </div>
+
+    <div class="card">
+      <div class="stage" id="stage">
+        <div class="empty" id="empty">No photo yet</div>
+        <canvas id="cvAfter" hidden></canvas>
+        <div id="beforeWrap" hidden><canvas id="cvBefore"></canvas></div>
+        <canvas id="cvOver" class="layer" hidden></canvas>
+        <div id="divider" hidden></div><div id="knob" hidden>⇆</div>
+        <span class="tag" style="left:8px" id="tagBefore" hidden>Before</span>
+        <span class="tag" style="right:8px" id="tagAfter" hidden>After (estimate)</span>
+      </div>
+      <div class="row chips" style="margin-top:10px" id="viewChips">
+        <button data-view="low">Low</button><button data-view="expected" class="on">Expected</button><button data-view="high">High</button>
+        <span class="note grow">"Give or take": Low = weaker result, High = stronger result.</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnSave" class="ghost sm" disabled>Save this look</button>
+        <button id="btnDownload" class="ghost sm" disabled>Download image</button>
+        <label class="row" style="margin:0"><input type="checkbox" id="chkGray"> show where it thinks my gray is</label>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="btnEdit" class="ghost sm" disabled>Fix hair outline</button>
+        <span id="brushTools" class="row" hidden>
+          <span class="row chips"><button id="bAdd" class="on sm">Add hair</button><button id="bErase" class="sm">Erase</button></span>
+          <input type="range" id="brushSize" min="4" max="60" value="20" style="width:120px">
+          <button id="btnDone" class="sm">Done</button>
+        </span>
+      </div>
+    </div>
+
+    <div class="card" id="looksCard" hidden>
+      <h2>Saved looks</h2>
+      <div class="looks" id="looks"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>1. Your hair</h2>
+      <label>Gray in the main hair <span class="val" id="vBody">60%</span></label>
+      <input type="range" id="pBody" min="0" max="100" value="60">
+      <label>Gray at the hairline &amp; temples <span class="val" id="vEdge">90%</span></label>
+      <input type="range" id="pEdge" min="0" max="100" value="90">
+      <label>Hairline / temple zone width <span class="val" id="vZone">8%</span></label>
+      <input type="range" id="zone" min="2" max="20" value="8">
+      <label>Your natural brown level <span class="val" id="vLevel">auto</span></label>
+      <div class="row"><input type="range" id="level" min="1" max="10" step="0.5" value="4" class="grow"><button id="btnAutoLevel" class="ghost sm">Auto</button></div>
+      <p class="note" id="hairNote"></p>
+    </div>
+
+    <div class="card">
+      <h2>2. Pick a formula</h2>
+      <label>Brand &amp; line</label>
+      <select id="line"></select>
+      <div id="lineMeta" class="note"></div>
+      <label>Shade <span class="note">(search by code or name)</span></label>
+      <input type="search" id="shadeSearch" placeholder="e.g. 5BC, 5N, Walnut">
+      <select id="shade" size="6" style="margin-top:6px"></select>
+      <details id="custom"><summary>My shade isn't listed — enter it</summary>
+        <div class="row" style="margin-top:8px">
+          <select id="cLevel" style="width:auto"></select><select id="cTone" style="width:auto"></select>
+          <button id="btnCustom" class="ghost sm">Use it</button>
+        </div>
+        <p class="note">Read the level and tone letters off the box (e.g. 5 and BC).</p>
+      </details>
+      <label>Developer <span class="note">(only this brand's own developers are listed)</span></label>
+      <select id="dev"></select>
+      <div id="devNote" class="note"></div>
+      <label>Time on hair <span class="val" id="vTime">20 min</span></label>
+      <input type="range" id="time" min="5" max="60" step="5" value="20">
+      <p class="note" id="timeNote"></p>
+    </div>
+
+    <div class="card">
+      <h2>3. What the app expects</h2>
+      <div id="explain"><span class="note">Pick a photo and a formula.</span></div>
+      <details id="detLine"><summary>Where this came from</summary><div id="lineFacts"></div></details>
+    </div>
+
+    <div class="card">
+      <h2>4. Teach it your hair (optional)</h2>
+      <p class="note">After you color for real, compare to the preview and nudge these. They are saved on this device and apply to every formula.</p>
+      <label>Result depth: darker ◂ ▸ lighter <span class="val" id="vDepth">0</span></label>
+      <input type="range" id="calDepth" min="-20" max="20" value="0">
+      <label>Gray coverage: less ◂ ▸ more <span class="val" id="vCovCal">100%</span></label>
+      <input type="range" id="calCov" min="50" max="130" value="100">
+      <button id="btnCalReset" class="ghost sm" style="margin-top:8px">Reset</button>
+    </div>
+  </section>
+</main>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
