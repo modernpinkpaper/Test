@@ -74,17 +74,38 @@ t('20 vs 30 min is a modest difference (< 12%)', () => {
 t('half the time gives clearly less effect', () => { assert(E.timeFactor(10, 20) < 0.85); });
 
 console.log('gray detection');
-t('gray % slider is honoured (60% body / 90% edge)', () => {
-  const w = 200, h = 200, n = w * h, L = new Float32Array(n), a = new Float32Array(n).fill(8), b = new Float32Array(n).fill(14);
-  const alpha = new Float32Array(n).fill(1), edge = new Uint8Array(n);
+function zoneImage(brightBody, brightEdge, brightLen) {
+  const w = 300, h = 100, n = w * h, L = new Float32Array(n), a = new Float32Array(n).fill(8), b = new Float32Array(n).fill(14);
+  const alpha = new Float32Array(n).fill(1), zone = new Uint8Array(n);
   let s = 12345; const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
-  for (let i = 0; i < n; i++) { L[i] = rnd() < 0.5 ? 20 + rnd() * 8 : 55 + rnd() * 20; if (i % w < 40) edge[i] = 1; }
-  const r = E.grayWeights({ L, a, b, alpha, edge, pctBody: 0.6, pctEdge: 0.9 });
-  let bodyG = 0, bodyN = 0, edgeG = 0, edgeN = 0;
-  for (let i = 0; i < n; i++) { if (edge[i]) { edgeN++; if (r.g[i] > 0.5) edgeG++; } else { bodyN++; if (r.g[i] > 0.5) bodyG++; } }
-  assert(Math.abs(bodyG / bodyN - 0.6) < 0.04, 'body ' + bodyG / bodyN);
-  assert(Math.abs(edgeG / edgeN - 0.9) < 0.04, 'edge ' + edgeG / edgeN);
+  for (let i = 0; i < n; i++) {
+    const x = i % w; zone[i] = x < 100 ? 1 : x < 200 ? 0 : 2;
+    const frac = zone[i] === 1 ? brightEdge : zone[i] === 0 ? brightBody : brightLen;
+    L[i] = rnd() < frac ? 58 + rnd() * 20 : 18 + rnd() * 8;
+  }
+  return { L, a, b, alpha, zone, n };
+}
+const share = (r, zone, z) => { let c = 0, k = 0; for (let i = 0; i < zone.length; i++) if (zone[i] === z) { k++; if (r.g[i] > 0.5) c++; } return c / k; };
+t('gray % sliders per zone are honoured when the photo really has that much gray (90 / 60 / 15)', () => {
+  const im = zoneImage(0.8, 0.97, 0.3);
+  const r = E.grayWeights({ L: im.L, a: im.a, b: im.b, alpha: im.alpha, zone: im.zone, pct: [0.6, 0.9, 0.15] });
+  assert(Math.abs(share(r, im.zone, 0) - 0.6) < 0.05, 'top ' + share(r, im.zone, 0));
+  assert(Math.abs(share(r, im.zone, 1) - 0.9) < 0.05, 'edge ' + share(r, im.zone, 1));
+  assert(Math.abs(share(r, im.zone, 2) - 0.15) < 0.05, 'lengths ' + share(r, im.zone, 2));
   assert(r.pigLevel < 4.5, 'pig level ' + r.pigLevel);
+});
+t('slider is a CAP: dark hair with only shine is NOT turned gray just because the slider says 60%', () => {
+  const im = zoneImage(0.05, 0.05, 0.05); // almost no truly bright strands
+  for (let i = 0; i < im.n; i++) if (im.L[i] < 30) im.L[i] += 0; // keep dark
+  const r = E.grayWeights({ L: im.L, a: im.a, b: im.b, alpha: im.alpha, zone: im.zone, pct: [0.6, 0.6, 0.6] });
+  assert(r.grayShare < 0.12, 'gray share ' + r.grayShare);
+});
+t('shine on dark hair (small bump, still dark) is not gray at default sensitivity', () => {
+  const n = 5000, L = new Float32Array(n), a = new Float32Array(n).fill(6), b = new Float32Array(n).fill(10), alpha = new Float32Array(n).fill(1);
+  let s = 7; const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+  for (let i = 0; i < n; i++) L[i] = 14 + rnd() * 14; // dark hair with highlights up to L*28
+  const r = E.grayWeights({ L, a, b, alpha, zone: new Uint8Array(n), pct: [0.6, 0.6, 0.6] });
+  assert(r.grayShare < 0.15, 'gray share ' + r.grayShare);
 });
 
 console.log('end-to-end render (synthetic 60% gray, level-4 brown hair)');
@@ -98,7 +119,7 @@ function synthetic(grayFrac) {
     E.rgbToLab(rgb[0], rgb[1], rgb[2], lab); L[i] = lab[0]; a[i] = lab[1]; b[i] = lab[2];
   }
   const edge = new Uint8Array(n);
-  const gw = E.grayWeights({ L, a, b, alpha, edge, pctBody: grayFrac, pctEdge: grayFrac });
+  const gw = E.grayWeights({ L, a, b, alpha, zone: edge, pct: [grayFrac, grayFrac, grayFrac] });
   const loc = E.localPigMean({ L, a, b, alpha, g: gw.g, w, h }, 6);
   return { w, h, rgba, L, a, b, alpha, g: gw.g, loc, noise: E.valueNoise(w, h, 3, 7), grayRefL: gw.grayRefL, glob: { L: gw.pigL, a: 8, b: 14 }, gw };
 }

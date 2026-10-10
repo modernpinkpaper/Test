@@ -41,7 +41,7 @@
   // Redken Shades EQ names seen on a retailer listing + Redken's "top 10" page (code format: 2-digit level + tone)
   var SHADES_EQ = [
     '03N|Espresso', '03NB|Mocha Java', '03RV|Merlot', '04N|Chicory', '04NB|Maple', '04ABn|Dark Roast',
-    '05N|Walnut', '05RV|Sangria', '06N|Moroccan Sand', '07N|Mirage'
+    '05N|Walnut', '05NB|(code used by you; name not checked)', '05RV|Sangria', '06N|Moroccan Sand', '07N|Mirage'
   ];
 
   function parseCode(code) {

@@ -18,7 +18,7 @@ Tests (no browser needed): `node test/engine.test.js`
 
 ## What you can do
 
-- **Your hair:** set gray % for the main hair and a separate, higher gray % for the hairline and temples (defaults: 60% and 90%, like you described). Tick *show where it thinks my gray is* to check it.
+- **Your hair:** set the most gray you expect at the hairline/temples (90%), the top and sides (60%), and the lengths (5%). Each slider is a *maximum* — the app only counts strands as gray if they are clearly lighter than your dark base, so shine on dark hair is not mistaken for gray. A sensitivity slider and a *show where it thinks my gray is* checkbox let you check and tune it.
 - **Formula:** brand and line, shade (search by code or name), the brand's own developers only, and time on hair.
 - **Low / Expected / High:** the "give or take" range.
 - **Save this look** to compare formulas side by side.
@@ -40,7 +40,7 @@ The numbers come from the brands' published instructions plus general colorist r
 
 1. **Estimates only.** Porosity, past color, buildup, water, and your camera's lighting all change real results. Always do a strand test.
 2. **Lighting matters.** Use even daylight, no filters. A warm or dark photo makes the app think your hair is darker or lighter. You can override the natural level.
-3. **Gray detection is by brightness.** Light brown highlights can be mistaken for gray. Use the gray-map checkbox and the sliders to correct it.
+3. **Gray detection is by brightness.** Strong shine or light highlights can still be mistaken for gray. Use the gray-map checkbox, the sensitivity slider and the zone sliders to correct it.
 4. **Shade lists:** only the Wella Color Charm Permanent list (52 shades) and 10 Redken Shades EQ names are checked against real pages. Other lines use a level × tone grid marked "approx." Use **My shade isn't listed** and type the level and tone from your box.
 5. **No before/after photos are bundled.** See `RESEARCH.md` for why, and for how to get real calibration data.
 

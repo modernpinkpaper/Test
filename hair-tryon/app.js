@@ -10,7 +10,7 @@
   var el = {};
   ['file', 'btnAuto', 'status', 'stage', 'empty', 'cvAfter', 'cvBefore', 'beforeWrap', 'cvOver', 'divider', 'knob', 'tagBefore', 'tagAfter',
     'viewChips', 'btnSave', 'btnDownload', 'chkGray', 'btnEdit', 'brushTools', 'bAdd', 'bErase', 'brushSize', 'btnDone', 'looksCard', 'looks',
-    'pBody', 'pEdge', 'zone', 'level', 'btnAutoLevel', 'vBody', 'vEdge', 'vZone', 'vLevel', 'hairNote', 'line', 'lineMeta', 'shadeSearch', 'shade',
+    'pBody', 'pEdge', 'pLen', 'sens', 'vLen', 'vSens', 'zone', 'level', 'btnAutoLevel', 'vBody', 'vEdge', 'vZone', 'vLevel', 'hairNote', 'line', 'lineMeta', 'shadeSearch', 'shade',
     'cLevel', 'cTone', 'btnCustom', 'dev', 'devNote', 'time', 'vTime', 'timeNote', 'explain', 'lineFacts', 'calDepth', 'calCov', 'vDepth', 'vCovCal', 'btnCalReset'
   ].forEach(function (id) { el[id] = $(id); });
 
@@ -113,14 +113,19 @@
   function afterMaskChange() { computeEdge(); scheduleGray(); }
 
   function computeEdge() {
-    var n = S.w * S.h, minX = S.w, maxX = 0, i, x;
+    var n = S.w * S.h, minX = S.w, maxX = 0, i, x, y;
     for (i = 0; i < n; i++) if (S.alpha[i] > 0.5) { x = i % S.w; if (x < minX) minX = x; if (x > maxX) maxX = x; }
     var zonePx = (maxX > minX ? (maxX - minX) : S.w) * (+el.zone.value / 100);
-    var hasFace = false; for (i = 0; i < n; i += 7) if (S.face[i] > 0.5) { hasFace = true; break; }
-    S.edge = new Uint8Array(n);
-    if (hasFace) {
-      var d = E.distanceTo(S.face, S.w, S.h);
-      for (i = 0; i < n; i++) S.edge[i] = (S.alpha[i] > 0.5 && d[i] < zonePx) ? 1 : 0;
+    var faceY = 0, faceN = 0;
+    for (i = 0; i < n; i++) if (S.face[i] > 0.5) { faceY += (i / S.w) | 0; faceN++; }
+    S.edge = new Uint8Array(n); // zone: 0 top & sides, 1 hairline/temples, 2 lengths
+    if (faceN > 50) {
+      var cy = faceY / faceN, d = E.distanceTo(S.face, S.w, S.h);
+      for (i = 0; i < n; i++) {
+        if (S.alpha[i] <= 0.5) continue;
+        y = (i / S.w) | 0;
+        S.edge[i] = d[i] < zonePx ? 1 : (y > cy ? 2 : 0);
+      }
     }
   }
 
@@ -128,7 +133,7 @@
 
   function computeGray() {
     if (!S.hasPhoto) return;
-    var gw = E.grayWeights({ L: S.L, a: S.a, b: S.b, alpha: S.alpha, edge: S.edge, pctBody: +el.pBody.value / 100, pctEdge: +el.pEdge.value / 100 });
+    var gw = E.grayWeights({ L: S.L, a: S.a, b: S.b, alpha: S.alpha, zone: S.edge, sens: +el.sens.value, pct: [+el.pBody.value / 100, +el.pEdge.value / 100, +el.pLen.value / 100] });
     S.gw = gw; S.g = gw.g;
     S.loc = E.localPigMean({ L: S.L, a: S.a, b: S.b, alpha: S.alpha, g: S.g, w: S.w, h: S.h }, Math.max(6, Math.round(S.w / 80)));
     var cnt = 0, sa = 0, sb = 0;
@@ -141,10 +146,9 @@
 
   function updateHairNote() {
     if (!S.gw || !S.gw.hairPixels) { el.hairNote.textContent = 'No hair marked yet.'; return; }
-    var guess = Math.round(E.otsuGrayShare(S.L, S.alpha) * 100);
     el.hairNote.textContent = 'Your brown reads as about level ' + S.gw.pigLevel.toFixed(1) + (S.manualLevel != null ? ' (you set ' + S.manualLevel + ')' : '') +
-      '. Marked ' + Math.round(S.gw.grayShare * 100) + '% of hair as gray. A quick brightness split of the photo alone suggests ~' + guess +
-      '%. Tick "show where it thinks my gray is" and move the sliders until it matches what you see.';
+      '. Gray found: ' + Math.round(S.gw.grayShare * 100) + '% of all hair (hairline ' + Math.round(S.gw.zoneShare[1] * 100) + '%, top/sides ' +
+      Math.round(S.gw.zoneShare[0] * 100) + '%, lengths ' + Math.round(S.gw.zoneShare[2] * 100) + '%). Tick "show where it thinks my gray is" and adjust until it matches what you see.';
     if (S.manualLevel == null) { el.level.value = Math.round(S.gw.pigLevel * 2) / 2; el.vLevel.textContent = 'auto (' + S.gw.pigLevel.toFixed(1) + ')'; }
   }
 
@@ -255,6 +259,8 @@
   }
   bindRange(el.pBody, el.vBody, function (v) { return v + '%'; }, scheduleGray);
   bindRange(el.pEdge, el.vEdge, function (v) { return v + '%'; }, scheduleGray);
+  bindRange(el.pLen, el.vLen, function (v) { return v + '%'; }, scheduleGray);
+  bindRange(el.sens, el.vSens, function (v) { return v; }, scheduleGray);
   bindRange(el.zone, el.vZone, function (v) { return v + '%'; }, function () { if (S.hasPhoto) { computeEdge(); scheduleGray(); } });
   el.level.addEventListener('input', function () { S.manualLevel = +el.level.value; el.vLevel.textContent = el.level.value; updateHairNote(); renderNow(); });
   el.btnAutoLevel.addEventListener('click', function () { S.manualLevel = null; updateHairNote(); renderNow(); });

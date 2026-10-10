@@ -216,29 +216,33 @@
     var n = p.L.length, idx = [], i;
     for (i = 0; i < n; i++) if (p.alpha[i] > 0.5) idx.push(i);
     var g = new Float32Array(n);
-    if (!idx.length) return { g: g, score: new Float32Array(n), pigLevel: 4, pigL: 25, grayRefL: 60, hairPixels: 0, grayShare: 0 };
-    var Ls = idx.map(function (j) { return p.L[j]; });
-    var Cs = idx.map(function (j) { return Math.sqrt(p.a[j] * p.a[j] + p.b[j] * p.b[j]); });
-    var mean = function (a) { var s = 0; for (var k = 0; k < a.length; k++) s += a[k]; return s / a.length; };
-    var sd = function (a, m) { var s = 0; for (var k = 0; k < a.length; k++) s += (a[k] - m) * (a[k] - m); return Math.sqrt(s / a.length) || 1; };
-    var Lm = mean(Ls), Ls_sd = sd(Ls, Lm), Cm = mean(Cs), Cs_sd = sd(Cs, Cm);
-    var score = new Float32Array(n), bodyS = [], edgeS = [];
-    idx.forEach(function (j, k) {
-      var s = (Ls[k] - Lm) / Ls_sd - 0.25 * (Cs[k] - Cm) / Cs_sd;
-      score[j] = s; (p.edge && p.edge[j] ? edgeS : bodyS).push(s);
-    });
-    var thrBody = p.pctBody <= 0 ? 1e9 : p.pctBody >= 1 ? -1e9 : quantile(bodyS, 1 - p.pctBody);
-    var thrEdge = p.pctEdge <= 0 ? 1e9 : p.pctEdge >= 1 ? -1e9 : (edgeS.length ? quantile(edgeS, 1 - p.pctEdge) : thrBody);
-    var w = 0.3, grayN = 0, pigL = [], grayL = [];
+    if (!idx.length) return { g: g, score: new Float32Array(n), pigLevel: 4, pigL: 25, grayRefL: 60, hairPixels: 0, grayShare: 0, zoneShare: [0, 0, 0] };
+    // zones: 0 = top & sides, 1 = hairline / temples, 2 = lengths. pct = max gray share per zone.
+    var zone = p.zone || (p.edge ? Uint8Array.from(p.edge) : new Uint8Array(n));
+    var pct = p.pct || [p.pctBody, p.pctEdge, p.pctBody];
+    var sens = p.sens == null ? 14 : p.sens; // how far above your dark base a strand must be to count as gray (L* units)
+    var score = new Float32Array(n), all = [], byZone = [[], [], []], Ls = [];
     idx.forEach(function (j) {
-      var thr = p.edge && p.edge[j] ? thrEdge : thrBody;
-      var v = smoothstep(thr - w, thr + w, score[j]); g[j] = v;
-      if (v > 0.5) { grayN++; grayL.push(p.L[j]); } else pigL.push(p.L[j]);
+      // gray = bright AND colorless (shine on dark hair is bright too, so sens sets an absolute floor)
+      var s = p.L[j] - 0.6 * Math.sqrt(p.a[j] * p.a[j] + p.b[j] * p.b[j]);
+      score[j] = s; all.push(s); Ls.push(p.L[j]); byZone[zone[j]].push(s);
     });
-    var pigMed = quantile(pigL.length ? pigL : Ls, 0.5);
+    var floor = quantile(all, 0.25) + sens; // dark base + sensitivity
+    var thr = byZone.map(function (arr, z) {
+      var q = pct[z] <= 0 ? 1e9 : pct[z] >= 1 ? -1e9 : (arr.length ? quantile(arr, 1 - pct[z]) : 1e9);
+      return pct[z] <= 0 ? 1e9 : Math.max(q, floor); // slider is a CAP: never call a strand gray that is not clearly lighter than your base
+    });
+    var w = 2.5, grayN = 0, pigL = [], grayL = [], zn = [0, 0, 0], zg = [0, 0, 0];
+    idx.forEach(function (j) {
+      var z = zone[j], v = smoothstep(thr[z] - w, thr[z] + w, score[j]); g[j] = v; zn[z]++;
+      if (v > 0.5) { grayN++; zg[z]++; grayL.push(p.L[j]); } else pigL.push(p.L[j]);
+    });
+    var pigMed = quantile(pigL.length ? pigL : Ls, 0.6);
+    var Lm = 0; Ls.forEach(function (v) { Lm += v; }); Lm /= Ls.length;
     return {
-      g: g, score: score, pigL: pigMed, pigLevel: levelFromL(pigMed),
-      grayRefL: grayL.length ? quantile(grayL, 0.5) : Lm + Ls_sd, hairPixels: idx.length, grayShare: grayN / idx.length
+      g: g, score: score, pigL: pigMed, pigLevel: levelFromL(pigMed), floor: floor,
+      grayRefL: grayL.length ? quantile(grayL, 0.5) : Lm + 25, hairPixels: idx.length, grayShare: grayN / idx.length,
+      zoneShare: zn.map(function (c, z) { return c ? zg[z] / c : 0; })
     };
   }
 

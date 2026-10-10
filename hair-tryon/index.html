@@ -102,10 +102,15 @@
   <section>
     <div class="card">
       <h2>1. Your hair</h2>
-      <label>Gray in the main hair <span class="val" id="vBody">60%</span></label>
-      <input type="range" id="pBody" min="0" max="100" value="60">
+      <p class="note" style="margin-top:0">Each slider is a <b>maximum</b>: the app only counts strands as gray if they are clearly lighter than your dark base.</p>
       <label>Gray at the hairline &amp; temples <span class="val" id="vEdge">90%</span></label>
       <input type="range" id="pEdge" min="0" max="100" value="90">
+      <label>Gray in the top &amp; sides (part, crown) <span class="val" id="vBody">60%</span></label>
+      <input type="range" id="pBody" min="0" max="100" value="60">
+      <label>Gray in the lengths (below the ears) <span class="val" id="vLen">5%</span></label>
+      <input type="range" id="pLen" min="0" max="100" value="5">
+      <label>Detection: finds more gray ◂ ▸ finds less <span class="val" id="vSens">14</span></label>
+      <input type="range" id="sens" min="4" max="36" value="14">
       <label>Hairline / temple zone width <span class="val" id="vZone">8%</span></label>
       <input type="range" id="zone" min="2" max="20" value="8">
       <label>Your natural brown level <span class="val" id="vLevel">auto</span></label>

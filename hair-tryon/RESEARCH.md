@@ -41,6 +41,19 @@ How sure we are: **checked** = seen on the brand's own page or a retailer listin
   3. Brand shade books/charts photographed on gray swatches (Redken and Wella education sites sometimes publish them).
 - A good next step is a small **calibration page** where you load a before and an after photo, enter the formula, and the app fits its numbers automatically. Not built yet.
 
+## Your own history (from you, 2026-10-10)
+
+Real data points to calibrate against. Results/timing/developer are still missing — see "what I need" below.
+
+| Line | Shade | What you said |
+|---|---|---|
+| Redken Shades EQ (demi) | 04NB, 05NB, a little 04ABn, a little 05N | used before |
+| Wella Color Charm Demi | 5N | used, "not in a while" |
+
+Your photos show a very dark brown base (the app reads about level 2–2.5), heavy gray at the hairline, part and temples, and mostly dark lengths. Both product lines you used are demi (deposit only, no lift), so on your dark base they mostly add tone/shine and blend the gray.
+
+**What would make these usable calibration points:** a before photo and an after photo in the same light, plus for each: the exact shade(s) and ratio, developer, minutes, and which part of the head (hairline vs lengths).
+
 ## Sources
 
 - Wella Pro — gray coverage tips: https://us.wella.professionalstore.com/en-US/blog/hair-color/trouble-with-gray-coverage-five-professional-tips
