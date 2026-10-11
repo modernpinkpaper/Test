@@ -1,0 +1,2 @@
+numpy
+cairosvg   # only for the PNG preview

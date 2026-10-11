@@ -1,0 +1,135 @@
+"""Lines for the 10-minute "what did I even do today" vlog (Day 1, Thursday Oct 2), from her MT Log for the day.
+Each entry: (section, line). One or two sentences per line so the voice model stays steady.
+Tone tags in [brackets] pick the delivery. She talks fast: few [calm] lines, no long pauses.
+Staff and customers are never named; every number shown on screen is a fake example.
+"""
+VOICE = "her"
+
+LINES = [
+    # 0. hook
+    ("hook", "[sassy] Okay so. Nothing I printed today actually printed."),
+    ("hook", "[sassy] The printer was paused. All day. And I did not notice until like three o'clock."),
+    ("hook", "[excited] So that's the energy. This is day one of me showing you what I actually do all day running my shop, straight from my computer logs."),
+    ("hook", "[neutral] Because I track everything now. Every app, every click, every print. Let's go."),
+    # 1. 8:00 the computer started without me
+    ("sync", "[neutral] So before I even sat down, my sales script already ran by itself."),
+    ("sync", "[neutral] It grabs the hourly sales from Amazon and drops them into a sheet on my Drive. Every hour. I don't touch it."),
+    ("sync", "[sassy] Which, honestly, love that for me. My computer is more of a morning person than I am."),
+    # 2. 8:15 check-in
+    ("checkin", "[neutral] Eight fifteen, I log on. First thing, Teams."),
+    ("checkin", "[neutral] One of the girls sent me a screen recording of yesterday's Shopify orders, so I'm watching that with my coffee."),
+    ("checkin", "[neutral] Then Amazon messages. Four of them need a response."),
+    ("checkin", "[neutral] One wants a replacement because it's different from what they ordered. One has a question that's due in eleven hours. And two are just product questions."),
+    ("checkin", "[sassy] I opened them. I looked at them. I did not answer them. Spoiler, that comes back later."),
+    ("checkin", "[neutral] Then I'm on Amazon looking at one of our wedding invitation listings, because a buyer asked about it, and I wanted to see what they were looking at."),
+    # 3. 8:21 new MT Log
+    ("mtlog", "[excited] Okay, then the fun part. I'm upgrading MT Log."),
+    ("mtlog", "[neutral] That's the thing that tracks what we all do on our computers, so I can actually see where the day goes. It's literally how I'm making this video."),
+    ("mtlog", "[neutral] I asked Claude for the download links, uninstalled the old version from September twenty ninth, and installed the new one."),
+    ("mtlog", "[excited] Then there's this little InDesign logger script. You just drop it into InDesign's startup scripts folder, and now it logs everything we do in InDesign too."),
+    ("mtlog", "[sassy] Easy. Ten minutes. I felt very techy."),
+    ("mtlog", "[neutral] Oh, and somewhere in there I told one of the girls my kid's school is closed for fall break next week."),
+    ("mtlog", "[sassy] Because that's my life. Logging software and fall break. At the same time."),
+    # 4. 8:40 the new assistant
+    ("assistant", "[excited] So then I open the new assistant app. It's supposed to watch how we work and give me recommendations."),
+    ("assistant", "[neutral] And I'm recording the whole setup, like two hundred forty nine screenshots, because I want it to be a how-to for the team later."),
+    ("assistant", "[excited] And the second I start it, it gives me a pile of recommendations. Like a pile."),
+    ("assistant", "[sassy] I literally barely did anything. How? How are you recommending things? You just met me."),
+    ("assistant", "[sassy] And one of the cards is like, great job using this keyboard shortcut."),
+    ("assistant", "[sassy] Ma'am. I have never used that shortcut in my life. I didn't even know it existed. Thank you though."),
+    ("assistant", "[sassy] And I'm literally typing all this to Claude in real time. My exact message was, wow, it gave me tons of recs the second I started it. How? I barely did anything."),
+    ("assistant", "[sassy] With like four typos. Because I type fast and I do not go back."),
+    # 5. 8:55 the setup spiral
+    ("setup", "[annoyed] Then it's the setup. And this is where it gets, like, a lot."),
+    ("setup", "[annoyed] I have to make an API key. Okay. Then save it as a Windows environment variable. Okay."),
+    ("setup", "[annoyed] Then it switches itself to a different AI model. Okay?"),
+    ("setup", "[annoyed] Then I'm in Apps Script, renaming the project, deploying it as a web app, copying the link, and saving that as another environment variable."),
+    ("setup", "[neutral] And I couldn't even delete what was already in Apps Script, because I have a live script in there that we actually use. So I just hit the plus and made a new one. Named it A I MT Log recs. Very creative."),
+    ("setup", "[neutral] And then I'm asking Claude, okay but what even is an environment variable? Is it like a place Windows holds API keys for programs? And yes. Basically. Okay."),
+    ("setup", "[sassy] Then I asked it, why didn't you just make this into a real program like MT Log? Not mad. Just curious. And now I have a file on my desktop called Start Assistant. That's the program."),
+    ("setup", "[annoyed] And then it wants PowerShell. And Google Cloud."),
+    ("setup", "[sassy] And I'm sitting there like, why do I gotta use PowerShell? Do I really need Google Cloud for this? Come on."),
+    ("setup", "[neutral] I did get it to show a countdown to its next check though. Next check in zero thirty eight. So that worked. Small wins."),
+    ("setup", "[neutral] Then I'm opening its memory file, its learned file, its recommendations file, trying to figure out what would make the screenshots actually useful."),
+    ("setup", "[sassy] It's nine thirty. I have been doing this for an hour."),
+    # 6. 9:44 the long review with the team
+    ("review", "[neutral] So then I spend basically an hour with one of the girls going through her screen recording of the Shopify orders. The whole thing. Back and forth."),
+    ("review", "[neutral] We look at the auto proofs for today. Three orders. Twenty flat, ten folded, fifty folded."),
+    ("review", "[neutral] I'm reading the proof results file, and the proof report from nine thirty nine."),
+    ("review", "[excited] I even made a test copy of one order with a different date, just to see what the script would do with it."),
+    ("review", "[neutral] And my big question was, okay, when a customer asks for another proof and it gets reloaded, does the right follow up message actually go out?"),
+    ("review", "[annoyed] Because if it doesn't, the customer just sits there. Waiting. And then they message us. And then we're back in the inbox."),
+    # 7. 11:29 Shopify and the new script
+    ("shopify", "[excited] Eleven thirty, Shopify. I check the unfulfilled orders."),
+    ("shopify", "[excited] Then I check how much I've spent on the Claude API this month. Three cents. Three cents! I'm basically a tech CEO now."),
+    ("shopify", "[neutral] Then I look at the girls' projects. One of them is updating the Amazon customization pop ups on a bunch of listings. Christmas, wedding, funeral, all of them."),
+    ("shopify", "[neutral] Another one is adding the line, prints in uppercase as shown, so people stop asking us why their names are in capital letters."),
+    ("shopify", "[excited] And I saved the new customer service script. The new one collapses everything, so it's not this giant wall of text. I told her, use this one now."),
+    ("shopify", "[neutral] And one of the girls messages me, okay, after work it is. So that's on the list too."),
+    # 8. 11:57 I quit the assistant
+    ("quit", "[neutral] And then, honestly? Eleven fifty seven, I typed it. I don't like the assistant thing."),
+    ("quit", "[neutral] I'd rather just ask my Claude chat. I already have one that's connected to my logs. I can ask it things when I want to."),
+    ("quit", "[sassy] I don't need cards popping up telling me I used a shortcut I've never used."),
+    ("quit", "[neutral] So I reinstalled MT Log one more time from the newest zip, made sure it's logging, and that's that."),
+    ("quit", "[sassy] Three hours of setup, and I quit by lunch. It's fine. It's research."),
+    # 9. 12:07 testing the Amazon pop ups
+    ("popups", "[neutral] After that I'm testing the Amazon customization pop ups myself. The Christmas invitations."),
+    ("popups", "[neutral] I pick the holiday cocktail party option, open the customization editor, and I'm typing test labels, moving things around, changing sizes."),
+    ("popups", "[neutral] Then I fill one out like I'm a customer, to see exactly what they see."),
+    ("popups", "[sassy] I keyboard smashed every label, by the way. My test labels are just a s d a s d a s d. Very professional."),
+    ("popups", "[neutral] And for the party details I typed, please bring your favorite bottle of. And then I never finished the sentence. So, bring your favorite bottle of whatever, I guess."),
+    ("popups", "[sassy] Note to self. Make sure I didn't actually save that with my test text in it."),
+    ("popups", "[sassy] Because a customer getting an invitation that says test test test is not the vibe."),
+    # 10. 12:18 the win of the day
+    ("win", "[excited] Okay, but the win today. Amazon has these new seller assistant workflows."),
+    ("win", "[neutral] So I start from one of their templates, and I tell it, get me the customization details for every order that's not shipped yet."),
+    ("win", "[sassy] And the first preview comes back with no customizations. Of course."),
+    ("win", "[neutral] So I'm asking it questions. Can I schedule this? If it runs every day, does it pull the orders that are still not shipped again?"),
+    ("win", "[excited] And then one thirty, I turn it on. I name it Unshipped Orders Customization Export. I hit Run Now."),
+    ("win", "[excited] And it gives me a spreadsheet. With every order. And the customizations. In one file."),
+    ("win", "[excited] I was so happy. You don't understand. Usually we're clicking into every single order, one by one."),
+    ("win", "[neutral] I even opened one order's customization zip to see the raw data. It's XML and SVG files in there. Very nerdy. Loved it."),
+    ("win", "[sassy] And at one point I literally typed to it, what order details does it not have? Because I need to know what it can't see before I trust it."),
+    ("win", "[neutral] So the next step is, I want it to check if the name on the customization kind of matches the ship to name. Like eighty percent similar."),
+    ("win", "[neutral] Because if somebody orders a funeral card and the name on the card is totally different from the name on the order, I want to double check that before we print."),
+    ("win", "[neutral] We'll see if it can do that."),
+    # 11. 12:34 the printer
+    ("printer", "[neutral] Meanwhile I'm reading these analysis rules I wrote for the printing logs."),
+    ("printer", "[sassy] I open two blank Google Docs. For no reason. They're still blank."),
+    ("printer", "[neutral] Then I print two project pages. One is about using AI to write our staff meeting notes from our production numbers."),
+    ("printer", "[neutral] The other one is MT Log for data collection. And I had Claude make every header eighteen point bold, because I like my headers loud."),
+    ("printer", "[sassy] And neither one printed. Because the printer was paused. Like I said. Cool. Very cool."),
+    # 12. 1:01 orders and the team
+    ("orders", "[annoyed] Oh, and a customer thought we were gonna mail the invitations to every single person on her list."),
+    ("orders", "[annoyed] Like, address them, stamp them, mail them. Fifty guests. No. We print them. You mail them. That's how invitations work."),
+    ("orders", "[neutral] One eighteen, I check Amazon. Ten pending, seventy two unshipped, and one that's about to ship late. So that one has to go out today."),
+    ("orders", "[neutral] And I told one of the girls, sometimes customers message just to double check their customization details."),
+    ("orders", "[neutral] So can her Amazon messages test handle that? Because that's like half of our messages."),
+    ("orders", "[sassy] And in between all that, I had an order open in InDesign for eight minutes with unsaved changes. Just sitting there. Unsaved. Living dangerously."),
+    # 13. 2:13 the team's timing
+    ("timing", "[neutral] Two o'clock, I'm looking at the team's timing in Claude. Like, how fast regular orders go, before a break and after a break."),
+    ("timing", "[neutral] And one thing didn't make sense. Somebody showed idle for twenty six minutes on everything."),
+    ("timing", "[calm] And then I realized, I didn't explain something right. That was on me."),
+    ("timing", "[calm] So I told her, my apologies for not communicating properly. For real. That one was my fault."),
+    # 14. 2:43 wrap up
+    ("wrap", "[neutral] Two forty three, wrap up mode."),
+    ("wrap", "[neutral] There's one big order, almost three hundred dollars, and I put a note on it. Do not touch. Waiting on the customer to write back by October fifth."),
+    ("wrap", "[sassy] Because if somebody touches it, I will cry."),
+    ("wrap", "[neutral] I sent the workflow link to one of the girls so she can try it too."),
+    ("wrap", "[sassy] Gmail. I archived six emails. Six. And I marked one customer email unread. Twice. Which means I'm definitely answering it tomorrow. Probably."),
+    ("wrap", "[neutral] Then I'm in the Amazon developer portal, saving the app, looking at a support case. Very official."),
+    ("wrap", "[excited] And my supply chain score is seven seventy out of a thousand. So, not bad."),
+    # 15. 3:09 done
+    ("done", "[excited] Three o'clock, I got a CAVA bowl."),
+    ("done", "[sassy] And I looked at a birthday cake from Nothing Bundt Cakes. Didn't order it. I just looked. That's growth."),
+    ("done", "[neutral] Last thing, I checked the InDesign logger is still in the startup folder, and I logged off at three twenty."),
+    # 16. stats + tomorrow
+    ("stats", "[excited] Okay, so here's my day in numbers."),
+    ("stats", "[neutral] Almost seven hours of active computer time. Over a thousand clicks. Two hundred forty one web pages. Two prints that never printed. Four messages opened, zero answered."),
+    ("stats", "[excited] And one spreadsheet that made me very happy."),
+    ("tomorrow", "[neutral] So tomorrow. Unpause the printer and reprint those two pages. Answer the Amazon messages, for real this time. Ship the late one."),
+    ("tomorrow", "[neutral] Reply to that email I marked unread twice. Clean up the assistant stuff I don't need anymore, including that web link I made public."),
+    ("tomorrow", "[neutral] Finish the Amazon workflow, the name match and the schedule. And talk to the team about the timing."),
+    ("bye", "[sassy] Okay. That was Thursday. It felt like nothing, and it was kind of a lot."),
+    ("bye", "[excited] Follow for day two. Bye."),
+]

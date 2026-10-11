@@ -1,0 +1,379 @@
+{
+  "canvas": {
+    "width": 1200,
+    "height": 1800,
+    "viewBox": "0 0 1200 1800"
+  },
+  "character_transform": {
+    "translate": [
+      50.0,
+      53.55
+    ],
+    "scale": 1.1,
+    "note": "design units -> canvas: canvas = translate + design * scale"
+  },
+  "sides": "left_/right_ = the character's own left/right (her left is on the viewer's right)",
+  "joints": {
+    "neck": [
+      600.0,
+      383.5
+    ],
+    "left_shoulder": [
+      754.0,
+      480.3
+    ],
+    "right_shoulder": [
+      446.0,
+      480.3
+    ],
+    "left_elbow": [
+      780.4,
+      774.1
+    ],
+    "right_elbow": [
+      419.6,
+      774.1
+    ],
+    "left_wrist": [
+      801.3,
+      983.1
+    ],
+    "right_wrist": [
+      398.7,
+      983.1
+    ],
+    "left_hip": [
+      682.5,
+      900.6
+    ],
+    "right_hip": [
+      517.5,
+      900.6
+    ],
+    "left_knee": [
+      661.6,
+      1208.5
+    ],
+    "right_knee": [
+      538.4,
+      1208.5
+    ],
+    "left_ankle": [
+      650.6,
+      1544.1
+    ],
+    "right_ankle": [
+      549.4,
+      1544.1
+    ]
+  },
+  "joints_design_units": {
+    "neck": [
+      500,
+      300
+    ],
+    "left_shoulder": [
+      640,
+      388
+    ],
+    "right_shoulder": [
+      360,
+      388
+    ],
+    "left_elbow": [
+      664,
+      655
+    ],
+    "right_elbow": [
+      336,
+      655
+    ],
+    "left_wrist": [
+      683,
+      845
+    ],
+    "right_wrist": [
+      317,
+      845
+    ],
+    "left_hip": [
+      575,
+      770
+    ],
+    "right_hip": [
+      425,
+      770
+    ],
+    "left_knee": [
+      556,
+      1050
+    ],
+    "right_knee": [
+      444,
+      1050
+    ],
+    "left_ankle": [
+      546,
+      1355
+    ],
+    "right_ankle": [
+      454,
+      1355
+    ]
+  },
+  "face": {
+    "right_eye_center": [
+      545.0,
+      226.2
+    ],
+    "left_eye_center": [
+      624.2,
+      221.8
+    ],
+    "right_eyebrow_center": [
+      545.0,
+      188.8
+    ],
+    "left_eyebrow_center": [
+      627.5,
+      183.3
+    ],
+    "nose_tip": [
+      586.8,
+      271.3
+    ],
+    "mouth_center": [
+      589.0,
+      293.3
+    ],
+    "mouth_right_corner": [
+      560.4,
+      283.4
+    ],
+    "mouth_left_corner": [
+      617.6,
+      282.3
+    ],
+    "chin": [
+      591.2,
+      334.0
+    ],
+    "right_ear": [
+      505.4,
+      251.5
+    ],
+    "left_ear": [
+      674.8,
+      233.9
+    ],
+    "hair_part": [
+      644.0,
+      77.7
+    ],
+    "head_top": [
+      586.8,
+      68.9
+    ]
+  },
+  "landmarks_y": {
+    "head_top": 68.9,
+    "eye_y": 226.2,
+    "chin_y": 336.2,
+    "shoulder_y": 396.8,
+    "bust_y": 537.5,
+    "waist_y": 671.8,
+    "hip_y": 878.6,
+    "crotch_y": 913.8,
+    "knee_y": 1208.5,
+    "ankle_y": 1544.1,
+    "sole_y": 1731.1
+  },
+  "bounding_boxes": {
+    "character": {
+      "x": 295.5,
+      "y": 65.2,
+      "width": 529.1,
+      "height": 1666.1
+    },
+    "hair_back": {
+      "x": 345.1,
+      "y": 68.9,
+      "width": 400.2,
+      "height": 594.0
+    },
+    "body": {
+      "x": 375.4,
+      "y": 304.3,
+      "width": 449.2,
+      "height": 1427.0
+    },
+    "neck": {
+      "x": 499.2,
+      "y": 304.3,
+      "width": 201.5,
+      "height": 201.8
+    },
+    "torso": {
+      "x": 458.1,
+      "y": 385.8,
+      "width": 283.8,
+      "height": 343.2
+    },
+    "left_upper_arm": {
+      "x": 706.1,
+      "y": 384.9,
+      "width": 103.0,
+      "height": 416.6
+    },
+    "left_forearm": {
+      "x": 752.8,
+      "y": 746.6,
+      "width": 69.4,
+      "height": 257.3
+    },
+    "left_hand": {
+      "x": 772.8,
+      "y": 971.8,
+      "width": 51.8,
+      "height": 125.7
+    },
+    "right_upper_arm": {
+      "x": 390.9,
+      "y": 384.9,
+      "width": 103.0,
+      "height": 416.6
+    },
+    "right_forearm": {
+      "x": 377.8,
+      "y": 746.6,
+      "width": 69.4,
+      "height": 257.3
+    },
+    "right_hand": {
+      "x": 375.4,
+      "y": 971.8,
+      "width": 51.8,
+      "height": 125.7
+    },
+    "hips": {
+      "x": 431.4,
+      "y": 714.6,
+      "width": 337.2,
+      "height": 219.0
+    },
+    "left_thigh": {
+      "x": 600.2,
+      "y": 894.9,
+      "width": 164.6,
+      "height": 363.1
+    },
+    "left_lower_leg": {
+      "x": 611.4,
+      "y": 1201.9,
+      "width": 119.5,
+      "height": 416.9
+    },
+    "right_thigh": {
+      "x": 435.2,
+      "y": 894.9,
+      "width": 164.6,
+      "height": 363.1
+    },
+    "right_lower_leg": {
+      "x": 469.1,
+      "y": 1201.9,
+      "width": 119.5,
+      "height": 416.9
+    },
+    "left_shoe": {
+      "x": 594.7,
+      "y": 1573.7,
+      "width": 132.5,
+      "height": 157.6
+    },
+    "right_shoe": {
+      "x": 472.8,
+      "y": 1573.7,
+      "width": 132.5,
+      "height": 157.6
+    },
+    "head": {
+      "x": 496.0,
+      "y": 110.7,
+      "width": 189.6,
+      "height": 237.6
+    },
+    "face": {
+      "x": 496.6,
+      "y": 110.7,
+      "width": 184.8,
+      "height": 237.6
+    },
+    "left_ear": {
+      "x": 658.1,
+      "y": 205.3,
+      "width": 27.5,
+      "height": 61.8
+    },
+    "right_ear": {
+      "x": 496.0,
+      "y": 219.6,
+      "width": 26.2,
+      "height": 60.8
+    },
+    "nose": {
+      "x": 569.7,
+      "y": 196.5,
+      "width": 33.6,
+      "height": 86.5
+    },
+    "eyes": {
+      "x": 500.2,
+      "y": 192.4,
+      "width": 168.8,
+      "height": 51.8
+    },
+    "left_eye": {
+      "x": 596.6,
+      "y": 192.4,
+      "width": 72.4,
+      "height": 47.4
+    },
+    "right_eye": {
+      "x": 500.2,
+      "y": 196.8,
+      "width": 72.4,
+      "height": 47.4
+    },
+    "eyebrows": {
+      "x": 516.4,
+      "y": 175.6,
+      "width": 143.0,
+      "height": 29.7
+    },
+    "left_eyebrow": {
+      "x": 597.8,
+      "y": 175.6,
+      "width": 61.6,
+      "height": 27.5
+    },
+    "right_eyebrow": {
+      "x": 516.4,
+      "y": 181.1,
+      "width": 58.3,
+      "height": 24.2
+    },
+    "mouth": {
+      "x": 560.4,
+      "y": 282.1,
+      "width": 57.2,
+      "height": 30.5
+    },
+    "hair_front": {
+      "x": 295.5,
+      "y": 65.2,
+      "width": 438.7,
+      "height": 626.4
+    }
+  }
+}
