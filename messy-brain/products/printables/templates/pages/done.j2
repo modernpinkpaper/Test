@@ -1,0 +1,8 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="examples"><span>answered one email</span><span>ate lunch</span><span>moved the laundry</span><span>asked for help</span></div>
+<div class="card grow" style="padding-top:6px;padding-bottom:6px">
+  {% for _ in range(p.rows) %}<div class="donerow">{{ icon('star') }}<span class="dt"></span></div>{% endfor %}
+</div>
+<div class="card soft"><div class="h3">Biggest win this week</div><div class="wl"></div><div class="wl" style="border-bottom:none;height:14px"></div></div>
+{% endcall %}

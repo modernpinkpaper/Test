@@ -1,0 +1,37 @@
+/* Messy Brain, Tidy Home — shared brand tokens.
+   Used by the ebook, printables, pin images, carousel slides and the website.
+   Paths are relative to this file, so link it as ../assets/brand.css etc. */
+
+@font-face { font-family: "Fraunces"; src: url("fonts/Fraunces.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+@font-face { font-family: "DM Sans"; src: url("fonts/DMSans.woff2") format("woff2"); font-weight: 100 1000; font-style: normal; font-display: block; }
+@font-face { font-family: "DM Sans"; src: url("fonts/DMSans-Italic.woff2") format("woff2"); font-weight: 100 1000; font-style: italic; font-display: block; }
+@font-face { font-family: "Caveat"; src: url("fonts/Caveat.woff2") format("woff2"); font-weight: 400 700; font-display: block; }
+
+:root {
+  --cream: #FBF6EF;     /* page background */
+  --paper: #FFFFFF;
+  --ink: #2B2A33;       /* main text */
+  --ink-soft: #5E5B6A;  /* secondary text */
+  --line: #E7DFD3;      /* rules, borders */
+  --sage: #7FA38A;      /* calm / done */
+  --sage-soft: #DCE8DF;
+  --coral: #E8836B;     /* energy / call to action */
+  --coral-soft: #F9DDD4;
+  --butter: #F4D58D;    /* highlight */
+  --butter-soft: #FBEFD0;
+  --lilac: #B9A7E0;     /* brain / feelings */
+  --lilac-soft: #ECE6F8;
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "DM Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-hand: "Caveat", "Comic Sans MS", cursive;
+
+  --radius: 18px;
+}
+
+/* Handy helpers any template can use */
+.hand { font-family: var(--font-hand); }
+.display { font-family: var(--font-display); }
+.hl { background: linear-gradient(transparent 55%, var(--butter) 55%); padding: 0 .1em; }
+.tag { display: inline-block; font: 600 .8em/1 var(--font-body); letter-spacing: .08em; text-transform: uppercase;
+       padding: .5em .9em; border-radius: 999px; background: var(--lilac-soft); color: var(--ink); }

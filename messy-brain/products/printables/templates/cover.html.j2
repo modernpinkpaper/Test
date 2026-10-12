@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="{{ brand_css }}">
+<style>
+{% include "mockup-base.css" %}
+.head { position: absolute; left: 0; right: 0; top: 110px; text-align: center; }
+.tags { display: flex; justify-content: center; gap: 14px; }
+.head h1 { font: 560 128px/.96 var(--font-display); letter-spacing: -.03em; margin-top: 40px; }
+.head h1 em { font-style: italic; font-weight: 400; }
+.head h1 .hl { background: linear-gradient(transparent 62%, var(--butter) 62%); padding: 0 .06em; }
+.head .sub { font: 500 50px/1.1 var(--font-hand); color: var(--ink-soft); margin-top: 26px; }
+.foot { position: absolute; left: 0; right: 0; bottom: 70px; text-align: center; }
+.chips { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; max-width: 1300px; margin: 0 auto; }
+.chips span { background: #fff; border-radius: 999px; padding: 14px 24px; font: 600 22px/1 var(--font-body); box-shadow: 0 4px 12px rgba(70,50,30,.06); }
+.foot .small { margin-top: 24px; font: 700 17px/1 var(--font-body); letter-spacing: .2em; text-transform: uppercase; color: var(--ink-soft); }
+</style></head><body>
+<div class="head">
+  <div class="tags"><span class="tag">Printable PDF</span><span class="tag" style="background:var(--sage-soft)">{{ total }} pages</span></div>
+  <h1>The <span class="hl">Tidy Brain</span><br><em>Printable</em> Pack</h1>
+  <div class="sub">ADHD-friendly home organizing pages for busy brains</div>
+</div>
+{% set fan = [('chores', 90, 760, -11, 1), ('kitchen', 290, 700, -5, 2), ('low', 670, 700, 5, 2), ('daily3', 870, 760, 11, 1), ('cover', 480, 660, 0, 5)] %}
+{% for id, x, y, rot, z in fan %}
+<div class="sheet" style="left:{{ x }}px;top:{{ y }}px;width:640px;transform:rotate({{ rot }}deg);z-index:{{ z }}"><img src="{{ shots[id] }}"></div>
+{% endfor %}
+<div class="foot">
+  <div class="chips"><span>Daily routines</span><span>8 room checklists</span><span>Energy menus</span><span>Meal planning</span><span>Declutter tools</span><span>Family chore chart</span></div>
+  <div class="small">Instant download &middot; US Letter &middot; Print at home</div>
+</div>
+</body></html>

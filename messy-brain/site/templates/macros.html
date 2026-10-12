@@ -1,0 +1,22 @@
+{% macro promo(shop, which='ebook') %}
+{% if which == 'printables' %}
+<div class="promo">
+  {% if has_printables %}<img src="/shop-img/printables-cover.png" alt="The Tidy Brain Printable Pack cover" loading="lazy">{% else %}<span></span>{% endif %}
+  <div><h3>The Tidy Brain Printable Pack</h3>
+  <p>Checklists, trackers and routines made for brains that forget. Print what you need, stick it where you'll see it.</p>
+  <a class="btn coral" href="{{ shop.printables_url }}">Get the pack · {{ shop.printables_price }}</a></div>
+</div>
+{% else %}
+<div class="promo">
+  {% if has_ebook %}<img src="/shop-img/ebook-cover.png" alt="The Messy Brain Home Reset cover" loading="lazy">{% else %}<span></span>{% endif %}
+  <div><h3>The Messy Brain Home Reset</h3>
+  <p>The shame-free 7-day system to get your home under control — and a restart plan for when life happens.</p>
+  <a class="btn coral" href="{{ shop.ebook_url }}">Get the ebook · {{ shop.ebook_price }}</a></div>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro card(url, img, title, text) %}
+<a class="card" href="{{ url }}"><div class="pic">{% if img %}<img src="{{ img }}" alt="" loading="lazy">{% endif %}</div>
+<div class="txt"><h3>{{ title }}</h3>{% if text %}<p>{{ text }}</p>{% endif %}</div></a>
+{% endmacro %}

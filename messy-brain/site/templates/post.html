@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% from "macros.html" import promo, card with context %}
+{% block main %}
+<article class="narrow">
+  <div class="post-head">
+    <span class="tag">{{ 'Amazon home finds' if post.type == 'finds' else 'ADHD home tips' }}</span>
+    <h1>{{ post.title }}</h1>
+    {% if post.finds %}<p class="disclose">This post has affiliate links. As an Amazon Associate I earn from qualifying purchases — it costs you nothing extra.</p>{% endif %}
+  </div>
+  {{ post.intro_html }}
+  {% for s in post.sections %}<h2>{{ s.heading }}</h2>{{ s.body_html }}{% endfor %}
+  {% if post.finds %}
+  <h2>{{ 'The finds' if post.type == 'finds' else 'Helpful finds' }}</h2>
+  {% for f in post.finds %}
+  <div class="find"><div class="n">{{ loop.index }}</div><h3>{{ f.name }}</h3><p>{{ f.why }}</p>
+    <a class="btn" href="{{ f.link }}" target="_blank" rel="sponsored nofollow noopener">See it on Amazon</a></div>
+  {% endfor %}
+  {% endif %}
+  {{ post.outro_html }}
+  <img class="pinimg" src="{{ post.img }}" alt="{{ post.title }}" data-pin-description="{{ post.description }}">
+  {{ promo(cfg.shop, 'printables' if loop_index % 3 == 0 else 'ebook') }}
+</article>
+<h2>Keep reading</h2>
+<div class="grid">{% for p in related %}{{ card(p.url, p.img, p.title, p.description) }}{% endfor %}</div>
+{% endblock %}

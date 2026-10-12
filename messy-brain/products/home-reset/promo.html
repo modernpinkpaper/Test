@@ -1,0 +1,90 @@
+{%- import 'macros.html' as m -%}
+{#- Sales-page images, 1600 x 2000. `which` is cover | preview-1 | preview-2 | preview-3. -#}
+{%- macro frame(inner, num, cls='') -%}
+<div class="pframe {{ cls }}"><div class="pf-content">{{ inner }}</div>
+{%- if num %}<div class="pf-foot"><span>The Messy Brain Home Reset</span><b>{{ num }}</b></div>{% endif -%}
+</div>
+{%- endmacro -%}
+{%- macro unit(chid, key) -%}{{ ch[chid].html | unit_html(key) }}{%- endmacro -%}
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>{{ which }}</title>
+<link rel="stylesheet" href="{{ brand_css }}">
+<link rel="stylesheet" href="{{ book_css }}">
+<style>
+  html, body { margin: 0; width: 1600px; height: 2000px; overflow: hidden; background: var(--cream); }
+  body { font: 400 11.5pt/1.58 var(--font-body); color: var(--ink); }
+  .cover-stage { width: 1600px; height: 2000px; font-size: 31.37px; }
+  .cover-stage .cover-art { width: 1600px; height: 2000px; }
+  .stage { position: relative; width: 1600px; height: 2000px; overflow: hidden; }
+  .stage > svg { position: absolute; inset: 0; }
+  .st-head { position: absolute; left: 110px; right: 110px; top: 100px; z-index: 5; }
+  .st-tag { display: inline-block; font: 700 22px/1 var(--font-body); letter-spacing: .16em; text-transform: uppercase; background: var(--paper);
+    padding: 16px 24px; border-radius: 999px; box-shadow: 0 8px 24px rgba(43,42,51,.07); }
+  .st-title { font: 800 88px/1.0 var(--font-display); letter-spacing: -.03em; margin: 34px 0 0; }
+  .st-title .ct-hl { padding: 0 .04em; }
+  .st-sub { font: 400 34px/1.35 var(--font-body); color: var(--ink-soft); margin: 22px 0 0; max-width: 1200px; }
+  .pframe { position: absolute; width: 8.5in; height: 11in; background: var(--cream); box-sizing: border-box; overflow: hidden;
+    box-shadow: 0 30px 70px rgba(43,42,51,.20), 0 4px 12px rgba(43,42,51,.08); border-radius: 6px; transform-origin: top left; }
+  .pframe.book-page .pf-content { position: absolute; left: .8in; right: .8in; top: .75in; height: 9.4in; overflow: hidden; }
+  .pframe.full .pf-content { position: absolute; inset: 0; }
+  .pframe.full .pf-content > section { break-before: auto; }
+  .pf-foot { position: absolute; left: .8in; right: .8in; bottom: .5in; display: flex; justify-content: space-between; align-items: baseline;
+    font: 400 8pt/1 var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: #9A95A6; }
+  .pf-foot b { font: 600 11pt/1 var(--font-display); color: var(--ink-soft); letter-spacing: 0; }
+  .back { left: 70px; top: 560px; transform: scale(1.18) rotate(-5deg); }
+  .front { left: 560px; top: 610px; transform: scale(1.3) rotate(3deg); }
+  .st-badge { position: absolute; right: 90px; bottom: 90px; z-index: 6; width: 250px; height: 250px; border-radius: 50%; background: var(--coral); color: #fff;
+    display: flex; align-items: center; justify-content: center; text-align: center; font: 700 44px/1.0 var(--font-hand); transform: rotate(8deg);
+    box-shadow: 0 20px 40px rgba(196,87,63,.3); }
+</style>
+</head>
+<body>
+{% if which == 'cover' %}
+  <div class="cover-stage">{{ m.cover(title, subtitle) }}</div>
+{% else %}
+<div class="stage">
+  <svg viewBox="0 0 1600 2000" preserveAspectRatio="none" aria-hidden="true">
+    <circle cx="1480" cy="120" r="260" fill="#F9DDD4"/>
+    <circle cx="80" cy="1880" r="300" fill="#ECE6F8"/>
+    <circle cx="1500" cy="1500" r="200" fill="#DCE8DF"/>
+    <circle cx="140" cy="460" r="40" fill="#F4D58D"/>
+  </svg>
+  {% if which == 'preview-1' %}
+    <div class="st-head">
+      <span class="st-tag">Inside the book</span>
+      <h1 class="st-title">Brain full? Read <span class="ct-hl">one page.</span></h1>
+      <p class="st-sub">A 1-page Quick Start, then 12 short, skimmable chapters you can read in any order.</p>
+    </div>
+    {{ frame(m.contents(all_chapters, pages), 3, 'full back') }}
+    {{ frame(ch.quickstart | body, pages.quickstart, 'book-page front trim') }}
+  {% elif which == 'preview-2' %}
+    <div class="st-head">
+      <span class="st-tag">The 7-Day Reset</span>
+      <h1 class="st-title">One zone a day. <span class="ct-hl">Zero shame.</span></h1>
+      <p class="st-sub">Timed rounds, a checklist, and a 10-minute minimum version for low-energy days.</p>
+    </div>
+    {{ frame(m.opener(ch.seven), None, 'full back') }}
+    {{ frame(ch.seven.html | unit_html('day-1-the-kitchen-sink-counters'), pages.seven + 4, 'book-page front trim') }}
+  {% else %}
+    <div class="st-head">
+      <span class="st-tag">6 printables included</span>
+      <h1 class="st-title">Print it. Stick it. <span class="ct-hl">Tick it.</span></h1>
+      <p class="st-sub">Quick Start card, Emergency Reset, Daily 3 tracker, Sunday Reset, 7-Day tracker and a fridge Energy Menu.</p>
+    </div>
+    {{ frame(ch.printables.html | unit_html('the-energy-menu-fridge-version'), None, 'book-page back k-printables c-sage') }}
+    {{ frame(ch.printables.html | unit_html('the-daily-3-tracker'), None, 'book-page front k-printables c-sage') }}
+  {% endif %}
+</div>
+{% endif %}
+<script>
+// Trim book-page previews at a block boundary so they end cleanly, like a real page.
+document.fonts.ready.then(() => {
+  document.querySelectorAll('.pframe.trim .pf-content').forEach(box => {
+    const limit = box.getBoundingClientRect().bottom;
+    const blocks = [...box.querySelectorAll(':scope > section > *, :scope > section > section > *')];
+    let cut = false;
+    blocks.forEach(el => { if (cut || el.getBoundingClientRect().bottom > limit) { cut = true; el.remove(); } });
+  });
+});
+</script>
+</body></html>

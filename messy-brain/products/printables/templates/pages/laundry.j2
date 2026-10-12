@@ -1,0 +1,17 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div>
+<div class="loop">
+  {% for s in p.steps %}<div class="lstep"><div class="circ">{{ s }}</div></div>{% if not loop.last %}<div class="larrow"></div>{% endif %}{% endfor %}
+</div>
+<div class="backloop">...and back to the hamper. Round and round, no mountain.</div>
+</div>
+<div class="tip"><span class="l">psst:</span><span>Set a phone alarm the moment you press start. When it rings, move the load. That one alarm saves a lot of re-washing.</span></div>
+<div class="tablewrap grow fillt">
+<table class="grid">
+  <colgroup><col style="width:88px"><col>{% for _ in p.steps %}<col style="width:60px">{% endfor %}</colgroup>
+  <thead><tr><th>Date</th><th>What's in the load</th>{% for s in p.steps %}<th class="c">{{ s }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for _ in range(p.rows) %}<tr><td></td><td></td>{% for s in p.steps %}<td class="c"><span class="cb sm"></span></td>{% endfor %}</tr>{% endfor %}</tbody>
+</table>
+</div>
+{% endcall %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% from "macros.html" import promo with context %}
+{% block main %}
+<div class="narrow">
+<h1>Amazon finds for busy brains</h1>
+<p>Every item here makes a home task easier to start, easier to see, or easier to finish. No prices listed because they change — tap through to see today's price.</p>
+<p class="disclose">As an Amazon Associate I earn from qualifying purchases. Buying through these links costs you nothing extra.</p>
+<div class="cats">{% for cat, items in groups %}<a href="#{{ cat }}">{{ cat|title }} ({{ items|length }})</a>{% endfor %}</div>
+{% for cat, items in groups %}
+<h2 id="{{ cat }}">{{ cat|title }}</h2>
+{% for f in items %}
+<div class="find"><div class="n">{{ loop.index }}</div><h3>{{ f.name }}</h3><p>{{ f.why }}</p>
+  <a class="btn" href="{{ f.link }}" target="_blank" rel="sponsored nofollow noopener">See it on Amazon</a></div>
+{% endfor %}{% endfor %}
+{{ promo(cfg.shop) }}
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block main %}
+<div class="narrow" style="text-align:center">
+<h1>Get your home back — without the shame spiral.</h1>
+<p>Instant download PDFs. Read on your phone or print at home. Made by someone whose brain works like yours.</p>
+</div>
+<div class="products">
+  <div class="product">
+    {% if has_ebook %}<img src="/shop-img/ebook-cover.png" alt="The Messy Brain Home Reset">{% endif %}
+    <h2 style="margin:0">The Messy Brain Home Reset</h2>
+    <div class="price">{{ cfg.shop.ebook_price }}</div>
+    <ul><li>The 15-minute emergency reset</li><li>A 7-day plan, one zone a day, with low-energy versions</li><li>The Daily 3, laundry loop, launch pad &amp; kitchen closing shift</li><li>The restart plan for when you fall off</li></ul>
+    <a class="btn coral" href="{{ cfg.shop.ebook_url }}">Buy the ebook</a>
+  </div>
+  <div class="product best">
+    <span class="ribbon">Best value</span>
+    {% if has_ebook %}<img src="/shop-img/ebook-cover.png" alt="Bundle">{% endif %}
+    <h2 style="margin:0">The Bundle: ebook + printables</h2>
+    <div class="price">{{ cfg.shop.bundle_price }}</div>
+    <ul><li>Everything in the Home Reset ebook</li><li>Every page of the Tidy Brain Printable Pack</li><li>Save compared to buying both</li></ul>
+    <a class="btn coral" href="{{ cfg.shop.bundle_url }}">Buy the bundle</a>
+  </div>
+  <div class="product">
+    {% if has_printables %}<img src="/shop-img/printables-cover.png" alt="The Tidy Brain Printable Pack">{% endif %}
+    <h2 style="margin:0">The Tidy Brain Printable Pack</h2>
+    <div class="price">{{ cfg.shop.printables_price }}</div>
+    <ul><li>Daily, weekly &amp; room-by-room checklists</li><li>Laundry, meal plan, declutter &amp; habit trackers</li><li>Energy menus, chore charts &amp; a home map</li></ul>
+    <a class="btn coral" href="{{ cfg.shop.printables_url }}">Buy the pack</a>
+  </div>
+</div>
+{% if previews %}<h2>Take a peek inside</h2><div class="previews">{% for p in previews %}<img src="{{ p }}" alt="Preview page" loading="lazy">{% endfor %}</div>{% endif %}
+<div class="narrow"><h2>Questions</h2>
+<p><strong>How do I get it?</strong> Right after you pay, you get a download link on screen and by email. <a href="/help/">Download help</a>.</p>
+<p><strong>Is it a physical book?</strong> No — it's a PDF you can read on any phone, tablet or computer, or print.</p>
+<p><strong>Refunds?</strong> Because these are instant digital downloads, all sales are final.</p></div>
+{% endblock %}

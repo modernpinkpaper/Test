@@ -1,0 +1,8 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="card" style="flex:1.5;min-height:0"><div class="h3">Everything in my head<small>messy is fine</small></div><div class="lines grow"></div></div>
+<div class="h3" style="margin:4px 0 -6px">Now sort it</div>
+<div class="two" style="flex:1;min-height:0;grid-template-rows:1fr 1fr">
+  {% for t, s in p.buckets %}<div class="card{% if loop.first %} soft{% endif %}"><div class="h3">{{ t }}{% if s %}<small>{{ s }}</small>{% endif %}</div><div class="lines grow"></div></div>{% endfor %}
+</div>
+{% endcall %}

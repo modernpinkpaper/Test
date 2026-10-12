@@ -1,0 +1,107 @@
+{# Shared pieces for the book (template.html) and the sales images (promo.html). #}
+
+{% macro check() -%}
+<svg viewBox="0 0 20 20" class="tick"><path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+{%- endmacro %}
+
+{% macro cover(title, subtitle) -%}
+<div class="cover-art">
+  <svg class="cover-shapes" viewBox="0 0 510 660" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path d="M330 -40 C440 -50 560 20 540 140 C525 235 440 250 380 220 C310 185 250 150 262 80 C272 20 280 -35 330 -40Z" fill="#F9DDD4"/>
+    <circle cx="468" cy="36" r="54" fill="#E8836B" opacity=".9"/>
+    <path d="M-60 470 C0 420 90 440 120 500 C150 560 120 640 50 690 C-10 730 -90 700 -100 620 C-110 560 -100 505 -60 470Z" fill="#ECE6F8"/>
+    <circle cx="30" cy="560" r="34" fill="#B9A7E0"/>
+    <path d="M400 470 C430 440 490 450 520 480 L520 700 L360 700 C340 640 360 520 400 470Z" fill="#DCE8DF"/>
+    <circle cx="95" cy="70" r="16" fill="#F4D58D"/>
+    <g fill="#E7DFD3">
+      <circle cx="40" cy="170" r="3"/><circle cx="56" cy="170" r="3"/><circle cx="72" cy="170" r="3"/>
+      <circle cx="40" cy="186" r="3"/><circle cx="56" cy="186" r="3"/><circle cx="72" cy="186" r="3"/>
+      <circle cx="40" cy="202" r="3"/><circle cx="56" cy="202" r="3"/><circle cx="72" cy="202" r="3"/>
+    </g>
+    <path d="M430 300 q12 -14 24 0 t24 0 t24 0" fill="none" stroke="#F4D58D" stroke-width="5" stroke-linecap="round"/>
+    <path d="M28 300 q10 -12 20 0 t20 0 t20 0" fill="none" stroke="#7FA38A" stroke-width="4" stroke-linecap="round"/>
+  </svg>
+  <div class="cover-inner">
+    <div class="cover-top"><span class="cover-tag">ADHD-friendly &middot; shame-free &middot; 7 days</span></div>
+    <h1 class="cover-title"><span class="ct1">The <span class="ct-hl">Messy Brain</span></span><span class="ct2">Home Reset</span></h1>
+    <p class="cover-sub">{{ subtitle }}</p>
+    <div class="cover-mid">
+      <div class="cover-card">
+        <div class="cc-head"><span class="hand">today's reset</span><span class="cc-timer">15:00</span></div>
+        <div class="cc-row done"><span class="cc-box">{{ check() }}</span>Trash bag lap</div>
+        <div class="cc-row done"><span class="cc-box">{{ check() }}</span>Everything else in one basket</div>
+        <div class="cc-row done"><span class="cc-box">{{ check() }}</span>Clear one surface</div>
+        <div class="cc-row"><span class="cc-box"></span>Celebrate (required)</div>
+      </div>
+      <div class="cover-note hand">small steps.<br>zero shame.<br>a home that works.</div>
+    </div>
+    <div class="cover-bottom">
+      <span class="cover-brand">Messy Brain, <b>Tidy Home</b></span>
+      <span class="cover-inc">7-day plan &middot; Daily 3 &middot; emergency reset &middot; printables</span>
+    </div>
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro opener(ch) -%}
+<section class="opener c-{{ ch.meta.color }}" id="{{ ch.meta.id }}">
+  <svg class="op-shapes" viewBox="0 0 510 660" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path class="fill-strong" d="M360 -50 C470 -40 560 60 530 170 C505 260 420 260 370 225 C305 180 270 120 290 50 C305 0 320 -52 360 -50Z" opacity=".55"/>
+    <circle class="fill-strong" cx="470" cy="600" r="80" opacity=".35"/>
+    <circle class="fill-paper" cx="60" cy="620" r="40" opacity=".6"/>
+  </svg>
+  <div class="op-inner">
+    {% if ch.num %}<div class="op-num">{{ '%02d' % ch.num }}</div>{% endif %}
+    <div class="op-kicker">{{ ch.meta.kicker or ('Chapter ' ~ ch.num if ch.num else '') }}</div>
+    <h1 class="op-title">{{ ch.title }}</h1>
+    {% if ch.meta.tagline %}<p class="op-tag hand">{{ ch.meta.tagline }}</p>{% endif %}
+    {% if ch.one_html %}
+    <div class="op-one">
+      <div class="op-one-label">If you only read one thing</div>
+      <p>{{ ch.one_html }}</p>
+    </div>
+    {% endif %}
+    {% if ch.sections %}
+    <div class="op-list">
+      <div class="op-list-label">In this chapter</div>
+      <ul class="{{ 'two' if ch.sections|length > 5 else '' }}">
+        {% for s in ch.sections %}<li>{{ s }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+  <div class="op-foot">The Messy Brain Home Reset</div>
+</section>
+{%- endmacro %}
+
+{% macro chapter_body(ch) -%}
+<section class="chapter-body c-{{ ch.meta.color }} k-{{ ch.meta.kind }} ch-{{ ch.meta.id }}"{% if ch.meta.kind != 'chapter' and ch.meta.kind != 'printables' %} id="{{ ch.meta.id }}"{% endif %}>
+  {% if ch.meta.kind == 'plain' %}
+  <header class="plain-head">
+    <div class="ph-kicker">{{ ch.meta.kicker }}</div>
+    <h1 class="ph-title">{{ ch.title }}</h1>
+  </header>
+  {% endif %}
+  {{ ch.html }}
+</section>
+{%- endmacro %}
+
+{% macro contents(chapters, pages) -%}
+<section class="contents-page">
+  <div class="ct-kicker">What's inside</div>
+  <h1 class="ct-title">Contents</h1>
+  <div class="box one ct-box"><div class="box-label">Brain full?</div><p>Read <strong>only page {{ pages.quickstart }}</strong>, the 1-Page Quick Start. It's allowed. Everything else can wait.</p></div>
+  <ol class="toc">
+  {% for ch in chapters %}
+    <li class="toc-row c-{{ ch.meta.color }} {{ 'toc-plain' if not ch.num else '' }}">
+      <a href="#{{ ch.meta.id }}">
+        <span class="toc-num">{{ '%02d' % ch.num if ch.num else '&bull;' }}</span>
+        <span class="toc-title">{{ ch.title }}</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">{{ pages[ch.meta.id] }}</span>
+      </a>
+    </li>
+  {% endfor %}
+  </ol>
+</section>
+{%- endmacro %}

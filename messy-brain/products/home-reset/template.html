@@ -1,0 +1,38 @@
+{%- import 'macros.html' as m -%}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ title }}</title>
+<link rel="stylesheet" href="{{ brand_css }}">
+<link rel="stylesheet" href="{{ book_css }}">
+</head>
+<body class="book">
+{% if front %}
+<section class="cover-page">{{ m.cover(title, subtitle) }}</section>
+
+<section class="copyright-page">
+  <div class="cp-top">
+    <div class="cp-mark">{{ title }}</div>
+    <p class="cp-sub">{{ subtitle }}</p>
+  </div>
+  <div class="cp-bottom">
+    <div class="box note cp-note"><div class="box-label">The friendly fine print</div>
+      <p><strong>This book is not medical advice.</strong> It's practical home-organizing ideas from people whose brains work a lot like yours. It isn't a substitute for diagnosis, treatment, or support from a doctor or mental-health professional. If things feel heavy beyond the dishes, please reach out to someone qualified. You deserve that support.</p>
+    </div>
+    <p>&copy; 2026 Messy Brain, Tidy Home. All rights reserved. First edition.</p>
+    <p>This ebook is licensed for your personal use. You're welcome to print the checklists for yourself and the people you live with. Please don't share, resell, or post the file or its pages publicly.</p>
+    <p>Examples of times, ages, and tasks in this book are general suggestions, not rules. Every home and every brain is different, so adjust anything to fit yours. Use cleaning products as their labels direct, and never mix them.</p>
+    <p class="cp-made">Made with care (and several timers) for busy, beautiful, messy brains.</p>
+  </div>
+</section>
+
+{{ m.contents(all_chapters, pages) }}
+{% endif %}
+
+{% for ch in chapters %}
+  {% if ch.meta.kind in ('chapter', 'printables') %}{{ m.opener(ch) }}{% endif %}
+  {{ m.chapter_body(ch) }}
+{% endfor %}
+</body>
+</html>

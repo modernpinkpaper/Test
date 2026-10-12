@@ -1,0 +1,20 @@
+{% from "macros.j2" import page, icon %}
+{% call page(p, n) %}
+<div class="tablewrap">
+<div class="h3" style="margin:0 8px 10px">Regular checks<small>suggested timing. Your manuals win.</small></div>
+<table class="grid">
+  <colgroup><col><col style="width:110px"><col style="width:100px"><col style="width:100px"></colgroup>
+  <thead><tr><th>Task</th><th>How often</th><th>Last done</th><th>Next due</th></tr></thead>
+  <tbody>{% for t, f in p.checks %}<tr><td>{{ t }}</td><td class="muted">{{ f }}</td><td></td><td></td></tr>{% endfor %}
+  <tr><td></td><td></td><td></td><td></td></tr></tbody>
+</table>
+</div>
+<div class="tablewrap grow fillt">
+<div class="h3" style="margin:0 8px 10px">Repairs &amp; service</div>
+<table class="grid">
+  <colgroup><col style="width:80px"><col><col style="width:150px"></colgroup>
+  <thead><tr><th>Date</th><th>What happened / what was done</th><th>Who &amp; cost</th></tr></thead>
+  <tbody>{% for _ in range(p.repairs) %}<tr><td></td><td></td><td></td></tr>{% endfor %}</tbody>
+</table>
+</div>
+{% endcall %}
