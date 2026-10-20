@@ -963,7 +963,8 @@ function Add-MtLogContext($Crashes, [string[]]$Folders, [string]$Computer = $env
         $files = @()
         foreach ($f in $Folders) {
             $files += Get-ChildItem -LiteralPath $f -Recurse -File -Filter '*.jsonl' -ErrorAction SilentlyContinue |
-                Where-Object { $_.LastWriteTime -ge $day.AddHours(-2) -and $_.LastWriteTime -le $day.AddDays(1).AddHours(6) }
+                Where-Object { ($_.LastWriteTime -ge $day.AddHours(-2) -and $_.LastWriteTime -le $day.AddDays(1).AddHours(6)) -or
+                               $_.FullName.Contains($day.ToString('yyyy-MM-dd')) }   # copied or unzipped logs keep the date in their folder name
         }
         if ($files.Count -eq 0) { continue }
         $events = @()
@@ -982,11 +983,16 @@ function Add-MtLogContext($Crashes, [string[]]$Folders, [string]$Computer = $env
         if ($events.Count -eq 0) { continue }
         $events = @($events | Sort-Object Time)
         foreach ($c in $g.Group) {
-            $before = @($events | Where-Object { $_.Time -le $c.Time.AddSeconds(30) -and $_.Time -ge $c.Time.AddMinutes(-20) })
+            # Same PC, same clock: a few seconds of slack is enough. A wider window pulls in the restart after the crash.
+            $before = @($events | Where-Object { $_.Time -le $c.Time.AddSeconds(3) -and $_.Time -ge $c.Time.AddMinutes(-20) })
             if ($before.Count -eq 0) { continue }
             $found = $true
             $lastTitle = ''
-            foreach ($b in $before) { $wt = Get-Prop $b.Event 'window_title'; if ($wt) { $lastTitle = $wt } }
+            foreach ($b in $before) {
+                $wt = Get-Prop $b.Event 'window_title'
+                # Only document windows; skip the splash screen, dialogs and the empty main window.
+                if ($wt -match '(?i)\.indd?\b|\.idml\b|@\s*\d+%') { $lastTitle = $wt }
+            }
             $doc = $lastTitle -replace '^Adobe InDesign( \d{4})?\s*-\s*', '' -replace '\s*@\s*\d+%.*$', ''
             $c.Document = $doc
             $actions = @()

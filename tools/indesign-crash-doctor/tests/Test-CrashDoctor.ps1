@@ -174,12 +174,14 @@ Assert ((Get-Prop $mdObj 'document') -eq 'HNP004 weekly planner.indd') 'MT Log d
 $mtDir = Join-Path $work 'mtlog'
 New-Item -ItemType Directory -Path $mtDir | Out-Null
 $ct = [datetime]'2026-10-08T12:04:25'
-$mk = { param($pc, $doc, $sec) '{"computer_id":"' + $pc + '","timestamp_local":"' + $ct.AddSeconds(-$sec).ToString('yyyy-MM-ddTHH:mm:ss') + '","event_type":"app_session_start","process_name":"InDesign","window_title":"' + $doc + ' @ 100%"}' }
-$lines = @((& $mk 'ANNIE' 'Gift Message.indd' 60), (& $mk 'KAYLAPC' 'Other PC.indd' 10))
-[System.IO.File]::WriteAllLines((Join-Path $mtDir 'events.jsonl'), [string[]]$lines)
+$mk = { param($pc, $doc, $sec) '{"computer_id":"' + $pc + '","timestamp_local":"' + $ct.AddSeconds(-$sec).ToString('yyyy-MM-ddTHH:mm:ss') + '","event_type":"app_session_start","process_name":"InDesign","window_title":"' + $doc + '"}' }
+$lines = @((& $mk 'ANNIE' 'Gift Message.indd @ 100%' 60), (& $mk 'KAYLAPC' 'Other PC.indd @ 100%' 10), (& $mk 'ANNIE' 'com.adobe.AdobeSplashKit.TextWindowClass' 2), (& $mk 'ANNIE' 'After Restart.indd @ 100%' -20))
+$mtDay = Join-Path $mtDir '2026-10-08'
+New-Item -ItemType Directory -Path $mtDay | Out-Null
+[System.IO.File]::WriteAllLines((Join-Path $mtDay 'events.jsonl'), [string[]]$lines)
 $mc = [pscustomobject]@{ Time = $ct; Document = ''; LastActions = @() }
 $null = Add-MtLogContext @($mc) @($mtDir) 'ANNIE'
-Assert ($mc.Document -eq 'Gift Message.indd') "MT Log events from other PCs are ignored ($($mc.Document))"
+Assert ($mc.Document -eq 'Gift Message.indd') "MT Log: other PCs, the splash screen and events after the crash are ignored ($($mc.Document))"
 $empty = Get-Verdict @() @() @() @() @() @() $false 90
 Assert ((($empty.Findings | ForEach-Object { $_.Title }) -join ' ') -match 'No crash records') 'no crashes gives a clear message'
 
