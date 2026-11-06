@@ -66,7 +66,7 @@ if ($onWindows) {
     Check 'ping no window = -2' (-2 -eq [MppLagNative]::Ping([IntPtr]::Zero, 500))
     Add-Type -AssemblyName System.Windows.Forms
     $f = New-Object System.Windows.Forms.Form
-    $f.Text = 'LagWatcher test window - x.indd @ 100%'
+    $f.Text = 'Adobe InDesign CC 2018 - [x.indd @ 100%]'
     $f.Show(); [System.Windows.Forms.Application]::DoEvents()
     $ms = [MppLagNative]::Ping($f.Handle, 1000)
     Check "ping a live window answers ($ms ms)" ($ms -ge 0 -and $ms -lt 1000)
@@ -101,7 +101,8 @@ $t.Start()
     $watcherScript = (Resolve-Path (Join-Path $here '..\LagWatcher.ps1')).Path
     $w = Start-Process $ps -PassThru -WindowStyle Hidden -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$watcherScript`"", '-ProcessName', 'InDesignFake', '-RunSeconds', '40', '-LogFolder', "`"$e2eLogs`"")
     Start-Sleep -Seconds 2
-    $fake = Start-Process $fakeExe -PassThru -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$fakeScript`"")
+    # Hidden console, so the program's main window is the form (like InDesign's main window).
+    $fake = Start-Process $fakeExe -PassThru -WindowStyle Hidden -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$fakeScript`"")
     $fake | Wait-Process -Timeout 60 -ErrorAction SilentlyContinue
     $w | Wait-Process -Timeout 60 -ErrorAction SilentlyContinue
     if (-not $w.HasExited) { Stop-Process -Id $w.Id -Force }
