@@ -354,6 +354,7 @@ function Invoke-LagWatcher {
     $nextHealth = Get-Date
     $lag = $null
     $lastHwnd = [IntPtr]::Zero
+    $noWindowSince = $null; $noWindowNoted = $false
 
     $watchStart = Get-Date
     while ($true) {
@@ -390,7 +391,15 @@ function Invoke-LagWatcher {
             }
             if ($hwnd -ne [IntPtr]::Zero) { $lastHwnd = $hwnd }
             $ms = [MppLagNative]::Ping($hwnd, [uint32]$script:LagTimeoutMs)
-            if ($ms -eq -2) { Start-Sleep -Seconds $script:PollSeconds; continue }  # no main window yet (splash/loading)
+            if ($ms -eq -2) {   # no main window yet (splash/loading)
+                if (-not $noWindowSince) { $noWindowSince = Get-Date }
+                elseif (-not $noWindowNoted -and ((Get-Date) - $noWindowSince).TotalSeconds -ge 60) {
+                    Write-LagLog ("[{0}] note: InDesign is running but has no visible main window to check." -f (Get-Date).ToString('HH:mm:ss')) $null
+                    $noWindowNoted = $true
+                }
+                Start-Sleep -Seconds $script:PollSeconds; continue
+            }
+            $noWindowSince = $null
             $now = Get-Date
             $evt = Step-LagState -State $state -PingMs $ms -Now $now
 

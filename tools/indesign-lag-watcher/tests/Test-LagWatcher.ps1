@@ -87,6 +87,8 @@ if ($onWindows) {
     $fakeScript = Join-Path $tmp 'fake.ps1'
     Set-Content -LiteralPath $fakeScript -Encoding UTF8 -Value @'
 Add-Type -AssemblyName System.Windows.Forms
+Add-Type -Name Con -Namespace Fake -MemberDefinition '[DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow(); [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int c);'
+[void][Fake.Con]::ShowWindow([Fake.Con]::GetConsoleWindow(), 0)   # hide only the console, so the form is the main window
 $f = New-Object System.Windows.Forms.Form
 $f.Text = 'Adobe InDesign CC 2018 - [*Test Doc.indd @ 100%]'
 $t = New-Object System.Windows.Forms.Timer
@@ -102,8 +104,8 @@ $t.Start()
     $watcherScript = (Resolve-Path (Join-Path $here '..\LagWatcher.ps1')).Path
     $w = Start-Process $ps -PassThru -WindowStyle Hidden -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$watcherScript`"", '-ProcessName', 'InDesignFake', '-RunSeconds', '40', '-LogFolder', "`"$e2eLogs`"")
     Start-Sleep -Seconds 2
-    # Hidden console, so the program's main window is the form (like InDesign's main window).
-    $fake = Start-Process $fakeExe -PassThru -WindowStyle Hidden -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$fakeScript`"")
+    # Not -WindowStyle Hidden: that would also hide the form. The fake hides its own console.
+    $fake = Start-Process $fakeExe -PassThru -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$fakeScript`"")
     $fake | Wait-Process -Timeout 60 -ErrorAction SilentlyContinue
     $w | Wait-Process -Timeout 60 -ErrorAction SilentlyContinue
     if (-not $w.HasExited) { Stop-Process -Id $w.Id -Force }
