@@ -92,7 +92,8 @@ $f.Text = 'Adobe InDesign CC 2018 - [*Test Doc.indd @ 100%]'
 $t = New-Object System.Windows.Forms.Timer
 $t.Interval = 5000
 $script:n = 0
-$t.add_Tick({ $script:n++; if ($script:n -eq 1) { Start-Sleep -Seconds 6 } elseif ($script:n -ge 3) { $f.Close() } })
+# Busy loop, not Start-Sleep: a sleeping STA thread still answers sent messages.
+$t.add_Tick({ $script:n++; if ($script:n -eq 1) { $end = [DateTime]::Now.AddSeconds(6); while ([DateTime]::Now -lt $end) { } } elseif ($script:n -ge 3) { $f.Close() } })
 $t.Start()
 [System.Windows.Forms.Application]::Run($f)
 '@
