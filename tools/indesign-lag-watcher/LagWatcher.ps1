@@ -385,6 +385,9 @@ function Invoke-LagWatcher {
             # main window can disappear from MainWindowHandle. Keep using the last one.
             $hwnd = $p.MainWindowHandle
             if ($hwnd -eq [IntPtr]::Zero -and $lastHwnd -ne [IntPtr]::Zero -and [MppLagNative]::IsWindow($lastHwnd)) { $hwnd = $lastHwnd }
+            if ($hwnd -ne [IntPtr]::Zero -and $hwnd -ne $lastHwnd) {
+                Write-LagLog ("[{0}] watching window: {1}" -f (Get-Date).ToString('HH:mm:ss'), [MppLagNative]::Title($hwnd)) $null
+            }
             if ($hwnd -ne [IntPtr]::Zero) { $lastHwnd = $hwnd }
             $ms = [MppLagNative]::Ping($hwnd, [uint32]$script:LagTimeoutMs)
             if ($ms -eq -2) { Start-Sleep -Seconds $script:PollSeconds; continue }  # no main window yet (splash/loading)
