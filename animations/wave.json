@@ -1,0 +1,272 @@
+{
+ "name": "wave",
+ "fps": 12,
+ "width": 200,
+ "height": 220,
+ "frames": [
+  {
+   "bob": 0.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 165.0,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 1.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 174.06,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 1.73,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 182.5,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 2.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 189.75,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 1.73,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 195.31,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 1.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 198.81,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 0.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 200.0,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": -1.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 198.81,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": -1.73,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 195.31,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": -2.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 189.75,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": -1.73,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 182.5,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": -1.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 174.06,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": -0.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 165.0,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 1.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 155.94,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 1.73,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 147.5,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 2.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 140.25,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 1.73,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 134.69,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 1.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 131.19,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": 0.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 130.0,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": -1.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 131.19,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": -1.73,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 134.69,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": -2.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 140.25,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": -1.73,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 147.5,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  },
+  {
+   "bob": -1.0,
+   "left_upper_arm": -20,
+   "left_lower_arm": -10,
+   "right_upper_arm": 115,
+   "right_lower_arm": 155.94,
+   "left_upper_leg": -12,
+   "left_lower_leg": -5,
+   "right_upper_leg": 12,
+   "right_lower_leg": 5
+  }
+ ]
+}
