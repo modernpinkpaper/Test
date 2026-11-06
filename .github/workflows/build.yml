@@ -37,6 +37,18 @@ jobs:
           if (-not $html) { Write-Error 'No report was written'; exit 1 }
           Get-Content (Get-ChildItem $out -Filter *.txt | Select-Object -First 1).FullName
 
+  lag-watcher:
+    name: InDesign Lag Watcher tests (Windows PowerShell 5.1 and 7)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tests on Windows PowerShell 5.1
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools\indesign-lag-watcher\tests\Test-LagWatcher.ps1
+      - name: Tests on PowerShell 7
+        shell: pwsh
+        run: pwsh -NoProfile -File tools\indesign-lag-watcher\tests\Test-LagWatcher.ps1
+
   windows:
     name: Windows build, tests, smoke test, package
     runs-on: windows-latest
