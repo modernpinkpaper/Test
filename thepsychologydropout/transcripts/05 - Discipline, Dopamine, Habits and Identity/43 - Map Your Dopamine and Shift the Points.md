@@ -1,0 +1,12 @@
+# #43 — Map Your Dopamine and Shift the Points
+
+**Topic:** Discipline, Dopamine, Habits and Identity  
+**Posted:** 2026-09-29  
+**Length:** 85 seconds  
+**Video:** https://www.tiktok.com/@thepsychologydropout/video/7691068765265464590
+
+## Caption
+Chase Hughes explains a simple way to map out the things giving you dopamine, assign them a value, and start shifting those points toward the things that actually move your life forward. Instead of trying to eliminate everything you enjoy, the goal is to understand your dopamine map and consciously change where your reward is coming from. This concept is discussed in depth in The Behavior Operations Manual. #ChaseHughes #BehaviorOpsManual #Dopamine #BehaviorChange #HumanBehavior
+
+## Transcript
+Your number one source of dopamine should be you. Not your kids, not your wife, not your family. It should be you and your actions. Like, if you just get, like, a blank page in your journal, and I'm gonna write down all the places in my life I get dopamines, and. And I'm gonna be honest, I'm gonna put Instagram comments, alcohol or drugs or p***ography or, you know, all these places that people are getting dopamine from. You have a hundred points, and you have to spend all 100 points. You have to put a point value on where you're getting your dopamine from. So. And that's typically the first time ever in somebody's life where they've actually mapped out where their pleasure is coming from. Not happiness. Dopamine is not happiness. Dopamine is pleasure. And most people confuse the difference between those two. So if I have a score of 10 for throwing the ball for my dogs or playing with my kids or things that I should. That should be higher. And the score for alcohol is like, 65. You've never. Like, once people see that metric, it is very, very hard to ignore. So the step 2 is like, where. Where should the dopamine be? So here's where it is now. I'm gonna draw a little map, and on the next sheet of paper, we're gonna draw a new map and start, you know, drawing an arrow from the negative to the positive. Like where Am. I'm gonna borrow dopamine from this location. Maybe you don't have to quit all the way. I'm just gonna borrow some points so at least these two are equal. And that's. That's the next step. I'm gonna get this from a 12 on this. And this one's like a 50. I'm gonna find out the midpoint of that and borrow dopamine from the high dopamine area.

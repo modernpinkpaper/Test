@@ -1,0 +1,12 @@
+# #61 — Empathy and the Animal Behavior Chart
+
+**Topic:** Childhood, Fear, Bullies and Empathy  
+**Posted:** 2026-09-15  
+**Length:** 82 seconds  
+**Video:** https://www.tiktok.com/@thepsychologydropout/video/7685563876955491598
+
+## Caption
+Empathy isn’t just “being able to relate to someone.” It’s learning to look past the behavior and ask what’s underneath it. Chase Hughes explains how he uses the Animal Behavior Chart to help people understand why someone behaves the way they do—and how recognizing the underlying fear, script, or worldview can completely change the way you see them. This is the kind of framework that makes you start noticing human behavior differently. 🧠 From The Behavior Ops Manual by Chase Hughes. #ChaseHughes #BehaviorOpsManual #HumanBehavior #EmotionalIntelligence #Empathy
+
+## Transcript
+To grow that empathy muscle, we have this thing called an animal behaviour profiling chart that I developed for kids who were maybe on the spectrum and needed to understand why people did what they did. But one of the animals on there is a Chihuahua. And why do we have a Chihuahua on there? Well, you know, Chihuahuas are barking all the time. You get close to them, they might snap a little bit. But why are they barking? And I would talk to the client and say, you know, why are they barking? What is the reason? Are, cause they're tough, cause they're strong. So I go through all these things and it's it all. We finally get down to fear. They're scared. So we see, like, I'm showing them posturing behaviour that some people do, where I'm trying to be on top and I'm, I'm aggressive, loud. Um, that's a fear behaviour. That's not like confidence, uh, or anything like that. So I start showing him a behaviour that used to piss him off, and it's saying, here's what's under that. Like, here's the reason behind that. And the second element of this is in your everyday life, if you can start spotting these behaviours, you're not just seeing an adult who's scared. You're seeing a little script that got written when they were eight or nine years old that said, I will never let anybody hurt me again. Uh, and I think that gets addictive because If you, if you get someone's world view to start seeing people as reasons instead of just, like, broken. Oh, he's, he's a, you know, they'll call him a bad name, but the reason behind that. And they'll see that little childhood script, I, I definitely think that changes the world for people.

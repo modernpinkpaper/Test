@@ -1,0 +1,12 @@
+# #44 — Discipline Means Putting Your Future Self First
+
+**Topic:** Discipline, Dopamine, Habits and Identity  
+**Posted:** 2026-09-14  
+**Length:** 86 seconds  
+**Video:** https://www.tiktok.com/@thepsychologydropout/video/7685217311527111949
+
+## Caption
+Most people think discipline is about forcing yourself to do things you don’t want to do. Chase Hughes breaks it down differently: discipline is your ability to prioritize the needs of your future self. The interesting part? He explains how he uses this framework to identify the weakest area holding someone back—and then uses that as the highest-leverage place to start. That’s just one of the frameworks inside The Behavior Ops Manual. 🧠 #ChaseHughes #BehaviorOpsManual #SelfMastery #Discipline #HumanBehavior
+
+## Transcript
+One of the most common in there is how can I change my discipline? That's the number one thing that I get from people, how do I fix my discipline if I'm an ill disciplined person? Understanding what discipline is is the most critical element. And I define this differently than most people. I define discipline as your ability to prioritise the needs of your future self ahead of your own. And that's it, that's all it discipline is. I'm prioritising the needs of future me. Then we go back to where am I getting my dopamine from? And I want past tense me to be a source of dopamine for present tense me. Cause most of us look back with regret, I shouldn't have drank that much, I shouldn't have mouth off at the family reunion, you know, whatever it is, I shouldn't have overslept. If I can start looking backwards with gratitude, that's the fastest way to make discipline dopamine generating. So I'm gonna set my life up in every single way that I possibly can as if I were a butler for future me. So when I wake up in the morning, all this stuff set out, my laundry's laid out, my checklist for what I need to do to the uh, for the day, all the stuff I'm got to get on a plane is all laid out by the back door. I can grab it and jump in the car. Everything that I could possibly Do to make my future self go, oh, man, that's awesome. And look backwards with gratitude. I'm gonna do it. Past tense me is becoming a source of dopamine for present tense me. Everything that I can possibly do to make myself look backwards with gratitude is what I'm gonna start doing. But you have to start small. It's like just going overboard is gonna be crazy.
